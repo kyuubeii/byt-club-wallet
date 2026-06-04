@@ -1,3 +1,22 @@
+:root {
+  --byt-navy: #0f172a;
+  --byt-navy-soft: #1e293b;
+  --byt-bg: #f3f6fb;
+  --byt-surface: #ffffff;
+  --byt-surface-soft: #f8fafc;
+  --byt-border: #e2e8f0;
+  --byt-border-strong: #cbd5e1;
+  --byt-muted: #64748b;
+  --byt-text: #0f172a;
+  --byt-success: #059669;
+  --byt-danger: #dc2626;
+  --byt-warning: #92400e;
+  --byt-radius: 22px;
+  --byt-radius-sm: 14px;
+  --byt-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+  --byt-shadow-soft: 0 8px 22px rgba(15, 23, 42, 0.06);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -1686,4 +1705,538 @@ button:disabled {
 
   font-weight: 700;
 
+}
+
+/* -------------------- Product UI polish layer -------------------- */
+body {
+  background: var(--byt-navy);
+  color: var(--byt-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  filter: saturate(0.8);
+}
+
+input,
+select {
+  min-height: 48px;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+input:focus,
+select:focus,
+.session-status-select:focus {
+  border-color: var(--byt-navy);
+  box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.08);
+}
+
+input::placeholder {
+  color: #94a3b8;
+}
+
+.page {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(96, 165, 250, 0.2), transparent 28%),
+    radial-gradient(circle at 88% 12%, rgba(148, 163, 184, 0.18), transparent 26%),
+    linear-gradient(135deg, #020617, #0f172a 52%, #111827);
+}
+
+.login-card {
+  border: 1px solid rgba(226, 232, 240, 0.7);
+  box-shadow: 0 34px 90px rgba(2, 6, 23, 0.42);
+}
+
+.dashboard-page {
+  background:
+    linear-gradient(180deg, #f8fafc 0%, var(--byt-bg) 260px, #eef2f7 100%);
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: auto;
+  min-height: 76px;
+  gap: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 1px 0 rgba(226, 232, 240, 0.9);
+}
+
+.topbar h2 {
+  letter-spacing: -0.01em;
+}
+
+.topbar-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.dashboard-content {
+  padding-top: 42px;
+  padding-bottom: 56px;
+}
+
+.dashboard-content h1 {
+  letter-spacing: -0.03em;
+}
+
+.dashboard-subtitle {
+  max-width: 720px;
+  line-height: 1.6;
+}
+
+.system-status-row {
+  margin-bottom: 2px;
+}
+
+.system-status-badge {
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 1px 0 rgba(226, 232, 240, 0.9);
+}
+
+.stats-grid {
+  align-items: stretch;
+}
+
+.stat-card,
+.panel,
+.member-card {
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: var(--byt-shadow);
+}
+
+.stat-card {
+  min-height: 132px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.stat-card p {
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 12px;
+}
+
+.stat-card h3 {
+  letter-spacing: -0.03em;
+}
+
+.panel {
+  overflow-x: auto;
+}
+
+.panel h2,
+.session-section-header h2 {
+  letter-spacing: -0.02em;
+}
+
+.panel-header {
+  gap: 18px;
+}
+
+.panel-header p,
+.session-section-header p,
+.empty-text {
+  line-height: 1.55;
+}
+
+table {
+  min-width: 680px;
+}
+
+th {
+  white-space: nowrap;
+  color: #475569;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 12px;
+}
+
+td {
+  vertical-align: middle;
+}
+
+tbody tr {
+  transition: background 0.16s ease;
+}
+
+tbody tr:hover {
+  background: #f8fafc;
+}
+
+.member-table-scroll {
+  overflow-x: auto;
+  background: white;
+}
+
+.member-table-scroll table {
+  min-width: 760px;
+}
+
+.action-button,
+.login-button,
+.topup-button {
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.16);
+}
+
+.action-button:hover:not(:disabled),
+.login-button:hover:not(:disabled),
+.topup-button:hover:not(:disabled) {
+  box-shadow: 0 16px 28px rgba(15, 23, 42, 0.2);
+}
+
+.secondary-button,
+.logout-button,
+.pagination-button,
+.member-edit-button,
+.register-link-button {
+  background: #ffffff;
+  box-shadow: 0 1px 0 rgba(226, 232, 240, 0.9);
+}
+
+.secondary-button:hover:not(:disabled),
+.logout-button:hover:not(:disabled),
+.pagination-button:hover:not(:disabled),
+.member-edit-button:hover:not(:disabled),
+.register-link-button:hover:not(:disabled) {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.danger-button,
+.approve-button,
+.reactivate-button {
+  box-shadow: var(--byt-shadow-soft);
+}
+
+.small-approve-button,
+.small-reject-button {
+  white-space: nowrap;
+}
+
+.table-actions {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.pagination-controls {
+  padding-top: 6px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.pagination-info {
+  padding: 0 4px;
+}
+
+.developer-tools-panel {
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: none;
+}
+
+.developer-tools-panel .panel-header h2 {
+  font-size: 18px;
+}
+
+.developer-tools-panel .panel-header p {
+  font-size: 13px;
+}
+
+.developer-tools-grid {
+  gap: 8px;
+}
+
+.developer-tools-grid .compact-button {
+  padding: 10px 13px;
+  border-radius: 13px;
+  font-size: 13px;
+}
+
+.member-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, #ffffff 0%, #ffffff 56%, #f8fafc 100%);
+}
+
+.member-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -56px -72px auto;
+  width: 180px;
+  height: 180px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.04);
+  pointer-events: none;
+}
+
+.member-card h3 {
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.status-badge,
+.booking-status-pill,
+.system-status-badge {
+  white-space: nowrap;
+}
+
+.topup-panel,
+.change-password-panel,
+.change-login-id-panel,
+.member-session-panel {
+  scroll-margin-top: 96px;
+}
+
+.bank-box,
+.expense-summary,
+.summary-card,
+.session-card,
+.member-session-card {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.member-session-card,
+.session-card {
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.member-session-card:hover,
+.session-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: var(--byt-shadow-soft);
+}
+
+.session-booking-summary span,
+.booking-status-pill {
+  background: #f1f5f9;
+}
+
+.session-booking-summary span {
+  padding: 6px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+}
+
+.session-booking-summary span {
+  border-right: 1px solid #e2e8f0;
+}
+
+.session-booking-row {
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.session-booking-row:hover {
+  background: #ffffff;
+}
+
+.session-booking-scroll,
+.session-member-scroll,
+.member-checkbox-list {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+}
+
+.payment-preview {
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.default-password-warning,
+.booking-warning,
+.auth-notice {
+  box-shadow: 0 8px 18px rgba(146, 64, 14, 0.08);
+}
+
+@media (max-width: 900px) {
+  .dashboard-content {
+    padding: 28px 18px 44px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    padding: 16px 20px;
+  }
+
+  .topbar-actions {
+    align-self: center;
+  }
+
+  .panel,
+  .member-card,
+  .stat-card {
+    border-radius: 20px;
+  }
+
+  .panel-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .panel-header .secondary-button,
+  .panel-header .compact-button {
+    width: 100%;
+  }
+
+  .small-button-row {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 600px) {
+  .page {
+    align-items: flex-start;
+    padding: 18px;
+  }
+
+  .login-card {
+    padding: 28px 22px;
+    border-radius: 22px;
+  }
+
+  .logo-box {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+  }
+
+  h1,
+  .dashboard-content h1 {
+    font-size: 28px;
+  }
+
+  .dashboard-content {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .topbar {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .topbar-actions,
+  .logout-button,
+  .member-menu,
+  .member-menu > .secondary-button {
+    width: 100%;
+  }
+
+  .member-menu-dropdown {
+    left: 0;
+    right: auto;
+    width: 100%;
+  }
+
+  .stats-grid,
+  .main-grid {
+    gap: 16px;
+  }
+
+  .stat-card,
+  .panel,
+  .member-card {
+    padding: 20px;
+  }
+
+  .member-card {
+    margin-top: 22px;
+  }
+
+  .member-card h3 {
+    font-size: 36px;
+  }
+
+  .system-status-row {
+    gap: 6px;
+  }
+
+  .system-status-badge {
+    font-size: 11px;
+  }
+
+  .developer-tools-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .developer-tools-grid .compact-button,
+  .developer-tools-grid .danger-button {
+    width: 100%;
+  }
+
+  .button-row,
+  .change-login-id-actions,
+  .table-actions,
+  .member-session-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .table-actions button,
+  .change-login-id-actions button,
+  .member-session-actions button {
+    width: 100%;
+  }
+
+  .pagination-controls {
+    gap: 8px;
+  }
+
+  .pagination-button {
+    min-width: 0;
+  }
+
+  .qr-image-box {
+    min-height: 190px;
+  }
+
+  .duitnow-qr-image {
+    width: 150px;
+  }
+
+  input,
+  select,
+  .action-button,
+  .secondary-button,
+  .login-button,
+  .register-link-button,
+  .topup-button,
+  .danger-button,
+  .approve-button,
+  .reactivate-button {
+    border-radius: 14px;
+  }
 }
