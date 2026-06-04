@@ -160,6 +160,44 @@ function toSupabaseReloadRequestRow(request) {
   };
 }
 
+function toSupabaseActivityLogRow(log) {
+  return {
+    actor_role: log.actorRole || null,
+    actor_name: log.actorName || null,
+    actor_id:
+      log.actorId === undefined || log.actorId === null
+        ? null
+        : String(log.actorId),
+    action: log.action,
+    target_type: log.targetType || null,
+    target_id:
+      log.targetId === undefined || log.targetId === null
+        ? null
+        : String(log.targetId),
+    description: log.description || null,
+  };
+}
+
+export async function createActivityLog(log) {
+  try {
+    const { data, error } = await supabase
+      .from("activity_logs")
+      .insert(toSupabaseActivityLogRow(log))
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Failed to create activity log:", getSupabaseErrorMessage(error));
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Failed to create activity log:", getSupabaseErrorMessage(error));
+    return null;
+  }
+}
+
 export async function uploadReloadScreenshotToSupabase(file, memberId) {
   try {
     if (!file) {

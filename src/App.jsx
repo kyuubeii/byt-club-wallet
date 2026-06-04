@@ -667,6 +667,26 @@ function App() {
     await updateMemberBalanceInSupabase(memberId, balance);
   }
 
+  async function logActivity(log) {
+    try {
+      const { createActivityLog } = await import(
+        "./services/supabaseServices.js"
+      );
+
+      await createActivityLog({
+        actorRole: currentUser?.role || log.actorRole || "",
+        actorName: currentUser?.name || log.actorName || "",
+        actorId:
+          currentUser?.id === undefined || currentUser?.id === null
+            ? log.actorId || ""
+            : String(currentUser.id),
+        ...log,
+      });
+    } catch (error) {
+      console.error("Failed to create activity log:", error);
+    }
+  }
+
   function alertSupabaseMemberSyncFailed(error) {
     alert(
       `Local update saved, but Supabase member sync failed: ${
@@ -1072,6 +1092,13 @@ function App() {
       return;
     }
 
+    logActivity({
+      action: "approve_member",
+      targetType: "member",
+      targetId: memberId,
+      description: `Approved member ${pendingMember.name}`,
+    });
+
     alert("Member approved successfully");
   }
 
@@ -1110,6 +1137,13 @@ function App() {
       alertSupabaseMemberSyncFailed(error);
       return;
     }
+
+    logActivity({
+      action: "reject_member",
+      targetType: "member",
+      targetId: memberId,
+      description: `Rejected member ${pendingMember.name}`,
+    });
 
     alert("Member rejected and deactivated");
   }
@@ -1405,6 +1439,12 @@ function App() {
       setTopUpAmount("");
       setPaymentScreenshot(null);
       setShowTopUpBox(false);
+      logActivity({
+        action: "submit_reload_request",
+        targetType: "reload_request",
+        targetId: newRequest.id,
+        description: `${memberData.name} submitted reload request RM${amount}`,
+      });
       alert("Reload request submitted. Please wait for admin approval.");
     } finally {
       setIsSubmittingReloadRequest(false);
@@ -1475,6 +1515,13 @@ function App() {
       return;
     }
 
+    logActivity({
+      action: "approve_reload",
+      targetType: "reload_request",
+      targetId: request.id,
+      description: `Approved reload request for ${request.memberName} RM${request.amount}`,
+    });
+
     alert("Reload approved, balance updated and transaction recorded");
   }
 
@@ -1500,6 +1547,16 @@ function App() {
       alertSupabaseFinanceSyncFailed(error);
       return;
     }
+
+    logActivity({
+      action: "reject_reload",
+      targetType: "reload_request",
+      targetId: requestId,
+      description: "Rejected reload request",
+      actorName: currentUser?.name || "",
+      actorRole: currentUser?.role || "",
+      actorId: currentUser?.id || "",
+    });
 
     alert("Reload request rejected");
   }
@@ -2239,11 +2296,21 @@ function App() {
       return;
     }
 
+    logActivity({
+      action: "book_session",
+      targetType: "session",
+      targetId: sessionId,
+      description: `${currentMember.name} booked session ${session.date}`,
+    });
+
     alert("Booking successful");
   }
 
   async function handleCancelSessionBooking(sessionId) {
     const session = sessions.find((session) => session.id === sessionId);
+    const memberData = members.find(
+      (member) => Number(member.id) === Number(currentUser.memberId)
+    );
 
     if (!session) {
       alert("Session not found");
@@ -2289,6 +2356,15 @@ function App() {
         return;
       }
 
+      logActivity({
+        action: "cancel_session_booking",
+        targetType: "session",
+        targetId: sessionId,
+        description: `${
+          memberData?.name || currentUser.name
+        } cancelled session ${session.date}`,
+      });
+
       alert("Cancel cutoff has passed. You will still be charged court fee.");
       return;
     }
@@ -2318,6 +2394,15 @@ function App() {
       alertSupabaseBookingSyncFailed(error);
       return;
     }
+
+    logActivity({
+      action: "cancel_session_booking",
+      targetType: "session",
+      targetId: sessionId,
+      description: `${
+        memberData?.name || currentUser.name
+      } cancelled session ${session.date}`,
+    });
 
     alert("Booking cancelled successfully");
   }
@@ -2548,6 +2633,13 @@ function App() {
       alertSupabaseFinanceSyncFailed(error);
       return;
     }
+
+    logActivity({
+      action: "finalize_session_charge",
+      targetType: "session",
+      targetId: sessionId,
+      description: `Finalized session charge for ${session.date}`,
+    });
 
     alert(
       `Session finalized. ${chargeSummary.chargeRows.length} member(s) charged.`
