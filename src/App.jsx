@@ -2915,7 +2915,9 @@ function App() {
               className={`dashboard-section-toggle ${showActivitySection ? "active" : ""}`}
               onClick={() => setShowActivitySection(!showActivitySection)}
             >
-              {showActivitySection ? "Hide Activity" : "Show Activity"}
+              {showActivitySection
+                ? "Hide Recent Activity"
+                : "Show Recent Activity"}
             </button>
 
             <button
