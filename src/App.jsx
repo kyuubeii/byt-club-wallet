@@ -4224,6 +4224,8 @@ function App() {
                       <label>Starting Balance</label>
                       <input
                         type="number"
+                        step="0.01"
+                        inputMode="decimal"
                         placeholder="Example: 0"
                         value={newMemberBalance}
                         onChange={(event) => setNewMemberBalance(event.target.value)}
@@ -4277,6 +4279,8 @@ function App() {
                     <label>New Balance</label>
                     <input
                       type="number"
+                      step="0.01"
+                      inputMode="decimal"
                       placeholder="Example: 100 or -50"
                       value={manualBalance}
                       onChange={(event) => setManualBalance(event.target.value)}
@@ -4296,6 +4300,8 @@ function App() {
                     <label>Total Expense</label>
                     <input
                       type="number"
+                      step="0.01"
+                      inputMode="decimal"
                       placeholder="Example: 175.20"
                       value={expenseAmount}
                       onChange={(event) => setExpenseAmount(event.target.value)}

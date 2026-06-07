@@ -62,6 +62,8 @@ function EditMemberPanel({
           <label>Balance</label>
           <input
             type="number"
+            step="0.01"
+            inputMode="decimal"
             placeholder="Example: 100 or -50"
             value={editMemberBalance}
             onChange={(event) => setEditMemberBalance(event.target.value)}

@@ -153,6 +153,8 @@ function SessionCalculator({ members, setMembers, setTransactions, formatMoney }
                     <label>Court Cost</label>
                     <input
                         type="number"
+                        step="0.01"
+                        inputMode="decimal"
                         value={courtCost}
                         onChange={(event) => setCourtCost(event.target.value)}
                     />
@@ -171,6 +173,8 @@ function SessionCalculator({ members, setMembers, setTransactions, formatMoney }
                     <label>Shuttle Rate Per Pcs</label>
                     <input
                         type="number"
+                        step="0.01"
+                        inputMode="decimal"
                         value={shuttleRate}
                         onChange={(event) => setShuttleRate(event.target.value)}
                     />
@@ -189,6 +193,8 @@ function SessionCalculator({ members, setMembers, setTransactions, formatMoney }
                     <label>Walk-in Fee</label>
                     <input
                         type="number"
+                        step="0.01"
+                        inputMode="decimal"
                         value={walkinFee}
                         onChange={(event) => setWalkinFee(event.target.value)}
                     />
@@ -198,6 +204,8 @@ function SessionCalculator({ members, setMembers, setTransactions, formatMoney }
                     <label>Mgmt Fee</label>
                     <input
                         type="number"
+                        step="0.01"
+                        inputMode="decimal"
                         value={managementFeePerMember}
                         onChange={(event) =>
                             setManagementFeePerMember(event.target.value)

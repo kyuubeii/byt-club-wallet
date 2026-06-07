@@ -473,6 +473,8 @@ function AdminBookingManagement({
               <input
                 type="number"
                 min="0"
+                step="0.01"
+                inputMode="decimal"
                 value={session.shuttlecockRate ?? ""}
                 disabled={isCharged}
                 onChange={(event) =>
@@ -490,6 +492,8 @@ function AdminBookingManagement({
               <input
                 type="number"
                 min="0"
+                step="0.01"
+                inputMode="decimal"
                 value={session.otherFeeTotal ?? ""}
                 disabled={isCharged}
                 onChange={(event) =>
@@ -627,6 +631,8 @@ function AdminBookingManagement({
           <label>Total Court Fee</label>
           <input
             type="number"
+            step="0.01"
+            inputMode="decimal"
             placeholder="Example: 160"
             value={newSessionCourtFeeTotal}
             onChange={(event) =>

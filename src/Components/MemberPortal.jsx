@@ -522,6 +522,8 @@ function MemberPortal({
                         <label>Top Up Amount</label>
                         <input
                             type="number"
+                            step="0.01"
+                            inputMode="decimal"
                             placeholder="Example: 100"
                             value={topUpAmount}
                             onChange={(event) => setTopUpAmount(event.target.value)}
