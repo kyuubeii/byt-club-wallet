@@ -40,6 +40,7 @@ function toSupabaseSessionRow(session) {
     max_players: Number(session.maxPlayers || 0),
     court_fee_total: Number(session.courtFeeTotal || 0),
     cancel_cutoff: nullable(session.cancelCutoff),
+    walk_in_limit: Number(session.walkInLimit ?? 5),
     status: session.status || "open",
     charge_status: session.chargeStatus || "not_charged",
     shuttlecock_used: Number(session.shuttlecockUsed || 0),
@@ -64,6 +65,12 @@ function toSupabaseSessionBookingRow(booking) {
     booked_at: nullable(booking.bookedAt),
     cancelled_at: nullable(booking.cancelledAt),
     status_updated_at: nullable(booking.statusUpdatedAt),
+    walk_in_count: Number(booking.walkInCount || 0),
+    walk_in_names: booking.walkInNames || [],
+    late_cancelled_walk_in_count: Number(booking.lateCancelledWalkInCount || 0),
+    late_cancelled_walk_in_names: booking.lateCancelledWalkInNames || [],
+    waitlist_type: nullable(booking.waitlistType),
+    waitlist_status: nullable(booking.waitlistStatus),
   };
 }
 
@@ -76,6 +83,10 @@ function toSupabaseSessionUpdates(updates) {
 
   if (Object.prototype.hasOwnProperty.call(updates, "chargeStatus")) {
     supabaseUpdates.charge_status = updates.chargeStatus;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "walkInLimit")) {
+    supabaseUpdates.walk_in_limit = Number(updates.walkInLimit ?? 5);
   }
 
   if (Object.prototype.hasOwnProperty.call(updates, "shuttlecockUsed")) {
@@ -132,6 +143,33 @@ function toSupabaseSessionBookingUpdates(updates) {
 
   if (Object.prototype.hasOwnProperty.call(updates, "statusUpdatedAt")) {
     supabaseUpdates.status_updated_at = nullable(updates.statusUpdatedAt);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "walkInCount")) {
+    supabaseUpdates.walk_in_count = Number(updates.walkInCount || 0);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "walkInNames")) {
+    supabaseUpdates.walk_in_names = updates.walkInNames || [];
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "lateCancelledWalkInCount")) {
+    supabaseUpdates.late_cancelled_walk_in_count = Number(
+      updates.lateCancelledWalkInCount || 0
+    );
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "lateCancelledWalkInNames")) {
+    supabaseUpdates.late_cancelled_walk_in_names =
+      updates.lateCancelledWalkInNames || [];
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "waitlistType")) {
+    supabaseUpdates.waitlist_type = nullable(updates.waitlistType);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "waitlistStatus")) {
+    supabaseUpdates.waitlist_status = nullable(updates.waitlistStatus);
   }
 
   return supabaseUpdates;

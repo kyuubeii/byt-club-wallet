@@ -4,14 +4,24 @@ function AdminBookingManagement({
   bookingStatusOptions,
   formatMoney,
   getActiveSessionBookings,
+  getSessionConfirmedBookings,
   getSessionBookings,
+  getSessionMemberBookingCount,
+  getSessionMemberWaitlist,
   getSessionChargeSummary,
+  getSessionRemainingParticipantSlots,
+  getSessionTotalParticipantCount,
+  getSessionWalkInCount,
+  getSessionWalkInWaitlist,
   handleCloseSession,
   handleCreateSession,
   handleFinalizeSessionCharge,
   handleOpenSession,
+  handlePromoteWaitlistBooking,
+  handleRemoveWaitlistBooking,
   handleBulkUpdateSessionBookingStatus,
   handleUpdateBookingStatus,
+  handleUpdateBookingWalkIns,
   handleUpdateSessionChargeField,
   members,
   newSessionCancelCutoff,
@@ -21,6 +31,7 @@ function AdminBookingManagement({
   newSessionMaxPlayers,
   newSessionTime,
   newSessionVenue,
+  newSessionWalkInLimit,
   sessions,
   setNewSessionCancelCutoff,
   setNewSessionCourtCount,
@@ -29,6 +40,7 @@ function AdminBookingManagement({
   setNewSessionMaxPlayers,
   setNewSessionTime,
   setNewSessionVenue,
+  setNewSessionWalkInLimit,
   users = [],
 }) {
   const [showHistory, setShowHistory] = useState(false);
@@ -56,19 +68,26 @@ function AdminBookingManagement({
   );
 
   function renderSessionCard(session) {
-    const activeBookings = getActiveSessionBookings(session.id);
+    const confirmedBookings = getSessionConfirmedBookings(session.id);
     const allBookings = getSessionBookings(session.id);
     const chargeSummary = getSessionChargeSummary(session, allBookings);
     const isCharged = session.chargeStatus === "charged";
+    const memberBookingCount = getSessionMemberBookingCount(session.id);
+    const walkInCount = getSessionWalkInCount(session.id);
+    const totalParticipantCount = getSessionTotalParticipantCount(session.id);
+    const remainingParticipantSlots = getSessionRemainingParticipantSlots(session.id);
+    const memberWaitlist = getSessionMemberWaitlist(session.id);
+    const walkInWaitlist = getSessionWalkInWaitlist(session.id);
+    const walkInLimit = Number(session.walkInLimit ?? 5);
     const bookingSearch = bookingSearchBySession[session.id] || "";
     const normalizedBookingSearch = bookingSearch.trim().toLowerCase();
     const bookingStatusCounts = bookingStatusOptions.reduce((counts, option) => {
-      counts[option.value] = allBookings.filter(
+      counts[option.value] = confirmedBookings.filter(
         (booking) => booking.status === option.value
       ).length;
       return counts;
     }, {});
-    const visibleBookings = allBookings.filter((booking) => {
+    const visibleBookings = confirmedBookings.filter((booking) => {
       if (!normalizedBookingSearch) {
         return true;
       }
@@ -92,11 +111,11 @@ function AdminBookingManagement({
 
       return searchableText.includes(normalizedBookingSearch);
     });
-    const hasBookedBookings = allBookings.some(
-      (booking) => booking.status === "booked"
+    const hasBookedBookings = confirmedBookings.some(
+      (booking) => booking.status === "booked" && booking.waitlistStatus !== "waiting"
     );
-    const hasNonCancelledBookings = allBookings.some(
-      (booking) => booking.status !== "cancelled"
+    const hasNonCancelledBookings = confirmedBookings.some(
+      (booking) => booking.status !== "cancelled" && booking.waitlistStatus !== "waiting"
     );
 
     return (
@@ -109,9 +128,17 @@ function AdminBookingManagement({
           <p>
             Courts: <strong>{session.courtCount}</strong> · Players:{" "}
             <strong>
-              {activeBookings.length}/{session.maxPlayers}
+              {totalParticipantCount}/{session.maxPlayers}
             </strong>
           </p>
+          <div className="walkin-summary">
+            <span>Members: {memberBookingCount}</span>
+            <span>Walk-ins: {walkInCount}/{walkInLimit}</span>
+            <span>Total Participants: {totalParticipantCount}/{session.maxPlayers}</span>
+            <span>Remaining Slots: {remainingParticipantSlots}</span>
+            <span>Member Waitlist: {memberWaitlist.length}</span>
+            <span>Walk-in Waitlist: {walkInWaitlist.length}</span>
+          </div>
           <p>
             Court Fee Total:{" "}
             <strong>{formatMoney(session.courtFeeTotal)}</strong>
@@ -169,7 +196,7 @@ function AdminBookingManagement({
             </div>
           </div>
 
-          {allBookings.length === 0 ? (
+          {confirmedBookings.length === 0 ? (
             <p className="empty-text">No booking yet.</p>
           ) : (
             <>
@@ -236,6 +263,21 @@ function AdminBookingManagement({
                               ? `Booked ${booking.bookedAt}`
                               : "Booking record"}
                           </small>
+                          <small>
+                            Walk-in: {Number(booking.walkInCount || 0)}
+                            {booking.walkInNames?.length
+                              ? ` · ${booking.walkInNames.join(", ")}`
+                              : ""}
+                          </small>
+                          {Number(booking.lateCancelledWalkInCount || 0) > 0 && (
+                            <small>
+                              Late cancelled walk-in:{" "}
+                              {booking.lateCancelledWalkInCount}
+                              {booking.lateCancelledWalkInNames?.length
+                                ? ` · ${booking.lateCancelledWalkInNames.join(", ")}`
+                                : ""}
+                            </small>
+                          )}
                         </div>
 
                         <div className="session-booking-status">
@@ -262,6 +304,37 @@ function AdminBookingManagement({
                             ))}
                           </select>
                         </div>
+
+                        <div className="walkin-admin-edit">
+                          <label>Walk-in Count</label>
+                          <input
+                            type="number"
+                            min="0"
+                            defaultValue={booking.walkInCount ?? 0}
+                            disabled={isCharged}
+                            onBlur={(event) =>
+                              handleUpdateBookingWalkIns(
+                                booking.id,
+                                event.target.value,
+                                (booking.walkInNames || []).join(", ")
+                              )
+                            }
+                          />
+                          <label>Walk-in Names</label>
+                          <input
+                            type="text"
+                            placeholder="Alex, Jason"
+                            defaultValue={(booking.walkInNames || []).join(", ")}
+                            disabled={isCharged}
+                            onBlur={(event) =>
+                              handleUpdateBookingWalkIns(
+                                booking.id,
+                                booking.walkInCount || 0,
+                                event.target.value
+                              )
+                            }
+                          />
+                        </div>
                       </div>
                     );
                   })}
@@ -271,10 +344,113 @@ function AdminBookingManagement({
           )}
         </div>
 
+        <div className="waitlist-section">
+          <div>
+            <h4>Member Waiting List</h4>
+            {memberWaitlist.length === 0 ? (
+              <p className="empty-text">No member waiting list.</p>
+            ) : (
+              memberWaitlist.map((booking) => {
+                const member = members.find(
+                  (member) => Number(member.id) === Number(booking.memberId)
+                );
+
+                return (
+                  <div key={booking.id} className="waitlist-row">
+                    <div>
+                      <strong>{member?.name || "Unknown Member"}</strong>
+                      <small>{booking.bookedAt || "Waiting request"}</small>
+                    </div>
+                    <span className="waitlist-badge">Member</span>
+                    <div className="waitlist-actions">
+                      <button
+                        className="small-approve-button"
+                        disabled={isCharged}
+                        onClick={() => handlePromoteWaitlistBooking(booking.id)}
+                      >
+                        Promote
+                      </button>
+                      <button
+                        className="small-reject-button"
+                        disabled={isCharged}
+                        onClick={() => handleRemoveWaitlistBooking(booking.id)}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <div>
+            <h4>Walk-in Waiting List</h4>
+            {walkInWaitlist.length === 0 ? (
+              <p className="empty-text">No walk-in waiting list.</p>
+            ) : (
+              walkInWaitlist.map((booking) => {
+                const member = members.find(
+                  (member) => Number(member.id) === Number(booking.memberId)
+                );
+
+                return (
+                  <div key={booking.id} className="waitlist-row">
+                    <div>
+                      <strong>{member?.name || "Unknown Member"}</strong>
+                      <small>{booking.bookedAt || "Waiting request"}</small>
+                      <small>
+                        Walk-in: {Number(booking.walkInCount || 0)}
+                        {booking.walkInNames?.length
+                          ? ` · ${booking.walkInNames.join(", ")}`
+                          : ""}
+                      </small>
+                    </div>
+                    <span className="waitlist-badge">Walk-in</span>
+                    <div className="waitlist-actions">
+                      <button
+                        className="small-approve-button"
+                        disabled={isCharged}
+                        onClick={() => handlePromoteWaitlistBooking(booking.id)}
+                      >
+                        Promote
+                      </button>
+                      <button
+                        className="small-reject-button"
+                        disabled={isCharged}
+                        onClick={() => handleRemoveWaitlistBooking(booking.id)}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
         <div className="session-finalize-box">
           <h4>Finalize Charge</h4>
 
           <div className="session-charge-grid">
+            <div>
+              <label>Walk-in Limit</label>
+              <input
+                type="number"
+                min="0"
+                value={session.walkInLimit ?? 5}
+                disabled={isCharged}
+                onChange={(event) =>
+                  handleUpdateSessionChargeField(
+                    session.id,
+                    "walkInLimit",
+                    event.target.value
+                  )
+                }
+              />
+            </div>
+
             <div>
               <label>Shuttlecock Used</label>
               <input
@@ -433,6 +609,17 @@ function AdminBookingManagement({
             placeholder="Example: 24"
             value={newSessionMaxPlayers}
             onChange={(event) => setNewSessionMaxPlayers(event.target.value)}
+          />
+        </div>
+
+        <div>
+          <label>Walk-in Limit</label>
+          <input
+            type="number"
+            min="0"
+            placeholder="Example: 5"
+            value={newSessionWalkInLimit}
+            onChange={(event) => setNewSessionWalkInLimit(event.target.value)}
           />
         </div>
 

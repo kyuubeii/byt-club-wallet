@@ -40,14 +40,27 @@ function MemberPortal({
     sessions,
     sessionBookings,
     getActiveSessionBookings,
+    getSessionMemberBookingCount,
+    getSessionWalkInCount,
+    getSessionTotalParticipantCount,
+    getSessionRemainingParticipantSlots,
+    getSessionRemainingWalkInSlots,
+    getSessionMemberWaitlist,
+    getSessionWalkInWaitlist,
     handleBookSession,
     handleCancelSessionBooking,
+    handleMemberUpdateBookingWalkIns,
     isPastCancelCutoff,
     minimumBookingBalance,
+    walkInSelections,
+    setWalkInSelections,
 }) {
     const [showMemberMenu, setShowMemberMenu] = useState(false);
     const [memberReloadPage, setMemberReloadPage] = useState(1);
     const [memberTransactionPage, setMemberTransactionPage] = useState(1);
+    const [expandedAttendeeSessions, setExpandedAttendeeSessions] = useState({});
+    const [editingWalkInSessionId, setEditingWalkInSessionId] = useState(null);
+    const [walkInEditValues, setWalkInEditValues] = useState({});
 
     const memberData = members.find(
         (member) => Number(member.id) === Number(currentUser.memberId)
@@ -172,6 +185,86 @@ function MemberPortal({
         showWhatsappPrompt &&
         (!String(memberData.whatsapp || "").trim() ||
             String(memberWhatsappInput || "").trim() !== "");
+
+    const updateWalkInSelection = (sessionId, updates) => {
+        setWalkInSelections((previousSelections) => {
+            const currentSelection = previousSelections[sessionId] || {
+                bringWalkIn: false,
+                count: 1,
+                names: [],
+            };
+            const nextSelection = {
+                ...currentSelection,
+                ...updates,
+            };
+            const nextCount = Math.max(1, Number(nextSelection.count || 1));
+
+            return {
+                ...previousSelections,
+                [sessionId]: {
+                    ...nextSelection,
+                    count: nextCount,
+                    names: Array.from({ length: nextCount }, (_, index) =>
+                        nextSelection.names?.[index] || ""
+                    ),
+                },
+            };
+        });
+    };
+
+    const toggleAttendeeSession = (sessionId) => {
+        setExpandedAttendeeSessions((previousSessions) => ({
+            ...previousSessions,
+            [sessionId]: !previousSessions[sessionId],
+        }));
+    };
+
+    const getMemberName = (memberId) => {
+        const member = members.find(
+            (member) => Number(member.id) === Number(memberId)
+        );
+
+        return member?.name || "Unknown Member";
+    };
+
+    const isConfirmedBooking = (booking) =>
+        booking.status !== "cancelled" &&
+        booking.waitlistStatus !== "waiting" &&
+        booking.waitlistStatus !== "removed";
+
+    const startWalkInEdit = (booking) => {
+        const count = Number(booking.walkInCount || 0);
+        setEditingWalkInSessionId(booking.sessionId);
+        setWalkInEditValues({
+            count,
+            names: Array.from({ length: count }, (_, index) =>
+                booking.walkInNames?.[index] || ""
+            ),
+        });
+    };
+
+    const updateWalkInEditValue = (updates) => {
+        setWalkInEditValues((previousValues) => {
+            const nextValues = {
+                count: Number(previousValues.count || 0),
+                names: previousValues.names || [],
+                ...updates,
+            };
+            const nextCount = Math.max(0, Number(nextValues.count || 0));
+
+            return {
+                count: nextCount,
+                names: Array.from({ length: nextCount }, (_, index) =>
+                    nextValues.names?.[index] || ""
+                ),
+            };
+        });
+    };
+
+    const cancelWalkInEdit = () => {
+        setEditingWalkInSessionId(null);
+        setWalkInEditValues({});
+    };
 
     return (
         <div className="dashboard-page">
@@ -471,15 +564,63 @@ function MemberPortal({
                                 )
                                 .map((session) => {
                                     const activeBookings = getActiveSessionBookings(session.id);
+                                    const memberBookingCount = getSessionMemberBookingCount(session.id);
+                                    const walkInCount = getSessionWalkInCount(session.id);
+                                    const totalParticipantCount =
+                                        getSessionTotalParticipantCount(session.id);
+                                    const remainingParticipantSlots =
+                                        getSessionRemainingParticipantSlots(session.id);
+                                    const remainingWalkInSlots =
+                                        getSessionRemainingWalkInSlots(session.id);
+                                    const memberWaitlistCount =
+                                        getSessionMemberWaitlist(session.id).length;
+                                    const walkInWaitlistCount =
+                                        getSessionWalkInWaitlist(session.id).length;
+                                    const confirmedBookings = (sessionBookings || []).filter(
+                                        (booking) =>
+                                            Number(booking.sessionId) === Number(session.id) &&
+                                            isConfirmedBooking(booking)
+                                    );
+                                    const memberWaitlist = (sessionBookings || []).filter(
+                                        (booking) =>
+                                            Number(booking.sessionId) === Number(session.id) &&
+                                            booking.waitlistType === "member" &&
+                                            booking.waitlistStatus === "waiting"
+                                    );
+                                    const walkInWaitlist = (sessionBookings || []).filter(
+                                        (booking) =>
+                                            Number(booking.sessionId) === Number(session.id) &&
+                                            booking.waitlistType === "walkin" &&
+                                            booking.waitlistStatus === "waiting"
+                                    );
+                                    const walkInLimit = Number(session.walkInLimit ?? 5);
+                                    const walkInSelection = walkInSelections[session.id] || {
+                                        bringWalkIn: false,
+                                        count: 1,
+                                        names: [],
+                                    };
 
                                     const myBooking = (sessionBookings || []).find(
                                         (booking) =>
-                                            booking.sessionId === session.id &&
+                                            Number(booking.sessionId) === Number(session.id) &&
                                             Number(booking.memberId) === Number(currentUser.memberId) &&
-                                            booking.status !== "cancelled"
+                                            booking.status !== "cancelled" &&
+                                            booking.waitlistStatus !== "removed"
                                     );
 
-                                    const isFull = activeBookings.length >= session.maxPlayers;
+                                    const isFull = remainingParticipantSlots <= 0;
+                                    const isAttendeeExpanded =
+                                        Boolean(expandedAttendeeSessions[session.id]);
+                                    const isMyConfirmedBooking =
+                                        myBooking && isConfirmedBooking(myBooking);
+                                    const isEditingWalkIns =
+                                        Number(editingWalkInSessionId) === Number(session.id);
+                                    const editableRemainingParticipantSlots =
+                                        remainingParticipantSlots +
+                                        Number(myBooking?.walkInCount || 0);
+                                    const editableRemainingWalkInSlots =
+                                        remainingWalkInSlots +
+                                        Number(myBooking?.walkInCount || 0);
                                     const pastCutoff = isPastCancelCutoff(session);
 
                                     const estimatedCourtFee =
@@ -495,12 +636,48 @@ function MemberPortal({
                                                     {session.time} · {session.venue}
                                                 </p>
 
-                                                <p>
-                                                    Players:{" "}
-                                                    <strong>
-                                                        {activeBookings.length}/{session.maxPlayers}
-                                                    </strong>
-                                                </p>
+                                                <div className="session-capacity-summary">
+                                                    <div className="capacity-summary-item">
+                                                        <span className="capacity-summary-label">Members</span>
+                                                        <strong className="capacity-summary-value">
+                                                            {memberBookingCount}
+                                                        </strong>
+                                                    </div>
+
+                                                    <div className="capacity-summary-item">
+                                                        <span className="capacity-summary-label">Walk-ins</span>
+                                                        <strong className="capacity-summary-value">
+                                                            {walkInCount}/{walkInLimit}
+                                                        </strong>
+                                                    </div>
+
+                                                    <div className="capacity-summary-item">
+                                                        <span className="capacity-summary-label">Total</span>
+                                                        <strong className="capacity-summary-value">
+                                                            {totalParticipantCount}/{session.maxPlayers}
+                                                        </strong>
+                                                    </div>
+
+                                                    <div
+                                                        className={`capacity-summary-item ${
+                                                            remainingParticipantSlots <= 0 ? "is-full" : ""
+                                                        }`}
+                                                    >
+                                                        <span className="capacity-summary-label">Remaining</span>
+                                                        <strong className="capacity-summary-value">
+                                                            {remainingParticipantSlots <= 0
+                                                                ? "Full"
+                                                                : remainingParticipantSlots}
+                                                        </strong>
+                                                    </div>
+
+                                                    <div className="capacity-summary-item capacity-summary-wide">
+                                                        <span className="capacity-summary-label">Waitlist</span>
+                                                        <strong className="capacity-summary-value">
+                                                            Member {memberWaitlistCount}, Walk-in {walkInWaitlistCount}
+                                                        </strong>
+                                                    </div>
+                                                </div>
 
                                                 <p>
                                                     Court Fee Total:{" "}
@@ -517,12 +694,106 @@ function MemberPortal({
                                                 </p>
 
                                                 {myBooking && (
-                                                    <p>
-                                                        Your Status:{" "}
-                                                        <span className="positive">
-                                                            {myBooking.status.toUpperCase()}
-                                                        </span>
-                                                    </p>
+                                                    <div className="my-booking-summary">
+                                                        <p>
+                                                            Your Status:{" "}
+                                                            <span className="positive">
+                                                                {myBooking.waitlistStatus === "waiting"
+                                                                    ? "WAITING LIST"
+                                                                    : myBooking.status.toUpperCase()}
+                                                            </span>
+                                                        </p>
+
+                                                        {isMyConfirmedBooking &&
+                                                            Number(myBooking.walkInCount || 0) > 0 && (
+                                                                <p>
+                                                                    Your Walk-ins:{" "}
+                                                                    <strong>{myBooking.walkInCount}</strong>
+                                                                    <br />
+                                                                    <span className="attendee-meta">
+                                                                        Names:{" "}
+                                                                        {(myBooking.walkInNames || []).join(", ")}
+                                                                    </span>
+                                                                </p>
+                                                            )}
+
+                                                        {isMyConfirmedBooking &&
+                                                            Number(myBooking.lateCancelledWalkInCount || 0) > 0 && (
+                                                                <p>
+                                                                    Late cancelled walk-in:{" "}
+                                                                    <strong>
+                                                                        {myBooking.lateCancelledWalkInCount}
+                                                                    </strong>
+                                                                    <br />
+                                                                    <span className="attendee-meta">
+                                                                        Names:{" "}
+                                                                        {(myBooking.lateCancelledWalkInNames || []).join(", ")}
+                                                                    </span>
+                                                                </p>
+                                                            )}
+                                                    </div>
+                                                )}
+
+                                                {!myBooking && (
+                                                    <div className="walkin-option">
+                                                        <label className="checkbox-label">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={Boolean(walkInSelection.bringWalkIn)}
+                                                                onChange={(event) =>
+                                                                    updateWalkInSelection(session.id, {
+                                                                        bringWalkIn: event.target.checked,
+                                                                    })
+                                                                }
+                                                            />
+                                                            Bring walk-in guest
+                                                        </label>
+
+                                                        {walkInSelection.bringWalkIn && (
+                                                            <>
+                                                                <div className="walkin-input-row">
+                                                                    <label>Walk-in count</label>
+                                                                    <input
+                                                                        type="number"
+                                                                        min="1"
+                                                                        max={Math.max(1, Math.min(5, remainingWalkInSlots || 5))}
+                                                                        value={walkInSelection.count}
+                                                                        onChange={(event) =>
+                                                                            updateWalkInSelection(session.id, {
+                                                                                count: event.target.value,
+                                                                            })
+                                                                        }
+                                                                    />
+                                                                </div>
+
+                                                                <div className="walkin-name-grid">
+                                                                    {Array.from(
+                                                                        { length: Number(walkInSelection.count || 1) },
+                                                                        (_, index) => (
+                                                                            <div key={index}>
+                                                                                <label>
+                                                                                    Walk-in Guest {index + 1} Name
+                                                                                </label>
+                                                                                <input
+                                                                                    type="text"
+                                                                                    value={walkInSelection.names?.[index] || ""}
+                                                                                    onChange={(event) => {
+                                                                                        const names = [
+                                                                                            ...(walkInSelection.names || []),
+                                                                                        ];
+                                                                                        names[index] = event.target.value;
+                                                                                        updateWalkInSelection(session.id, {
+                                                                                            names,
+                                                                                        });
+                                                                                    }}
+                                                                                />
+                                                                            </div>
+                                                                        )
+                                                                    )}
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
                                                 )}
 
                                                 {!myBooking && isFull && (
@@ -542,28 +813,229 @@ function MemberPortal({
                                                         Cancel cutoff passed. Court fee may still be charged.
                                                     </p>
                                                 )}
+
+                                                {isMyConfirmedBooking && isEditingWalkIns && (
+                                                    <div className="walkin-edit-panel">
+                                                        <div className="walkin-edit-header">
+                                                            <div>
+                                                                <h4>Update Walk-in Guests</h4>
+                                                                <p>
+                                                                    Remaining total slots:{" "}
+                                                                    <strong>{editableRemainingParticipantSlots}</strong>
+                                                                    {" · "}
+                                                                    Remaining walk-in slots:{" "}
+                                                                    <strong>{editableRemainingWalkInSlots}</strong>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="walkin-input-row">
+                                                            <label>Walk-in count</label>
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                value={walkInEditValues.count ?? 0}
+                                                                onChange={(event) =>
+                                                                    updateWalkInEditValue({
+                                                                        count: event.target.value,
+                                                                    })
+                                                                }
+                                                            />
+                                                        </div>
+
+                                                        {Number(walkInEditValues.count || 0) > 0 && (
+                                                            <div className="walkin-name-grid">
+                                                                {Array.from(
+                                                                    { length: Number(walkInEditValues.count || 0) },
+                                                                    (_, index) => (
+                                                                        <div key={index}>
+                                                                            <label>
+                                                                                Walk-in Guest {index + 1} Name
+                                                                            </label>
+                                                                            <input
+                                                                                type="text"
+                                                                                value={walkInEditValues.names?.[index] || ""}
+                                                                                onChange={(event) => {
+                                                                                    const names = [
+                                                                                        ...(walkInEditValues.names || []),
+                                                                                    ];
+                                                                                    names[index] = event.target.value;
+                                                                                    updateWalkInEditValue({ names });
+                                                                                }}
+                                                                            />
+                                                                        </div>
+                                                                    )
+                                                                )}
+                                                            </div>
+                                                        )}
+
+                                                        <div className="button-row">
+                                                            <button
+                                                                className="action-button"
+                                                                onClick={async () => {
+                                                                    const success =
+                                                                        await handleMemberUpdateBookingWalkIns(
+                                                                            session.id,
+                                                                            walkInEditValues.count || 0,
+                                                                            walkInEditValues.names || []
+                                                                        );
+
+                                                                    if (success) {
+                                                                        cancelWalkInEdit();
+                                                                    }
+                                                                }}
+                                                            >
+                                                                Save Walk-in Guests
+                                                            </button>
+
+                                                            <button
+                                                                className="secondary-button"
+                                                                onClick={cancelWalkInEdit}
+                                                            >
+                                                                Cancel Edit
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {isAttendeeExpanded && (
+                                                    <div className="attendee-panel">
+                                                        <h4>Attendees</h4>
+
+                                                        <div className="attendee-section">
+                                                            <h5>Confirmed Members</h5>
+                                                            {confirmedBookings.length === 0 ? (
+                                                                <p className="waitlist-muted-text">
+                                                                    No confirmed attendees yet.
+                                                                </p>
+                                                            ) : (
+                                                                confirmedBookings.map((booking) => (
+                                                                    <div key={booking.id} className="attendee-row">
+                                                                        <div>
+                                                                            <span className="attendee-name">
+                                                                                {getMemberName(booking.memberId)}
+                                                                            </span>
+                                                                            <span className="attendee-meta">
+                                                                                {String(booking.status || "booked").replace("_", " ")}
+                                                                            </span>
+                                                                        </div>
+
+                                                                        {Number(booking.walkInCount || 0) > 0 && (
+                                                                            <div className="walkin-name-list">
+                                                                                <strong>
+                                                                                    Walk-in: {booking.walkInCount}
+                                                                                </strong>
+                                                                                <span>
+                                                                                    {(booking.walkInNames || []).join(", ")}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+
+                                                                        {Number(booking.lateCancelledWalkInCount || 0) > 0 && (
+                                                                            <div className="walkin-name-list">
+                                                                                <strong>
+                                                                                    Late cancelled walk-in:{" "}
+                                                                                    {booking.lateCancelledWalkInCount}
+                                                                                </strong>
+                                                                                <span>
+                                                                                    {(booking.lateCancelledWalkInNames || []).join(", ")}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                ))
+                                                            )}
+                                                        </div>
+
+                                                        <div className="attendee-section">
+                                                            <h5>Member Waiting List</h5>
+                                                            {memberWaitlist.length === 0 ? (
+                                                                <p className="waitlist-muted-text">
+                                                                    No member waitlist.
+                                                                </p>
+                                                            ) : (
+                                                                memberWaitlist.map((booking) => (
+                                                                    <div key={booking.id} className="attendee-row">
+                                                                        <span className="attendee-name">
+                                                                            {getMemberName(booking.memberId)}
+                                                                        </span>
+                                                                    </div>
+                                                                ))
+                                                            )}
+                                                        </div>
+
+                                                        <div className="attendee-section">
+                                                            <h5>Walk-in Waiting List</h5>
+                                                            {walkInWaitlist.length === 0 ? (
+                                                                <p className="waitlist-muted-text">
+                                                                    No walk-in waitlist.
+                                                                </p>
+                                                            ) : (
+                                                                walkInWaitlist.map((booking) => (
+                                                                    <div key={booking.id} className="attendee-row">
+                                                                        <div>
+                                                                            <span className="attendee-name">
+                                                                                {getMemberName(booking.memberId)}
+                                                                            </span>
+                                                                            <span className="attendee-meta">
+                                                                                Walk-in: {booking.walkInCount || 0}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="walkin-name-list">
+                                                                            <span>
+                                                                                {(booking.walkInNames || []).join(", ")}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                ))
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             <div className="member-session-actions">
+                                                <button
+                                                    className="secondary-button"
+                                                    onClick={() => toggleAttendeeSession(session.id)}
+                                                >
+                                                    {isAttendeeExpanded
+                                                        ? "Hide Attendees"
+                                                        : "View Attendees"}
+                                                </button>
+
                                                 {!myBooking ? (
                                                     <button
                                                         className="action-button"
-                                                        disabled={isFull || belowMinimumBookingBalance}
+                                                        disabled={belowMinimumBookingBalance}
                                                         onClick={() => handleBookSession(session.id)}
                                                     >
-                                                        {isFull
-                                                            ? "Full"
-                                                            : belowMinimumBookingBalance
+                                                        {belowMinimumBookingBalance
                                                                 ? "Need Reload"
+                                                            : isFull
+                                                                ? "Join Waitlist"
                                                                 : "Book Now"}
                                                     </button>
                                                 ) : (
-                                                    <button
-                                                        className="secondary-button"
-                                                        onClick={() => handleCancelSessionBooking(session.id)}
-                                                    >
-                                                        Cancel Booking
-                                                    </button>
+                                                    <>
+                                                        {isMyConfirmedBooking && (
+                                                            <button
+                                                                className="secondary-button"
+                                                                onClick={() => startWalkInEdit(myBooking)}
+                                                            >
+                                                                {Number(myBooking.walkInCount || 0) > 0
+                                                                    ? "Update Walk-in Guests"
+                                                                    : "Add Walk-in Guests"}
+                                                            </button>
+                                                        )}
+
+                                                        <button
+                                                            className="secondary-button"
+                                                            onClick={() => handleCancelSessionBooking(session.id)}
+                                                        >
+                                                            Cancel Booking
+                                                        </button>
+                                                    </>
                                                 )}
                                             </div>
                                         </div>

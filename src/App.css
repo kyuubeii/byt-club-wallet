@@ -1552,6 +1552,289 @@ input[type="file"] {
   flex-shrink: 0;
 }
 
+.walkin-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.walkin-summary span,
+.walkin-count-badge,
+.waitlist-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  padding: 7px 10px;
+}
+
+.session-capacity-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+  padding: 14px;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+}
+
+.capacity-summary-item {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 14px;
+  background: #f8fafc;
+  min-width: 0;
+}
+
+.capacity-summary-item.is-full {
+  background: #fef2f2;
+}
+
+.capacity-summary-wide {
+  grid-column: span 2;
+}
+
+.capacity-summary-label {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.capacity-summary-value {
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.capacity-summary-item.is-full .capacity-summary-value {
+  color: #b91c1c;
+}
+
+.attendee-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+.attendee-panel h4 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 18px;
+}
+
+.attendee-section {
+  display: grid;
+  gap: 8px;
+}
+
+.attendee-section h5 {
+  margin: 0;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.attendee-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.attendee-row:first-of-type {
+  border-top: none;
+}
+
+.attendee-row > div {
+  display: grid;
+  gap: 3px;
+}
+
+.attendee-name {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.attendee-meta,
+.walkin-name-list {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.walkin-name-list {
+  text-align: right;
+}
+
+.walkin-name-list strong {
+  color: #334155;
+}
+
+.waitlist-muted-text {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.walkin-option {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.walkin-edit-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.walkin-edit-header h4 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 17px;
+}
+
+.walkin-edit-header p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.my-booking-summary {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.my-booking-summary p {
+  margin: 0;
+}
+
+.my-booking-summary p + p {
+  margin-top: 8px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: #0f172a;
+  font-weight: 900;
+}
+
+.checkbox-label input {
+  width: auto;
+  min-height: auto;
+  margin: 0;
+}
+
+.walkin-input-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px);
+  gap: 8px;
+}
+
+.walkin-name-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.walkin-admin-edit {
+  display: grid;
+  grid-template-columns: 100px minmax(140px, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-width: 260px;
+}
+
+.walkin-admin-edit label {
+  margin: 0;
+  font-size: 11px;
+}
+
+.walkin-admin-edit input {
+  margin: 0;
+  padding: 9px 10px;
+}
+
+.waitlist-section {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.waitlist-section h4 {
+  margin: 0 0 10px;
+  color: #0f172a;
+}
+
+.waitlist-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 10px;
+}
+
+.waitlist-row > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.waitlist-row small {
+  color: #64748b;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.waitlist-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .booking-status-pill {
   min-width: 98px;
   padding: 7px 10px;
@@ -2739,6 +3022,28 @@ tbody tr:hover {
     overflow-wrap: anywhere;
   }
 
+  .session-capacity-summary {
+    grid-template-columns: 1fr 1fr;
+    padding: 12px;
+  }
+
+  .capacity-summary-wide {
+    grid-column: 1 / -1;
+  }
+
+  .attendee-panel {
+    padding: 14px;
+  }
+
+  .attendee-row {
+    display: grid;
+    gap: 8px;
+  }
+
+  .walkin-name-list {
+    text-align: left;
+  }
+
   .status-badge {
     max-width: 100%;
     white-space: normal;
@@ -2788,6 +3093,21 @@ tbody tr:hover {
   .session-booking-status {
     width: 100%;
     align-items: stretch;
+  }
+
+  .walkin-input-row,
+  .walkin-name-grid,
+  .walkin-admin-edit,
+  .waitlist-row {
+    grid-template-columns: 1fr;
+  }
+
+  .waitlist-actions {
+    justify-content: stretch;
+  }
+
+  .waitlist-actions button {
+    width: 100%;
   }
 
   .booking-status-pill,

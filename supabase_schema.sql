@@ -87,6 +87,7 @@ create table if not exists sessions (
   max_players integer not null,
   court_fee_total numeric(10, 2) not null,
   cancel_cutoff time,
+  walk_in_limit integer not null default 5,
   status text not null default 'open',
   charge_status text not null default 'not_charged',
   shuttlecock_used integer not null default 0,
@@ -117,12 +118,27 @@ create table if not exists session_bookings (
   booked_at timestamptz not null default now(),
   cancelled_at timestamptz,
   status_updated_at timestamptz,
+  walk_in_count integer not null default 0,
+  walk_in_names text[] not null default '{}',
+  late_cancelled_walk_in_count integer not null default 0,
+  late_cancelled_walk_in_names text[] not null default '{}',
+  waitlist_type text,
+  waitlist_status text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint session_bookings_status_check check (
     status in ('booked', 'attended', 'no_show', 'late_cancel', 'cancelled')
   )
 );
+
+alter table sessions add column if not exists walk_in_limit integer not null default 5;
+
+alter table session_bookings add column if not exists walk_in_count integer not null default 0;
+alter table session_bookings add column if not exists walk_in_names text[] not null default '{}';
+alter table session_bookings add column if not exists late_cancelled_walk_in_count integer not null default 0;
+alter table session_bookings add column if not exists late_cancelled_walk_in_names text[] not null default '{}';
+alter table session_bookings add column if not exists waitlist_type text;
+alter table session_bookings add column if not exists waitlist_status text;
 
 create index if not exists idx_app_users_member_id on app_users(member_id);
 create index if not exists idx_app_users_role on app_users(role);

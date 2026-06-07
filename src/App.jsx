@@ -159,6 +159,7 @@ const initialSessions = [
     venue: "Arena Sukan",
     courtCount: 4,
     maxPlayers: 24,
+    walkInLimit: 5,
     courtFeeTotal: 160,
     cancelCutoff: "12:00",
     status: "open",
@@ -297,6 +298,7 @@ function convertSupabaseSessions(supabaseSessions) {
     venue: session.venue || "",
     courtCount: Number(session.court_count || 0),
     maxPlayers: Number(session.max_players || 0),
+    walkInLimit: Number(session.walk_in_limit ?? 5),
     courtFeeTotal: Number(session.court_fee_total || 0),
     cancelCutoff: session.cancel_cutoff || "",
     status: session.status || "open",
@@ -321,6 +323,14 @@ function convertSupabaseSessionBookings(supabaseBookings) {
     bookedAt: booking.booked_at || "",
     cancelledAt: booking.cancelled_at || null,
     statusUpdatedAt: booking.status_updated_at || null,
+    walkInCount: Number(booking.walk_in_count || 0),
+    walkInNames: booking.walk_in_names || [],
+    lateCancelledWalkInCount: Number(
+      booking.late_cancelled_walk_in_count || 0
+    ),
+    lateCancelledWalkInNames: booking.late_cancelled_walk_in_names || [],
+    waitlistType: booking.waitlist_type || null,
+    waitlistStatus: booking.waitlist_status || null,
   }));
 }
 
@@ -433,6 +443,8 @@ function App() {
   const [newSessionMaxPlayers, setNewSessionMaxPlayers] = useState("");
   const [newSessionCourtFeeTotal, setNewSessionCourtFeeTotal] = useState("");
   const [newSessionCancelCutoff, setNewSessionCancelCutoff] = useState("12:00");
+  const [newSessionWalkInLimit, setNewSessionWalkInLimit] = useState("5");
+  const [walkInSelections, setWalkInSelections] = useState({});
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
@@ -2311,14 +2323,91 @@ function App() {
   }
 
   function getSessionBookings(sessionId) {
-    return sessionBookings.filter((booking) => booking.sessionId === sessionId);
+    return sessionBookings.filter(
+      (booking) => Number(booking.sessionId) === Number(sessionId)
+    );
+  }
+
+  function isConfirmedSessionBooking(booking) {
+    return (
+      booking.status !== "cancelled" &&
+      booking.waitlistStatus !== "waiting" &&
+      booking.waitlistStatus !== "removed"
+    );
+  }
+
+  function getSessionConfirmedBookings(sessionId) {
+    return sessionBookings.filter(
+      (booking) =>
+        Number(booking.sessionId) === Number(sessionId) &&
+        isConfirmedSessionBooking(booking)
+    );
   }
 
   function getActiveSessionBookings(sessionId) {
+    return getSessionConfirmedBookings(sessionId);
+  }
+
+  function getSessionMemberBookingCount(sessionId) {
+    return getSessionConfirmedBookings(sessionId).length;
+  }
+
+  function getSessionWalkInCount(sessionId) {
+    return getSessionConfirmedBookings(sessionId).reduce(
+      (total, booking) => total + Number(booking.walkInCount || 0),
+      0
+    );
+  }
+
+  function getSessionTotalParticipantCount(sessionId) {
+    return (
+      getSessionMemberBookingCount(sessionId) +
+      getSessionWalkInCount(sessionId)
+    );
+  }
+
+  function getSessionRemainingParticipantSlots(sessionId) {
+    const session = sessions.find((session) => Number(session.id) === Number(sessionId));
+
+    if (!session) {
+      return 0;
+    }
+
+    return Math.max(
+      0,
+      Number(session.maxPlayers || 0) - getSessionTotalParticipantCount(sessionId)
+    );
+  }
+
+  function getSessionRemainingWalkInSlots(sessionId) {
+    const session = sessions.find((session) => Number(session.id) === Number(sessionId));
+
+    if (!session) {
+      return 0;
+    }
+
+    const remainingWalkInLimit =
+      Number(session.walkInLimit ?? 5) - getSessionWalkInCount(sessionId);
+    const remainingTotalSlots = getSessionRemainingParticipantSlots(sessionId);
+
+    return Math.max(0, Math.min(remainingWalkInLimit, remainingTotalSlots));
+  }
+
+  function getSessionMemberWaitlist(sessionId) {
     return sessionBookings.filter(
       (booking) =>
-        booking.sessionId === sessionId &&
-        booking.status !== "cancelled"
+        Number(booking.sessionId) === Number(sessionId) &&
+        booking.waitlistType === "member" &&
+        booking.waitlistStatus === "waiting"
+    );
+  }
+
+  function getSessionWalkInWaitlist(sessionId) {
+    return sessionBookings.filter(
+      (booking) =>
+        Number(booking.sessionId) === Number(sessionId) &&
+        booking.waitlistType === "walkin" &&
+        booking.waitlistStatus === "waiting"
     );
   }
 
@@ -2327,11 +2416,15 @@ function App() {
   }
 
   function getSessionChargeSummary(session, bookings) {
-    const courtBookings = bookings.filter((booking) =>
+    const confirmedBookings = bookings.filter((booking) =>
+      isConfirmedSessionBooking(booking)
+    );
+
+    const courtBookings = confirmedBookings.filter((booking) =>
       courtChargeStatuses.includes(booking.status)
     );
 
-    const attendedBookings = bookings.filter(
+    const attendedBookings = confirmedBookings.filter(
       (booking) => booking.status === "attended"
     );
 
@@ -2346,7 +2439,7 @@ function App() {
         ? attendedFeeTotal / attendedBookings.length
         : 0;
 
-    const chargeRows = bookings
+    const chargeRows = confirmedBookings
       .map((booking) => {
         const courtAmount = courtChargeStatuses.includes(booking.status)
           ? courtFeePerPlayer
@@ -2409,6 +2502,19 @@ function App() {
       return;
     }
 
+    const walkInLimit =
+      newSessionWalkInLimit === "" ? 5 : Number(newSessionWalkInLimit);
+
+    if (walkInLimit < 0 || Number.isNaN(walkInLimit)) {
+      alert("Please enter valid walk-in limit");
+      return;
+    }
+
+    if (walkInLimit > Number(newSessionMaxPlayers)) {
+      alert("Walk-in limit cannot exceed max players.");
+      return;
+    }
+
     const newSession = {
       id: Date.now(),
       date: newSessionDate,
@@ -2416,6 +2522,7 @@ function App() {
       venue: newSessionVenue,
       courtCount: Number(newSessionCourtCount),
       maxPlayers: Number(newSessionMaxPlayers),
+      walkInLimit: walkInLimit,
       courtFeeTotal: Number(newSessionCourtFeeTotal),
       cancelCutoff: normalizeCutoffTime(newSessionCancelCutoff || "12:00"),
       status: "open",
@@ -2434,6 +2541,7 @@ function App() {
     setNewSessionMaxPlayers("");
     setNewSessionCourtFeeTotal("");
     setNewSessionCancelCutoff("12:00");
+    setNewSessionWalkInLimit("5");
 
     try {
       await syncSessionToSupabase(newSession);
@@ -2471,23 +2579,74 @@ function App() {
       return;
     }
 
-    const activeBookings = getActiveSessionBookings(sessionId);
-
-    if (activeBookings.length >= session.maxPlayers) {
-      alert("This session is already full");
-      return;
-    }
-
     const alreadyBooked = sessionBookings.some(
       (booking) =>
-        booking.sessionId === sessionId &&
+        Number(booking.sessionId) === Number(sessionId) &&
         Number(booking.memberId) === Number(currentUser.memberId) &&
-        booking.status !== "cancelled"
+        booking.status !== "cancelled" &&
+        booking.waitlistStatus !== "removed"
     );
 
     if (alreadyBooked) {
-      alert("You have already booked this session");
+      alert("You already have a booking or waiting list request for this session.");
       return;
+    }
+
+    const selection = walkInSelections[sessionId] || {};
+    const selectedWalkInCount = selection.bringWalkIn
+      ? Math.min(5, Math.max(1, Number(selection.count || 1)))
+      : 0;
+    const walkInNames = selection.bringWalkIn
+      ? (selection.names || [])
+          .slice(0, selectedWalkInCount)
+          .map((name) => String(name || "").trim())
+      : [];
+
+    if (
+      selectedWalkInCount > 0 &&
+      (walkInNames.length !== selectedWalkInCount ||
+        walkInNames.some((name) => name === ""))
+    ) {
+      alert("Please enter all walk-in guest names");
+      return;
+    }
+
+    const existingMembers = getSessionMemberBookingCount(sessionId);
+    const existingWalkIns = getSessionWalkInCount(sessionId);
+    const existingTotal = existingMembers + existingWalkIns;
+    const newTotal = existingTotal + 1 + selectedWalkInCount;
+    const walkInLimit = Number(session.walkInLimit ?? 5);
+    const canConfirmBooking =
+      newTotal <= Number(session.maxPlayers || 0) &&
+      existingWalkIns + selectedWalkInCount <= walkInLimit;
+
+    let waitlistType = null;
+    let waitlistStatus = null;
+
+    if (!canConfirmBooking) {
+      if (selectedWalkInCount === 0) {
+        const shouldJoinMemberWaitlist = confirm(
+          "This session is full. Do you want to join the member waiting list?"
+        );
+
+        if (!shouldJoinMemberWaitlist) {
+          return;
+        }
+
+        waitlistType = "member";
+        waitlistStatus = "waiting";
+      } else {
+        const shouldJoinWalkInWaitlist = confirm(
+          "Not enough confirmed slots for your walk-in guest(s). Do you want to join the walk-in waiting list?"
+        );
+
+        if (!shouldJoinWalkInWaitlist) {
+          return;
+        }
+
+        waitlistType = "walkin";
+        waitlistStatus = "waiting";
+      }
     }
 
     const newBooking = {
@@ -2496,6 +2655,10 @@ function App() {
       memberId: currentUser.memberId,
       status: "booked",
       bookedAt: new Date().toLocaleString(),
+      walkInCount: selectedWalkInCount,
+      walkInNames: walkInNames,
+      waitlistType: waitlistType,
+      waitlistStatus: waitlistStatus,
     };
 
     setSessionBookings((previousBookings) => [
@@ -2510,11 +2673,37 @@ function App() {
       return;
     }
 
+    setWalkInSelections((previousSelections) => ({
+      ...previousSelections,
+      [sessionId]: {
+        bringWalkIn: false,
+        count: 1,
+        names: [],
+      },
+    }));
+
+    if (waitlistStatus === "waiting") {
+      logActivity({
+        action: "join_waitlist",
+        targetType: "session",
+        targetId: sessionId,
+        description: `${currentMember.name} joined ${
+          waitlistType === "walkin" ? "walk-in" : "member"
+        } waiting list for session ${session.date}`,
+      });
+
+      alert("Waiting list request submitted.");
+      return;
+    }
+
     logActivity({
       action: "book_session",
       targetType: "session",
       targetId: sessionId,
-      description: `${currentMember.name} booked session ${session.date}`,
+      description:
+        selectedWalkInCount > 0
+          ? `${currentMember.name} booked session ${session.date} with ${selectedWalkInCount} walk-in guest(s): ${walkInNames.join(", ")}`
+          : `${currentMember.name} booked session ${session.date}`,
     });
 
     alert("Booking successful");
@@ -2540,6 +2729,39 @@ function App() {
 
     if (!booking) {
       alert("Booking not found");
+      return;
+    }
+
+    if (booking.waitlistStatus === "waiting") {
+      const updatedBooking = {
+        ...booking,
+        status: "cancelled",
+        cancelledAt: new Date().toLocaleString(),
+        waitlistStatus: "removed",
+      };
+
+      setSessionBookings((previousBookings) =>
+        previousBookings.map((item) => {
+          if (item.id === booking.id) {
+            return updatedBooking;
+          }
+
+          return item;
+        })
+      );
+
+      try {
+        await syncSessionBookingUpdateToSupabase(booking.id, {
+          status: updatedBooking.status,
+          cancelledAt: updatedBooking.cancelledAt,
+          waitlistStatus: updatedBooking.waitlistStatus,
+        });
+      } catch (error) {
+        alertSupabaseBookingSyncFailed(error);
+        return;
+      }
+
+      alert("Waiting list request cancelled.");
       return;
     }
 
@@ -2648,10 +2870,359 @@ function App() {
     }
   }
 
+  async function handleUpdateBookingWalkIns(bookingId, walkInCount, walkInNamesText) {
+    const booking = sessionBookings.find(
+      (booking) => Number(booking.id) === Number(bookingId)
+    );
+
+    if (!booking) {
+      alert("Booking not found");
+      return;
+    }
+
+    const session = sessions.find(
+      (session) => Number(session.id) === Number(booking.sessionId)
+    );
+
+    if (!session) {
+      alert("Session not found");
+      return;
+    }
+
+    const nextWalkInCount = Math.max(0, Number(walkInCount || 0));
+    const nextWalkInNames = String(walkInNamesText || "")
+      .split(",")
+      .map((name) => name.trim())
+      .filter(Boolean);
+
+    if (nextWalkInCount > 0 && nextWalkInNames.length !== nextWalkInCount) {
+      alert("Walk-in names must match walk-in count.");
+      return;
+    }
+
+    const confirmedBookings = getSessionConfirmedBookings(session.id);
+    const currentConfirmedBooking = confirmedBookings.find(
+      (item) => Number(item.id) === Number(booking.id)
+    );
+    const currentWalkInCount = Number(currentConfirmedBooking?.walkInCount || 0);
+    const nextTotalParticipants =
+      getSessionTotalParticipantCount(session.id) -
+      currentWalkInCount +
+      nextWalkInCount;
+    const nextTotalWalkIns =
+      getSessionWalkInCount(session.id) - currentWalkInCount + nextWalkInCount;
+
+    if (
+      nextTotalParticipants > Number(session.maxPlayers || 0) ||
+      nextTotalWalkIns > Number(session.walkInLimit ?? 5)
+    ) {
+      alert("Not enough slots for this walk-in update.");
+      return;
+    }
+
+    const updatedBooking = {
+      ...booking,
+      walkInCount: nextWalkInCount,
+      walkInNames: nextWalkInNames,
+      statusUpdatedAt: new Date().toLocaleString(),
+    };
+
+    setSessionBookings((previousBookings) =>
+      previousBookings.map((item) =>
+        Number(item.id) === Number(bookingId) ? updatedBooking : item
+      )
+    );
+
+    try {
+      await syncSessionBookingUpdateToSupabase(bookingId, {
+        walkInCount: updatedBooking.walkInCount,
+        walkInNames: updatedBooking.walkInNames,
+        statusUpdatedAt: updatedBooking.statusUpdatedAt,
+      });
+    } catch (error) {
+      alertSupabaseBookingSyncFailed(error);
+    }
+  }
+
+  async function handleMemberUpdateBookingWalkIns(
+    sessionId,
+    walkInCount,
+    walkInNames
+  ) {
+    const session = sessions.find(
+      (session) => Number(session.id) === Number(sessionId)
+    );
+    const booking = sessionBookings.find(
+      (booking) =>
+        Number(booking.sessionId) === Number(sessionId) &&
+        Number(booking.memberId) === Number(currentUser.memberId) &&
+        booking.status !== "cancelled" &&
+        booking.waitlistStatus !== "waiting" &&
+        booking.waitlistStatus !== "removed"
+    );
+
+    if (!session) {
+      alert("Session not found");
+      return false;
+    }
+
+    if (!booking) {
+      alert("Booking not found");
+      return false;
+    }
+
+    const newWalkInCount = Number(walkInCount || 0);
+
+    if (Number.isNaN(newWalkInCount) || newWalkInCount < 0) {
+      alert("Please enter a valid walk-in count");
+      return false;
+    }
+
+    const cleanedWalkInNames = (walkInNames || [])
+      .slice(0, newWalkInCount)
+      .map((name) => String(name || "").trim());
+
+    if (
+      newWalkInCount > 0 &&
+      (cleanedWalkInNames.length !== newWalkInCount ||
+        cleanedWalkInNames.some((name) => name === ""))
+    ) {
+      alert("Please enter all walk-in guest names");
+      return false;
+    }
+
+    const oldWalkInCount = Number(booking.walkInCount || 0);
+    const oldWalkInNames = booking.walkInNames || [];
+    const isReducingAfterCutoff =
+      isPastCancelCutoff(session) && newWalkInCount < oldWalkInCount;
+    let lateCancelledWalkInCount = Number(
+      booking.lateCancelledWalkInCount || 0
+    );
+    let lateCancelledWalkInNames = [
+      ...(booking.lateCancelledWalkInNames || []),
+    ];
+
+    if (isReducingAfterCutoff) {
+      const shouldContinue = confirm(
+        "Cancel cutoff has passed. Removed walk-in guest(s) may still be charged. Continue?"
+      );
+
+      if (!shouldContinue) {
+        return false;
+      }
+
+      const difference = oldWalkInCount - newWalkInCount;
+      const removedNamesByDiff = oldWalkInNames.filter(
+        (name) => !cleanedWalkInNames.includes(name)
+      );
+      const removedNames =
+        removedNamesByDiff.length >= difference
+          ? removedNamesByDiff.slice(0, difference)
+          : [
+              ...removedNamesByDiff,
+              ...oldWalkInNames.slice(newWalkInCount),
+            ].slice(0, difference);
+
+      lateCancelledWalkInCount += difference;
+      lateCancelledWalkInNames = [
+        ...lateCancelledWalkInNames,
+        ...removedNames,
+      ];
+    }
+
+    const newTotalParticipants =
+      getSessionTotalParticipantCount(sessionId) -
+      oldWalkInCount +
+      newWalkInCount;
+    const newTotalWalkIns =
+      getSessionWalkInCount(sessionId) - oldWalkInCount + newWalkInCount;
+
+    if (newTotalParticipants > Number(session.maxPlayers || 0)) {
+      alert("This session does not have enough slots for these walk-in guests.");
+      return false;
+    }
+
+    if (newTotalWalkIns > Number(session.walkInLimit ?? 5)) {
+      alert("Walk-in slots are full. Please contact admin.");
+      return false;
+    }
+
+    const updatedBooking = {
+      ...booking,
+      walkInCount: newWalkInCount,
+      walkInNames: newWalkInCount > 0 ? cleanedWalkInNames : [],
+      lateCancelledWalkInCount: lateCancelledWalkInCount,
+      lateCancelledWalkInNames: lateCancelledWalkInNames,
+      statusUpdatedAt: new Date().toLocaleString(),
+    };
+
+    setSessionBookings((previousBookings) =>
+      previousBookings.map((item) =>
+        Number(item.id) === Number(booking.id) ? updatedBooking : item
+      )
+    );
+
+    try {
+      await syncSessionBookingUpdateToSupabase(booking.id, {
+        walkInCount: updatedBooking.walkInCount,
+        walkInNames: updatedBooking.walkInNames,
+        lateCancelledWalkInCount: updatedBooking.lateCancelledWalkInCount,
+        lateCancelledWalkInNames: updatedBooking.lateCancelledWalkInNames,
+        statusUpdatedAt: updatedBooking.statusUpdatedAt,
+      });
+    } catch (error) {
+      alertSupabaseBookingSyncFailed(error);
+      return false;
+    }
+
+    const memberData = members.find(
+      (member) => Number(member.id) === Number(currentUser.memberId)
+    );
+    logActivity({
+      action: "update_booking_walkins",
+      targetType: "session",
+      targetId: String(sessionId),
+      description: `${memberData?.name || currentUser.name} updated walk-in guests for ${session.date}: ${
+        updatedBooking.walkInNames.join(", ") || "none"
+      }`,
+    });
+
+    alert("Walk-in guests updated successfully.");
+    return true;
+  }
+
+  async function handlePromoteWaitlistBooking(bookingId) {
+    const booking = sessionBookings.find(
+      (booking) => Number(booking.id) === Number(bookingId)
+    );
+
+    if (!booking) {
+      alert("Booking not found");
+      return;
+    }
+
+    const session = sessions.find(
+      (session) => Number(session.id) === Number(booking.sessionId)
+    );
+
+    if (!session) {
+      alert("Session not found");
+      return;
+    }
+
+    const participantsToAdd =
+      booking.waitlistType === "walkin"
+        ? 1 + Number(booking.walkInCount || 0)
+        : 1;
+    const walkInsToAdd =
+      booking.waitlistType === "walkin" ? Number(booking.walkInCount || 0) : 0;
+    const nextTotalParticipants =
+      getSessionTotalParticipantCount(session.id) + participantsToAdd;
+    const nextWalkInCount = getSessionWalkInCount(session.id) + walkInsToAdd;
+
+    if (
+      nextTotalParticipants > Number(session.maxPlayers || 0) ||
+      nextWalkInCount > Number(session.walkInLimit ?? 5)
+    ) {
+      alert("Not enough slots to promote this waiting list request.");
+      return;
+    }
+
+    const updatedBooking = {
+      ...booking,
+      status: "booked",
+      waitlistType: null,
+      waitlistStatus: null,
+      statusUpdatedAt: new Date().toLocaleString(),
+    };
+
+    setSessionBookings((previousBookings) =>
+      previousBookings.map((item) =>
+        Number(item.id) === Number(bookingId) ? updatedBooking : item
+      )
+    );
+
+    try {
+      await syncSessionBookingUpdateToSupabase(bookingId, {
+        status: updatedBooking.status,
+        waitlistType: updatedBooking.waitlistType,
+        waitlistStatus: updatedBooking.waitlistStatus,
+        statusUpdatedAt: updatedBooking.statusUpdatedAt,
+      });
+    } catch (error) {
+      alertSupabaseBookingSyncFailed(error);
+      return;
+    }
+
+    const member = members.find(
+      (member) => Number(member.id) === Number(booking.memberId)
+    );
+    logActivity({
+      action: "promote_waitlist",
+      targetType: "session",
+      targetId: String(session.id),
+      description: `Promoted waiting list request for ${
+        member?.name || "Unknown Member"
+      } on ${session.date}`,
+    });
+
+    alert("Waiting list request promoted.");
+  }
+
+  async function handleRemoveWaitlistBooking(bookingId) {
+    const booking = sessionBookings.find(
+      (booking) => Number(booking.id) === Number(bookingId)
+    );
+
+    if (!booking) {
+      alert("Booking not found");
+      return;
+    }
+
+    const updatedBooking = {
+      ...booking,
+      status: "cancelled",
+      waitlistStatus: "removed",
+      cancelledAt: new Date().toLocaleString(),
+      statusUpdatedAt: new Date().toLocaleString(),
+    };
+
+    setSessionBookings((previousBookings) =>
+      previousBookings.map((item) =>
+        Number(item.id) === Number(bookingId) ? updatedBooking : item
+      )
+    );
+
+    try {
+      await syncSessionBookingUpdateToSupabase(bookingId, {
+        status: updatedBooking.status,
+        waitlistStatus: updatedBooking.waitlistStatus,
+        cancelledAt: updatedBooking.cancelledAt,
+        statusUpdatedAt: updatedBooking.statusUpdatedAt,
+      });
+    } catch (error) {
+      alertSupabaseBookingSyncFailed(error);
+      return;
+    }
+
+    logActivity({
+      action: "remove_waitlist",
+      targetType: "session",
+      targetId: String(booking.sessionId),
+      description: `Removed waiting list request #${booking.id}`,
+    });
+
+    alert("Waiting list request removed.");
+  }
+
   async function handleBulkUpdateSessionBookingStatus(sessionId, action) {
     const statusUpdatedAt = new Date().toLocaleString();
     const changedBookings = sessionBookings
-      .filter((booking) => Number(booking.sessionId) === Number(sessionId))
+      .filter(
+        (booking) =>
+          Number(booking.sessionId) === Number(sessionId) &&
+          isConfirmedSessionBooking(booking)
+      )
       .map((booking) => {
         if (action === "mark_booked_attended" && booking.status === "booked") {
           return {
@@ -2704,6 +3275,26 @@ function App() {
   }
 
   async function handleUpdateSessionChargeField(sessionId, field, value) {
+    if (field === "walkInLimit") {
+      const session = sessions.find(
+        (session) => Number(session.id) === Number(sessionId)
+      );
+      const nextWalkInLimit = Number(value || 0);
+
+      if (!session) {
+        alert("Session not found");
+        return;
+      }
+
+      if (
+        nextWalkInLimit < getSessionWalkInCount(sessionId) ||
+        nextWalkInLimit > Number(session.maxPlayers || 0)
+      ) {
+        alert("Walk-in limit must be between current walk-ins and max players.");
+        return;
+      }
+    }
+
     setSessions((previousSessions) =>
       previousSessions.map((session) => {
         if (Number(session.id) === Number(sessionId)) {
@@ -3766,16 +4357,26 @@ function App() {
             bookingStatusOptions={bookingStatusOptions}
             formatMoney={formatMoney}
             getActiveSessionBookings={getActiveSessionBookings}
+            getSessionConfirmedBookings={getSessionConfirmedBookings}
             getSessionBookings={getSessionBookings}
+            getSessionMemberBookingCount={getSessionMemberBookingCount}
+            getSessionMemberWaitlist={getSessionMemberWaitlist}
             getSessionChargeSummary={getSessionChargeSummary}
+            getSessionRemainingParticipantSlots={getSessionRemainingParticipantSlots}
+            getSessionTotalParticipantCount={getSessionTotalParticipantCount}
+            getSessionWalkInCount={getSessionWalkInCount}
+            getSessionWalkInWaitlist={getSessionWalkInWaitlist}
             handleCloseSession={handleCloseSession}
             handleCreateSession={handleCreateSession}
             handleFinalizeSessionCharge={handleFinalizeSessionCharge}
             handleOpenSession={handleOpenSession}
+            handlePromoteWaitlistBooking={handlePromoteWaitlistBooking}
+            handleRemoveWaitlistBooking={handleRemoveWaitlistBooking}
             handleBulkUpdateSessionBookingStatus={
               handleBulkUpdateSessionBookingStatus
             }
             handleUpdateBookingStatus={handleUpdateBookingStatus}
+            handleUpdateBookingWalkIns={handleUpdateBookingWalkIns}
             handleUpdateSessionChargeField={handleUpdateSessionChargeField}
             members={members}
             newSessionCancelCutoff={newSessionCancelCutoff}
@@ -3785,6 +4386,7 @@ function App() {
             newSessionMaxPlayers={newSessionMaxPlayers}
             newSessionTime={newSessionTime}
             newSessionVenue={newSessionVenue}
+            newSessionWalkInLimit={newSessionWalkInLimit}
             sessions={sessions}
             setNewSessionCancelCutoff={setNewSessionCancelCutoff}
             setNewSessionCourtCount={setNewSessionCourtCount}
@@ -3793,6 +4395,7 @@ function App() {
             setNewSessionMaxPlayers={setNewSessionMaxPlayers}
             setNewSessionTime={setNewSessionTime}
             setNewSessionVenue={setNewSessionVenue}
+            setNewSessionWalkInLimit={setNewSessionWalkInLimit}
             users={users}
           />
             </section>
@@ -4036,10 +4639,20 @@ function App() {
           sessions={sessions}
           sessionBookings={sessionBookings}
           getActiveSessionBookings={getActiveSessionBookings}
+          getSessionMemberBookingCount={getSessionMemberBookingCount}
+          getSessionWalkInCount={getSessionWalkInCount}
+          getSessionTotalParticipantCount={getSessionTotalParticipantCount}
+          getSessionRemainingParticipantSlots={getSessionRemainingParticipantSlots}
+          getSessionRemainingWalkInSlots={getSessionRemainingWalkInSlots}
+          getSessionMemberWaitlist={getSessionMemberWaitlist}
+          getSessionWalkInWaitlist={getSessionWalkInWaitlist}
           handleBookSession={handleBookSession}
           handleCancelSessionBooking={handleCancelSessionBooking}
+          handleMemberUpdateBookingWalkIns={handleMemberUpdateBookingWalkIns}
           isPastCancelCutoff={isPastCancelCutoff}
           minimumBookingBalance={MINIMUM_BOOKING_BALANCE}
+          walkInSelections={walkInSelections}
+          setWalkInSelections={setWalkInSelections}
         />
       </>
     );
