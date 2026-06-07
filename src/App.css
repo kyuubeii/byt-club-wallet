@@ -918,6 +918,27 @@ input[type="file"] {
   margin-top: 0;
 }
 
+.developer-tools-locked {
+  display: grid;
+  gap: 14px;
+}
+
+.developer-tools-unlock-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 360px) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.developer-tools-unlock-row input {
+  margin-top: 0;
+}
+
+.developer-tools-lock-button {
+  margin-top: 0;
+  white-space: nowrap;
+}
+
 .reset-button {
   border: none;
   background: #f1f5f9;
@@ -2307,6 +2328,14 @@ tbody tr:hover {
   .developer-tools-grid {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .developer-tools-unlock-row {
+    grid-template-columns: 1fr;
+  }
+
+  .developer-tools-lock-button {
+    width: 100%;
   }
 
   .dashboard-section-toggle-grid {

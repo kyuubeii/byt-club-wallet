@@ -26,6 +26,58 @@ function withTimeout(promise, timeoutMs, timeoutMessage) {
   ]);
 }
 
+function getErrorMessage(error) {
+  if (!error) {
+    return "Unknown error";
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  return error.message || String(error);
+}
+
+function getFriendlyErrorMessage(error) {
+  const message = getErrorMessage(error);
+  const normalizedMessage = message.toLowerCase();
+
+  if (normalizedMessage.includes("failed to fetch")) {
+    return "Cannot connect to cloud server. Please check your internet connection and try again.";
+  }
+
+  if (
+    normalizedMessage.includes("row-level security") ||
+    normalizedMessage.includes("permission denied")
+  ) {
+    return "Permission issue. Please contact admin.";
+  }
+
+  if (
+    normalizedMessage.includes("duplicate key") ||
+    normalizedMessage.includes("already exists")
+  ) {
+    return "This record already exists. Please check the details.";
+  }
+
+  if (normalizedMessage.includes("timeout")) {
+    return "Request timed out. Please check your internet connection and try again.";
+  }
+
+  if (
+    normalizedMessage.includes("storage") ||
+    normalizedMessage.includes("bucket")
+  ) {
+    return "File upload failed. Please try again or contact admin.";
+  }
+
+  return message;
+}
+
+function getFriendlyCloudSyncMessage(error) {
+  return `Saved locally, but cloud sync failed. ${getFriendlyErrorMessage(error)}`;
+}
+
 const initialTransactions = [
   {
     id: 1,
@@ -277,6 +329,8 @@ function App() {
   const [adminTransactionPage, setAdminTransactionPage] = useState(1);
   const [pendingMemberApprovalPage, setPendingMemberApprovalPage] = useState(1);
   const [showDeveloperTools, setShowDeveloperTools] = useState(false);
+  const [isDeveloperToolsUnlocked, setIsDeveloperToolsUnlocked] = useState(false);
+  const [developerToolsUnlockText, setDeveloperToolsUnlockText] = useState("");
   const [showMembersSection, setShowMembersSection] = useState(false);
   const [showBalanceToolsSection, setShowBalanceToolsSection] = useState(false);
   const [showBookingSection, setShowBookingSection] = useState(true);
@@ -395,7 +449,8 @@ function App() {
       setReloadRequests(convertSupabaseReloadRequests(supabaseReloadRequests));
       handleLoadRecentActivityLogs(false);
     } catch (error) {
-      setSupabaseLoadError(error?.message || "Unknown Supabase error");
+      console.error("Supabase startup data load failed:", error);
+      setSupabaseLoadError(getFriendlyErrorMessage(error));
     } finally {
       setIsLoadingSupabaseData(false);
     }
@@ -413,11 +468,7 @@ function App() {
     } catch (error) {
       console.error("Failed to load activity logs:", error);
       if (showAlert) {
-        alert(
-          `Failed to load activity logs: ${
-            error?.message || "Unknown Supabase error"
-          }`
-        );
+        alert(`Failed to load activity logs: ${getFriendlyErrorMessage(error)}`);
       }
     } finally {
       setIsLoadingActivityLogs(false);
@@ -558,8 +609,9 @@ function App() {
       await syncMemberToSupabase(newMember);
       await syncUserToSupabase(newUser);
     } catch (error) {
+      console.error("Registration cloud sync failed:", error);
       registrationMessage =
-        "Registration saved locally, but Supabase sync failed. Please contact admin if your account does not appear.";
+        "Registration saved locally, but cloud sync failed. Please contact admin if your account does not appear.";
     }
 
     alert(registrationMessage);
@@ -719,43 +771,28 @@ function App() {
   }
 
   function alertSupabaseMemberSyncFailed(error) {
-    alert(
-      `Local update saved, but Supabase member sync failed: ${
-        error?.message || "Unknown Supabase error"
-      }`
-    );
+    console.error("Supabase member sync failed:", error);
+    alert(getFriendlyCloudSyncMessage(error));
   }
 
   function alertSupabaseUserSyncFailed(error) {
-    alert(
-      `Local update saved, but Supabase user sync failed: ${
-        error?.message || "Unknown Supabase error"
-      }`
-    );
+    console.error("Supabase user sync failed:", error);
+    alert(getFriendlyCloudSyncMessage(error));
   }
 
   function alertSupabaseSessionSyncFailed(error) {
-    alert(
-      `Local update saved, but Supabase session sync failed: ${
-        error?.message || "Unknown Supabase error"
-      }`
-    );
+    console.error("Supabase session sync failed:", error);
+    alert(getFriendlyCloudSyncMessage(error));
   }
 
   function alertSupabaseBookingSyncFailed(error) {
-    alert(
-      `Local update saved, but Supabase booking sync failed: ${
-        error?.message || "Unknown Supabase error"
-      }`
-    );
+    console.error("Supabase booking sync failed:", error);
+    alert(getFriendlyCloudSyncMessage(error));
   }
 
   function alertSupabaseFinanceSyncFailed(error) {
-    alert(
-      `Local update saved, but Supabase finance sync failed: ${
-        error?.message || "Unknown Supabase error"
-      }`
-    );
+    console.error("Supabase finance sync failed:", error);
+    alert(getFriendlyCloudSyncMessage(error));
   }
 
   // Member management
@@ -1381,7 +1418,8 @@ function App() {
         await syncMemberToSupabase(updatedMember);
       }
     } catch (error) {
-      alert(`Local update saved, but Supabase sync failed: ${getErrorMessage(error)}`);
+      console.error("Supabase login ID sync failed:", error);
+      alert(getFriendlyCloudSyncMessage(error));
       return;
     }
 
@@ -1431,7 +1469,7 @@ function App() {
         );
       } catch (error) {
         console.error("Reload screenshot upload failed:", error);
-        alert(`Failed to upload payment screenshot: ${getErrorMessage(error)}`);
+        alert(getFriendlyErrorMessage(error));
         return;
       }
 
@@ -1461,9 +1499,7 @@ function App() {
         );
       } catch (error) {
         console.error("Reload request Supabase sync failed:", error);
-        alert(
-          `Reload request saved locally, but Supabase sync failed: ${getErrorMessage(error)}`
-        );
+        alert(getFriendlyCloudSyncMessage(error));
         return;
       }
 
@@ -1809,13 +1845,11 @@ function App() {
         return;
       }
 
-      alert(`Supabase connection failed: ${result.error}`);
+      console.error("Supabase connection failed:", result.error);
+      alert(`Cloud connection failed: ${getFriendlyErrorMessage(result.error)}`);
     } catch (error) {
-      alert(
-        `Supabase connection failed: ${
-          error?.message || "Unknown Supabase error"
-        }`
-      );
+      console.error("Supabase connection failed:", error);
+      alert(`Cloud connection failed: ${getFriendlyErrorMessage(error)}`);
     }
   }
 
@@ -1834,9 +1868,8 @@ function App() {
       await seedMembersToSupabase(members);
       alert("Members seeded to Supabase successfully.");
     } catch (error) {
-      alert(
-        `Failed to seed members: ${error?.message || "Unknown Supabase error"}`
-      );
+      console.error("Failed to seed members:", error);
+      alert(`Failed to seed members: ${getFriendlyErrorMessage(error)}`);
     }
   }
 
@@ -1851,9 +1884,8 @@ function App() {
       setMembers(convertedMembers);
       alert("Members loaded from Supabase successfully.");
     } catch (error) {
-      alert(
-        `Failed to load members: ${error?.message || "Unknown Supabase error"}`
-      );
+      console.error("Failed to load members:", error);
+      alert(`Failed to load members: ${getFriendlyErrorMessage(error)}`);
     }
   }
 
@@ -1868,9 +1900,8 @@ function App() {
       setUsers(convertedUsers);
       alert("Users loaded from Supabase successfully.");
     } catch (error) {
-      alert(
-        `Failed to load users: ${error?.message || "Unknown Supabase error"}`
-      );
+      console.error("Failed to load users:", error);
+      alert(`Failed to load users: ${getFriendlyErrorMessage(error)}`);
     }
   }
 
@@ -1885,11 +1916,8 @@ function App() {
       setSessions(convertedSessions);
       alert("Sessions loaded from Supabase successfully.");
     } catch (error) {
-      alert(
-        `Failed to load sessions: ${
-          error?.message || "Unknown Supabase error"
-        }`
-      );
+      console.error("Failed to load sessions:", error);
+      alert(`Failed to load sessions: ${getFriendlyErrorMessage(error)}`);
     }
   }
 
@@ -1905,10 +1933,9 @@ function App() {
       setSessionBookings(convertedBookings);
       alert("Session bookings loaded from Supabase successfully.");
     } catch (error) {
+      console.error("Failed to load session bookings:", error);
       alert(
-        `Failed to load session bookings: ${
-          error?.message || "Unknown Supabase error"
-        }`
+        `Failed to load session bookings: ${getFriendlyErrorMessage(error)}`
       );
     }
   }
@@ -1925,11 +1952,8 @@ function App() {
       setTransactions(convertedTransactions);
       alert("Transactions loaded from Supabase successfully.");
     } catch (error) {
-      alert(
-        `Failed to load transactions: ${
-          error?.message || "Unknown Supabase error"
-        }`
-      );
+      console.error("Failed to load transactions:", error);
+      alert(`Failed to load transactions: ${getFriendlyErrorMessage(error)}`);
     }
   }
 
@@ -1946,10 +1970,9 @@ function App() {
       setReloadRequests(convertedReloadRequests);
       alert("Reload requests loaded from Supabase successfully.");
     } catch (error) {
+      console.error("Failed to load reload requests:", error);
       alert(
-        `Failed to load reload requests: ${
-          error?.message || "Unknown Supabase error"
-        }`
+        `Failed to load reload requests: ${getFriendlyErrorMessage(error)}`
       );
     }
   }
@@ -1969,9 +1992,8 @@ function App() {
       await seedUsersToSupabase(users);
       alert("Users seeded to Supabase successfully.");
     } catch (error) {
-      alert(
-        `Failed to seed users: ${error?.message || "Unknown Supabase error"}`
-      );
+      console.error("Failed to seed users:", error);
+      alert(`Failed to seed users: ${getFriendlyErrorMessage(error)}`);
     }
   }
 
@@ -1990,9 +2012,8 @@ function App() {
       await seedSessionsToSupabase(sessions);
       alert("Sessions seeded to Supabase successfully.");
     } catch (error) {
-      alert(
-        `Failed to seed sessions: ${error?.message || "Unknown Supabase error"}`
-      );
+      console.error("Failed to seed sessions:", error);
+      alert(`Failed to seed sessions: ${getFriendlyErrorMessage(error)}`);
     }
   }
 
@@ -2013,10 +2034,9 @@ function App() {
       await seedSessionBookingsToSupabase(sessionBookings);
       alert("Session bookings seeded to Supabase successfully.");
     } catch (error) {
+      console.error("Failed to seed session bookings:", error);
       alert(
-        `Failed to seed session bookings: ${
-          error?.message || "Unknown Supabase error"
-        }`
+        `Failed to seed session bookings: ${getFriendlyErrorMessage(error)}`
       );
     }
   }
@@ -2038,11 +2058,8 @@ function App() {
       await seedTransactionsToSupabase(transactions);
       alert("Transactions seeded to Supabase successfully.");
     } catch (error) {
-      alert(
-        `Failed to seed transactions: ${
-          error?.message || "Unknown Supabase error"
-        }`
-      );
+      console.error("Failed to seed transactions:", error);
+      alert(`Failed to seed transactions: ${getFriendlyErrorMessage(error)}`);
     }
   }
 
@@ -2063,10 +2080,9 @@ function App() {
       await seedReloadRequestsToSupabase(reloadRequests);
       alert("Reload requests seeded to Supabase successfully.");
     } catch (error) {
+      console.error("Failed to seed reload requests:", error);
       alert(
-        `Failed to seed reload requests: ${
-          error?.message || "Unknown Supabase error"
-        }`
+        `Failed to seed reload requests: ${getFriendlyErrorMessage(error)}`
       );
     }
   }
@@ -2916,7 +2932,15 @@ function App() {
 
             <button
               className={`dashboard-section-toggle ${showDeveloperTools ? "active" : ""}`}
-              onClick={() => setShowDeveloperTools(!showDeveloperTools)}
+              onClick={() => {
+                const nextShowDeveloperTools = !showDeveloperTools;
+                setShowDeveloperTools(nextShowDeveloperTools);
+
+                if (!nextShowDeveloperTools) {
+                  setIsDeveloperToolsUnlocked(false);
+                  setDeveloperToolsUnlockText("");
+                }
+              }}
             >
               Developer
             </button>
@@ -2924,114 +2948,163 @@ function App() {
 
           {showDeveloperTools && (
             <div className="panel developer-tools-panel">
-              <div className="panel-header">
-                <div>
-                  <h2>Developer Sync Tools</h2>
-                  <p>
-                    Use these tools only for data migration, testing, or emergency sync.
-                  </p>
+              {!isDeveloperToolsUnlocked ? (
+                <div className="developer-tools-locked">
+                  <div className="panel-header">
+                    <div>
+                      <h2>Developer Sync Tools Locked</h2>
+                      <p>
+                        These tools are for migration and emergency sync only.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="developer-tools-unlock-row">
+                    <input
+                      type="text"
+                      value={developerToolsUnlockText}
+                      onChange={(event) =>
+                        setDeveloperToolsUnlockText(event.target.value)
+                      }
+                      placeholder="Type DEVELOPER to unlock"
+                    />
+                    <button
+                      className="secondary-button compact-button"
+                      onClick={() => {
+                        if (developerToolsUnlockText === "DEVELOPER") {
+                          setIsDeveloperToolsUnlocked(true);
+                          setDeveloperToolsUnlockText("");
+                          return;
+                        }
+
+                        alert("Developer tools remain locked.");
+                      }}
+                    >
+                      Unlock Developer Tools
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div className="panel-header">
+                    <div>
+                      <h2>Developer Sync Tools</h2>
+                      <p>
+                        Use these tools only for data migration, testing, or emergency sync.
+                      </p>
+                    </div>
+                    <button
+                      className="secondary-button compact-button developer-tools-lock-button"
+                      onClick={() => {
+                        setIsDeveloperToolsUnlocked(false);
+                        setDeveloperToolsUnlockText("");
+                      }}
+                    >
+                      Lock Developer Tools
+                    </button>
+                  </div>
 
-              <div className="developer-tools-grid">
-                <button
-                  className="secondary-button compact-button"
-                  onClick={handleTestSupabaseConnection}
-                >
-                  Test Supabase Connection
-                </button>
+                  <div className="developer-tools-grid">
+                    <button
+                      className="secondary-button compact-button"
+                      onClick={handleTestSupabaseConnection}
+                    >
+                      Test Supabase Connection
+                    </button>
 
-                <button
-                  className="secondary-button compact-button"
-                  onClick={handleLoadMembersFromSupabase}
-                >
-                  Load Members from Supabase
-                </button>
+                    <button
+                      className="secondary-button compact-button"
+                      onClick={handleLoadMembersFromSupabase}
+                    >
+                      Load Members from Supabase
+                    </button>
 
-                <button
-                  className="secondary-button compact-button"
-                  onClick={handleLoadUsersFromSupabase}
-                >
-                  Load Users from Supabase
-                </button>
+                    <button
+                      className="secondary-button compact-button"
+                      onClick={handleLoadUsersFromSupabase}
+                    >
+                      Load Users from Supabase
+                    </button>
 
-                <button
-                  className="secondary-button compact-button"
-                  onClick={handleLoadSessionsFromSupabase}
-                >
-                  Load Sessions from Supabase
-                </button>
+                    <button
+                      className="secondary-button compact-button"
+                      onClick={handleLoadSessionsFromSupabase}
+                    >
+                      Load Sessions from Supabase
+                    </button>
 
-                <button
-                  className="secondary-button compact-button"
-                  onClick={handleLoadSessionBookingsFromSupabase}
-                >
-                  Load Session Bookings from Supabase
-                </button>
+                    <button
+                      className="secondary-button compact-button"
+                      onClick={handleLoadSessionBookingsFromSupabase}
+                    >
+                      Load Session Bookings from Supabase
+                    </button>
 
-                <button
-                  className="secondary-button compact-button"
-                  onClick={handleLoadTransactionsFromSupabase}
-                >
-                  Load Transactions from Supabase
-                </button>
+                    <button
+                      className="secondary-button compact-button"
+                      onClick={handleLoadTransactionsFromSupabase}
+                    >
+                      Load Transactions from Supabase
+                    </button>
 
-                <button
-                  className="secondary-button compact-button"
-                  onClick={handleLoadReloadRequestsFromSupabase}
-                >
-                  Load Reload Requests from Supabase
-                </button>
+                    <button
+                      className="secondary-button compact-button"
+                      onClick={handleLoadReloadRequestsFromSupabase}
+                    >
+                      Load Reload Requests from Supabase
+                    </button>
 
-                <button
-                  className="secondary-button compact-button"
-                  onClick={handleSeedMembersToSupabase}
-                >
-                  Seed Members to Supabase
-                </button>
+                    <button
+                      className="secondary-button compact-button"
+                      onClick={handleSeedMembersToSupabase}
+                    >
+                      Seed Members to Supabase
+                    </button>
 
-                <button
-                  className="secondary-button compact-button"
-                  onClick={handleSeedUsersToSupabase}
-                >
-                  Seed Users to Supabase
-                </button>
+                    <button
+                      className="secondary-button compact-button"
+                      onClick={handleSeedUsersToSupabase}
+                    >
+                      Seed Users to Supabase
+                    </button>
 
-                <button
-                  className="secondary-button compact-button"
-                  onClick={handleSeedSessionsToSupabase}
-                >
-                  Seed Sessions to Supabase
-                </button>
+                    <button
+                      className="secondary-button compact-button"
+                      onClick={handleSeedSessionsToSupabase}
+                    >
+                      Seed Sessions to Supabase
+                    </button>
 
-                <button
-                  className="secondary-button compact-button"
-                  onClick={handleSeedSessionBookingsToSupabase}
-                >
-                  Seed Session Bookings to Supabase
-                </button>
+                    <button
+                      className="secondary-button compact-button"
+                      onClick={handleSeedSessionBookingsToSupabase}
+                    >
+                      Seed Session Bookings to Supabase
+                    </button>
 
-                <button
-                  className="secondary-button compact-button"
-                  onClick={handleSeedTransactionsToSupabase}
-                >
-                  Seed Transactions to Supabase
-                </button>
+                    <button
+                      className="secondary-button compact-button"
+                      onClick={handleSeedTransactionsToSupabase}
+                    >
+                      Seed Transactions to Supabase
+                    </button>
 
-                <button
-                  className="secondary-button compact-button"
-                  onClick={handleSeedReloadRequestsToSupabase}
-                >
-                  Seed Reload Requests to Supabase
-                </button>
+                    <button
+                      className="secondary-button compact-button"
+                      onClick={handleSeedReloadRequestsToSupabase}
+                    >
+                      Seed Reload Requests to Supabase
+                    </button>
 
-                <button
-                  className="danger-button compact-button"
-                  onClick={handleResetDemoData}
-                >
-                  Danger: Reset Local Demo Data
-                </button>
-              </div>
+                    <button
+                      className="danger-button compact-button"
+                      onClick={handleResetDemoData}
+                    >
+                      Danger: Reset Local Demo Data
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
