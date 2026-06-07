@@ -2368,3 +2368,315 @@ tbody tr:hover {
     border-radius: 14px;
   }
 }
+
+/* -------------------- Mobile usability polish -------------------- */
+@media (max-width: 900px) {
+  .topbar {
+    min-height: auto;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .topbar > div:first-child {
+    min-width: 0;
+  }
+
+  .topbar h2,
+  .topbar p {
+    overflow-wrap: anywhere;
+  }
+
+  .topbar-actions {
+    width: auto;
+    max-width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .dashboard-content {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .panel,
+  .member-card,
+  .stat-card,
+  .session-card,
+  .member-session-card,
+  .summary-card {
+    max-width: 100%;
+  }
+
+  .panel {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 680px;
+  }
+
+  .member-table-scroll,
+  .pending-member-approvals-panel,
+  .recent-activity-panel,
+  .reload-request-panel,
+  .transaction-panel {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .session-booking-row {
+    align-items: flex-start;
+  }
+
+  .session-booking-status {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .session-status-select {
+    min-width: 180px;
+  }
+
+  .member-session-card,
+  .session-card {
+    padding: 18px;
+  }
+
+  .balance-tools-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-content {
+    padding: 22px 12px 36px;
+  }
+
+  .dashboard-content > .panel,
+  .collapsible-section,
+  .member-session-panel,
+  .reload-request-panel,
+  .transaction-panel,
+  .topup-panel {
+    margin-top: 18px;
+    margin-bottom: 18px;
+  }
+
+  .topbar {
+    padding: 14px 16px;
+  }
+
+  .topbar-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .logout-button,
+  .reset-button {
+    width: 100%;
+  }
+
+  .dashboard-section-toggle-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .dashboard-section-toggle {
+    min-height: 42px;
+    white-space: normal;
+  }
+
+  .system-status-row {
+    align-items: flex-start;
+  }
+
+  .panel,
+  .member-card,
+  .stat-card {
+    padding: 18px;
+  }
+
+  .panel h2,
+  .collapsible-section-header h2 {
+    font-size: 20px;
+  }
+
+  .panel-header {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  label {
+    margin-top: 12px;
+  }
+
+  input,
+  select,
+  input[type="file"],
+  .action-button,
+  .secondary-button,
+  .danger-button,
+  .approve-button,
+  .reactivate-button,
+  .login-button,
+  .register-link-button,
+  .topup-button {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  table {
+    min-width: 640px;
+    font-size: 14px;
+  }
+
+  th,
+  td {
+    padding: 12px 10px;
+  }
+
+  .member-table-scroll table {
+    min-width: 680px;
+  }
+
+  .activity-log-table {
+    min-width: 700px;
+  }
+
+  .table-actions {
+    gap: 7px;
+  }
+
+  .small-approve-button,
+  .small-reject-button,
+  .member-edit-button {
+    min-height: 38px;
+    padding: 9px 11px;
+  }
+
+  .pagination-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+  }
+
+  .pagination-info {
+    grid-column: 1 / -1;
+    order: -1;
+    width: 100%;
+    padding-bottom: 2px;
+  }
+
+  .member-card {
+    text-align: left;
+  }
+
+  .member-card h3 {
+    font-size: 34px;
+    overflow-wrap: anywhere;
+  }
+
+  .status-badge {
+    max-width: 100%;
+    white-space: normal;
+    line-height: 1.3;
+  }
+
+  .topup-button {
+    display: block;
+  }
+
+  .bank-box,
+  .qr-box {
+    border-radius: 18px;
+  }
+
+  .duitnow-qr-image {
+    width: min(150px, 72vw);
+  }
+
+  .member-session-list,
+  .session-list,
+  .balance-side-stack,
+  .dashboard-section-stack {
+    gap: 14px;
+  }
+
+  .member-session-card h3,
+  .session-card h3 {
+    font-size: 19px;
+    line-height: 1.3;
+  }
+
+  .session-booking-row {
+    display: grid;
+    gap: 10px;
+  }
+
+  .session-booking-member {
+    width: 100%;
+  }
+
+  .session-booking-member span,
+  .session-booking-member small {
+    overflow-wrap: anywhere;
+  }
+
+  .session-booking-status {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .booking-status-pill,
+  .session-status-select {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .session-booking-quick-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .session-charge-grid,
+  .calculator-grid,
+  .calculator-summary-grid,
+  .edit-member-grid,
+  .add-member-grid,
+  .session-form-grid,
+  .member-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-member-panel {
+    padding: 18px;
+  }
+
+  .edit-member-heading {
+    gap: 10px;
+  }
+
+  .edit-member-actions,
+  .button-row,
+  .small-button-row,
+  .change-login-id-actions,
+  .member-session-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .session-member-row,
+  .member-checkbox-row {
+    grid-template-columns: 22px 1fr;
+  }
+
+  .session-member-row strong,
+  .member-checkbox-row small {
+    grid-column: 2;
+    justify-self: start;
+  }
+}

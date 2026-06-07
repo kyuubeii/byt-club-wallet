@@ -2879,7 +2879,7 @@ function App() {
               className={`dashboard-section-toggle ${showMembersSection ? "active" : ""}`}
               onClick={() => setShowMembersSection(!showMembersSection)}
             >
-              {showMembersSection ? "Hide Members" : "Show Members"}
+              Members
             </button>
 
             <button
@@ -2888,16 +2888,14 @@ function App() {
                 setShowBalanceToolsSection(!showBalanceToolsSection)
               }
             >
-              {showBalanceToolsSection
-                ? "Hide Balance Tools"
-                : "Show Balance Tools"}
+              Balance
             </button>
 
             <button
               className={`dashboard-section-toggle ${showBookingSection ? "active" : ""}`}
               onClick={() => setShowBookingSection(!showBookingSection)}
             >
-              {showBookingSection ? "Hide Booking" : "Show Booking"}
+              Booking
             </button>
 
             <button
@@ -2906,27 +2904,21 @@ function App() {
                 setShowTransactionsSection(!showTransactionsSection)
               }
             >
-              {showTransactionsSection
-                ? "Hide Transactions"
-                : "Show Transactions"}
+              Transactions
             </button>
 
             <button
               className={`dashboard-section-toggle ${showActivitySection ? "active" : ""}`}
               onClick={() => setShowActivitySection(!showActivitySection)}
             >
-              {showActivitySection
-                ? "Hide Recent Activity"
-                : "Show Recent Activity"}
+              Activity
             </button>
 
             <button
               className={`dashboard-section-toggle ${showDeveloperTools ? "active" : ""}`}
               onClick={() => setShowDeveloperTools(!showDeveloperTools)}
             >
-              {showDeveloperTools
-                ? "Hide Developer Tools"
-                : "Show Developer Tools"}
+              Developer
             </button>
           </div>
 
