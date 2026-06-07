@@ -758,6 +758,10 @@ input[type="file"] {
 }
 
 @media (max-width: 900px) {
+  .balance-tools-grid {
+    grid-template-columns: 1fr;
+  }
+
   .edit-member-grid {
     grid-template-columns: 1fr;
   }
@@ -802,6 +806,92 @@ input[type="file"] {
   gap: 10px;
   justify-content: flex-start;
   margin-top: 18px;
+}
+
+.dashboard-section-toggle-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.dashboard-section-toggle {
+  padding: 11px 15px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: white;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(226, 232, 240, 0.9);
+}
+
+.dashboard-section-toggle:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.dashboard-section-toggle.active {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: white;
+}
+
+.collapsible-section {
+  margin-top: 24px;
+}
+
+.collapsible-section-header {
+  margin-bottom: 14px;
+}
+
+.collapsible-section-header h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 24px;
+  letter-spacing: -0.02em;
+}
+
+.collapsible-section-header p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.dashboard-section-stack {
+  display: grid;
+  gap: 24px;
+}
+
+.balance-tools-grid {
+  display: grid;
+  grid-template-columns: minmax(560px, 1.6fr) minmax(320px, 0.9fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.balance-tools-grid .session-calculator-panel {
+  margin-top: 0;
+  min-width: 0;
+}
+
+.balance-side-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.balance-side-stack .panel {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .balance-tools-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .developer-tools-toggle {
@@ -1036,14 +1126,14 @@ input[type="file"] {
 
 .calculator-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 
 .calculator-summary-grid {
   margin-top: 24px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -1432,6 +1522,33 @@ button:disabled {
 .pending-member-approvals-panel table {
   min-width: 720px;
 }
+
+.recent-activity-panel {
+  margin-top: 24px;
+  overflow-x: auto;
+}
+
+.activity-log-table {
+  min-width: 760px;
+}
+
+.activity-log-table td:nth-child(1) {
+  white-space: nowrap;
+  color: #475569;
+  font-size: 14px;
+}
+
+.activity-log-table td:nth-child(3) {
+  color: #334155;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.activity-log-table td:nth-child(4) {
+  color: #475569;
+  line-height: 1.45;
+}
+
 /* Add spacing between stacked panels in member portal */
 .dashboard-content > .panel {
   margin-top: 24px;
@@ -2190,6 +2307,17 @@ tbody tr:hover {
   .developer-tools-grid {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-section-toggle-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dashboard-section-toggle {
+    width: 100%;
+    padding: 12px 10px;
+    font-size: 13px;
   }
 
   .developer-tools-grid .compact-button,

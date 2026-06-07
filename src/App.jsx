@@ -257,6 +257,8 @@ function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoadingSupabaseData, setIsLoadingSupabaseData] = useState(false);
   const [supabaseLoadError, setSupabaseLoadError] = useState("");
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [isLoadingActivityLogs, setIsLoadingActivityLogs] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -275,6 +277,11 @@ function App() {
   const [adminTransactionPage, setAdminTransactionPage] = useState(1);
   const [pendingMemberApprovalPage, setPendingMemberApprovalPage] = useState(1);
   const [showDeveloperTools, setShowDeveloperTools] = useState(false);
+  const [showMembersSection, setShowMembersSection] = useState(false);
+  const [showBalanceToolsSection, setShowBalanceToolsSection] = useState(false);
+  const [showBookingSection, setShowBookingSection] = useState(true);
+  const [showTransactionsSection, setShowTransactionsSection] = useState(false);
+  const [showActivitySection, setShowActivitySection] = useState(false);
   const [newMemberName, setNewMemberName] = useState("");
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberBalance, setNewMemberBalance] = useState("");
@@ -386,10 +393,34 @@ function App() {
       setSessionBookings(convertSupabaseSessionBookings(supabaseBookings));
       setTransactions(convertSupabaseTransactions(supabaseTransactions));
       setReloadRequests(convertSupabaseReloadRequests(supabaseReloadRequests));
+      handleLoadRecentActivityLogs(false);
     } catch (error) {
       setSupabaseLoadError(error?.message || "Unknown Supabase error");
     } finally {
       setIsLoadingSupabaseData(false);
+    }
+  }
+
+  async function handleLoadRecentActivityLogs(showAlert = true) {
+    setIsLoadingActivityLogs(true);
+
+    try {
+      const { fetchRecentActivityLogs } = await import(
+        "./services/supabaseServices.js"
+      );
+      const logs = await fetchRecentActivityLogs(20);
+      setActivityLogs(logs);
+    } catch (error) {
+      console.error("Failed to load activity logs:", error);
+      if (showAlert) {
+        alert(
+          `Failed to load activity logs: ${
+            error?.message || "Unknown Supabase error"
+          }`
+        );
+      }
+    } finally {
+      setIsLoadingActivityLogs(false);
     }
   }
 
@@ -2835,14 +2866,67 @@ function App() {
           </div>
           {renderSupabaseLoadNotice()}
 
-          <button
-            className="secondary-button developer-tools-toggle"
-            onClick={() => setShowDeveloperTools(!showDeveloperTools)}
-          >
-            {showDeveloperTools
-              ? "Hide Developer Sync Tools"
-              : "Show Developer Sync Tools"}
-          </button>
+          <AdminStats
+            totalClubBalance={totalClubBalance}
+            activeMemberCount={activeMemberCount}
+            pendingRequestCount={pendingRequests.length}
+            negativeBalanceCount={negativeBalanceCount}
+            formatMoney={formatMoney}
+          />
+
+          <div className="dashboard-section-toggle-grid">
+            <button
+              className={`dashboard-section-toggle ${showMembersSection ? "active" : ""}`}
+              onClick={() => setShowMembersSection(!showMembersSection)}
+            >
+              {showMembersSection ? "Hide Members" : "Show Members"}
+            </button>
+
+            <button
+              className={`dashboard-section-toggle ${showBalanceToolsSection ? "active" : ""}`}
+              onClick={() =>
+                setShowBalanceToolsSection(!showBalanceToolsSection)
+              }
+            >
+              {showBalanceToolsSection
+                ? "Hide Balance Tools"
+                : "Show Balance Tools"}
+            </button>
+
+            <button
+              className={`dashboard-section-toggle ${showBookingSection ? "active" : ""}`}
+              onClick={() => setShowBookingSection(!showBookingSection)}
+            >
+              {showBookingSection ? "Hide Booking" : "Show Booking"}
+            </button>
+
+            <button
+              className={`dashboard-section-toggle ${showTransactionsSection ? "active" : ""}`}
+              onClick={() =>
+                setShowTransactionsSection(!showTransactionsSection)
+              }
+            >
+              {showTransactionsSection
+                ? "Hide Transactions"
+                : "Show Transactions"}
+            </button>
+
+            <button
+              className={`dashboard-section-toggle ${showActivitySection ? "active" : ""}`}
+              onClick={() => setShowActivitySection(!showActivitySection)}
+            >
+              {showActivitySection ? "Hide Activity" : "Show Activity"}
+            </button>
+
+            <button
+              className={`dashboard-section-toggle ${showDeveloperTools ? "active" : ""}`}
+              onClick={() => setShowDeveloperTools(!showDeveloperTools)}
+            >
+              {showDeveloperTools
+                ? "Hide Developer Tools"
+                : "Show Developer Tools"}
+            </button>
+          </div>
 
           {showDeveloperTools && (
             <div className="panel developer-tools-panel">
@@ -2957,13 +3041,61 @@ function App() {
             </div>
           )}
 
-          <AdminStats
-            totalClubBalance={totalClubBalance}
-            activeMemberCount={activeMemberCount}
-            pendingRequestCount={pendingRequests.length}
-            negativeBalanceCount={negativeBalanceCount}
-            formatMoney={formatMoney}
-          />
+          {showActivitySection && (
+          <div className="panel recent-activity-panel collapsible-section">
+            <div className="panel-header">
+              <div>
+                <h2>Recent Activity</h2>
+                <p>Latest audit logs from important admin and member actions.</p>
+              </div>
+
+              <button
+                className="secondary-button compact-button"
+                onClick={() => handleLoadRecentActivityLogs()}
+                disabled={isLoadingActivityLogs}
+              >
+                {isLoadingActivityLogs ? "Loading..." : "Refresh Activity"}
+              </button>
+            </div>
+
+            {isLoadingActivityLogs ? (
+              <p className="empty-text">Loading activity...</p>
+            ) : activityLogs.length === 0 ? (
+              <p className="empty-text">No activity yet.</p>
+            ) : (
+              <table className="activity-log-table">
+                <thead>
+                  <tr>
+                    <th>Date/time</th>
+                    <th>Actor</th>
+                    <th>Action</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {activityLogs.map((log) => (
+                    <tr key={log.id}>
+                      <td>
+                        {log.created_at
+                          ? new Date(log.created_at).toLocaleString()
+                          : ""}
+                      </td>
+                      <td>
+                        {log.actor_name ||
+                          log.actor_role ||
+                          log.actor_id ||
+                          "Unknown"}
+                      </td>
+                      <td>{log.action}</td>
+                      <td>{log.description || ""}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+          )}
 
           {pendingMembers.length > 0 && (
             <div className="panel pending-member-approvals-panel">
@@ -3047,8 +3179,17 @@ function App() {
             </div>
           )}
 
-          <div className="main-grid">
-            <div className="panel">
+          {showMembersSection && (
+            <section className="collapsible-section">
+              <div className="collapsible-section-header">
+                <div>
+                  <h2>Members Management</h2>
+                  <p>Search, edit, export, and manage club members.</p>
+                </div>
+              </div>
+
+              <div className="dashboard-section-stack">
+                <div className="panel">
               <div className="panel-header">
                 <div>
                   <h2>Members</h2>
@@ -3118,95 +3259,163 @@ function App() {
               ) : null}
             </div>
 
-            <div className="panel">
-              <h2>Manual Balance Update</h2>
+                <div className="panel add-member-panel">
+                  <h2>Add New Member</h2>
 
-              <label>Member</label>
-              <select
-                value={selectedMemberId}
-                onChange={(event) => setSelectedMemberId(event.target.value)}
-              >
-                {members
-                  .filter((member) => member.status === "active")
-                  .map((member) => (
-                    <option key={member.id} value={member.id}>
-                      {member.name}
-                    </option>
-                  ))}
-              </select>
-
-              <label>New Balance</label>
-              <input
-                type="number"
-                placeholder="Example: 100 or -50"
-                value={manualBalance}
-                onChange={(event) => setManualBalance(event.target.value)}
-              />
-
-              <button
-                className="action-button"
-                onClick={handleManualBalanceUpdate}
-              >
-                Update Balance
-              </button>
-
-              <hr />
-
-              <h2>Weekly Expense</h2>
-
-              <label>Total Expense</label>
-              <input
-                type="number"
-                placeholder="Example: 175.20"
-                value={expenseAmount}
-                onChange={(event) => setExpenseAmount(event.target.value)}
-              />
-
-              <div className="expense-summary">
-                <p>
-                  Selected Members: <strong>{selectedExpenseMembers.length}</strong>
-                </p>
-
-                <p>
-                  Split Amount:{" "}
-                  <strong>
-                    {selectedExpenseMembers.length > 0 && Number(expenseAmount) > 0
-                      ? formatMoney(
-                        Number(expenseAmount) / selectedExpenseMembers.length
-                      )
-                      : "RM0.00"}
-                  </strong>
-                </p>
-              </div>
-
-              <div className="member-checkbox-list">
-                {members
-                  .filter((member) => member.status === "active")
-                  .map((member) => (
-                    <label key={member.id} className="member-checkbox-row">
+                  <div className="add-member-grid">
+                    <div>
+                      <label>Member Name</label>
                       <input
-                        type="checkbox"
-                        checked={selectedExpenseMembers.includes(member.id)}
-                        onChange={() => handleToggleExpenseMember(member.id)}
+                        type="text"
+                        placeholder="Example: Alex Tan"
+                        value={newMemberName}
+                        onChange={(event) => setNewMemberName(event.target.value)}
                       />
+                    </div>
 
-                      <span>{member.name}</span>
-                      <small>{formatMoney(member.balance)}</small>
-                    </label>
-                  ))}
+                    <div>
+                      <label>Login ID / Email</label>
+                      <input
+                        type="text"
+                        placeholder="Example: alex@byt.club"
+                        value={newMemberEmail}
+                        onChange={(event) => setNewMemberEmail(event.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <label>Starting Balance</label>
+                      <input
+                        type="number"
+                        placeholder="Example: 0"
+                        value={newMemberBalance}
+                        onChange={(event) => setNewMemberBalance(event.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <button className="action-button add-member-button" onClick={handleAddMember}>
+                    Add Member
+                  </button>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {showBalanceToolsSection && (
+            <section className="collapsible-section">
+              <div className="collapsible-section-header">
+                <div>
+                  <h2>Balance & Calculator</h2>
+                  <p>Adjust balances, split expenses, and estimate session charges.</p>
+                </div>
               </div>
 
-              <button className="action-button" onClick={handleChargeExpense}>
-                Charge Expense
-              </button>
-            </div>
-            <SessionCalculator
-              members={members}
-              setMembers={setMembers}
-              setTransactions={setTransactions}
-              formatMoney={formatMoney}
-            />
-          </div>
+              <div className="balance-tools-grid">
+                <SessionCalculator
+                  members={members}
+                  setMembers={setMembers}
+                  setTransactions={setTransactions}
+                  formatMoney={formatMoney}
+                />
+
+                <div className="balance-side-stack">
+                  <div className="panel">
+                    <h2>Manual Balance Update</h2>
+
+                    <label>Member</label>
+                    <select
+                      value={selectedMemberId}
+                      onChange={(event) => setSelectedMemberId(event.target.value)}
+                    >
+                      {members
+                        .filter((member) => member.status === "active")
+                        .map((member) => (
+                          <option key={member.id} value={member.id}>
+                            {member.name}
+                          </option>
+                        ))}
+                    </select>
+
+                    <label>New Balance</label>
+                    <input
+                      type="number"
+                      placeholder="Example: 100 or -50"
+                      value={manualBalance}
+                      onChange={(event) => setManualBalance(event.target.value)}
+                    />
+
+                    <button
+                      className="action-button"
+                      onClick={handleManualBalanceUpdate}
+                    >
+                      Update Balance
+                    </button>
+                  </div>
+
+                  <div className="panel">
+                    <h2>Weekly Expense</h2>
+
+                    <label>Total Expense</label>
+                    <input
+                      type="number"
+                      placeholder="Example: 175.20"
+                      value={expenseAmount}
+                      onChange={(event) => setExpenseAmount(event.target.value)}
+                    />
+
+                    <div className="expense-summary">
+                      <p>
+                        Selected Members: <strong>{selectedExpenseMembers.length}</strong>
+                      </p>
+
+                      <p>
+                        Split Amount:{" "}
+                        <strong>
+                          {selectedExpenseMembers.length > 0 && Number(expenseAmount) > 0
+                            ? formatMoney(
+                              Number(expenseAmount) / selectedExpenseMembers.length
+                            )
+                            : "RM0.00"}
+                        </strong>
+                      </p>
+                    </div>
+
+                    <div className="member-checkbox-list">
+                      {members
+                        .filter((member) => member.status === "active")
+                        .map((member) => (
+                          <label key={member.id} className="member-checkbox-row">
+                            <input
+                              type="checkbox"
+                              checked={selectedExpenseMembers.includes(member.id)}
+                              onChange={() => handleToggleExpenseMember(member.id)}
+                            />
+
+                            <span>{member.name}</span>
+                            <small>{formatMoney(member.balance)}</small>
+                          </label>
+                        ))}
+                    </div>
+
+                    <button className="action-button" onClick={handleChargeExpense}>
+                      Charge Expense
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {showBookingSection && (
+            <section className="collapsible-section">
+              <div className="collapsible-section-header">
+                <div>
+                  <h2>Booking Management</h2>
+                  <p>Create sessions, manage bookings, and finalize charges.</p>
+                </div>
+              </div>
+
           <AdminBookingManagement
             bookingStatusOptions={bookingStatusOptions}
             formatMoney={formatMoney}
@@ -3240,46 +3449,18 @@ function App() {
             setNewSessionVenue={setNewSessionVenue}
             users={users}
           />
+            </section>
+          )}
 
-          <div className="panel add-member-panel">
-            <h2>Add New Member</h2>
-
-            <div className="add-member-grid">
-              <div>
-                <label>Member Name</label>
-                <input
-                  type="text"
-                  placeholder="Example: Alex Tan"
-                  value={newMemberName}
-                  onChange={(event) => setNewMemberName(event.target.value)}
-                />
+          {showTransactionsSection && (
+            <section className="collapsible-section">
+              <div className="collapsible-section-header">
+                <div>
+                  <h2>Transactions</h2>
+                  <p>Search, filter, export, and review club transaction history.</p>
+                </div>
               </div>
 
-              <div>
-                <label>Login ID / Email</label>
-                <input
-                  type="text"
-                  placeholder="Example: alex@byt.club"
-                  value={newMemberEmail}
-                  onChange={(event) => setNewMemberEmail(event.target.value)}
-                />
-              </div>
-
-              <div>
-                <label>Starting Balance</label>
-                <input
-                  type="number"
-                  placeholder="Example: 0"
-                  value={newMemberBalance}
-                  onChange={(event) => setNewMemberBalance(event.target.value)}
-                />
-              </div>
-            </div>
-
-            <button className="action-button add-member-button" onClick={handleAddMember}>
-              Add Member
-            </button>
-          </div>
           <div className="panel transaction-panel">
             <div className="panel-header">
               <div>
@@ -3366,7 +3547,10 @@ function App() {
               </div>
             )}
           </div>
+            </section>
+          )}
 
+          {pendingRequests.length > 0 && (
           <div className="panel reload-request-panel">
             <h2>Pending Reload Requests</h2>
 
@@ -3457,6 +3641,7 @@ function App() {
               </div>
             )}
           </div>
+          )}
         </div>
       </div>
     );

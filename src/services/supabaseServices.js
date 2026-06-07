@@ -198,6 +198,25 @@ export async function createActivityLog(log) {
   }
 }
 
+export async function fetchRecentActivityLogs(limit = 20) {
+  try {
+    const rowLimit = Number(limit) || 20;
+    const { data, error } = await supabase
+      .from("activity_logs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(rowLimit);
+
+    if (error) {
+      throw new Error(getSupabaseErrorMessage(error));
+    }
+
+    return data || [];
+  } catch (error) {
+    throw new Error(getSupabaseErrorMessage(error));
+  }
+}
+
 export async function uploadReloadScreenshotToSupabase(file, memberId) {
   try {
     if (!file) {
