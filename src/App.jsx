@@ -106,6 +106,28 @@ function normalizeWhatsappNumber(value) {
   return normalizedValue;
 }
 
+function normalizeWhatsappForLink(value) {
+  const trimmedValue = String(value || "").trim();
+
+  if (trimmedValue === "") {
+    return "";
+  }
+
+  let normalizedValue = trimmedValue.replace(/[\s\-()]/g, "");
+
+  if (normalizedValue.startsWith("+")) {
+    normalizedValue = normalizedValue.slice(1);
+  }
+
+  normalizedValue = normalizedValue.replace(/\D/g, "");
+
+  if (normalizedValue.startsWith("0")) {
+    normalizedValue = `60${normalizedValue.slice(1)}`;
+  }
+
+  return normalizedValue;
+}
+
 const initialTransactions = [
   {
     id: 1,
@@ -365,6 +387,8 @@ function App() {
   const [showBookingSection, setShowBookingSection] = useState(true);
   const [showTransactionsSection, setShowTransactionsSection] = useState(false);
   const [showActivitySection, setShowActivitySection] = useState(false);
+  const [showPaymentReminderSection, setShowPaymentReminderSection] =
+    useState(false);
   const [newMemberName, setNewMemberName] = useState("");
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberBalance, setNewMemberBalance] = useState("");
@@ -2180,6 +2204,56 @@ function App() {
     }
   }
 
+  function getPaymentReminderMessage(member) {
+    const formattedBalance = formatMoney(Number(member.balance || 0));
+
+    if (Number(member.balance || 0) < 0) {
+      return `Hi ${member.name}, your BYT Club Wallet balance is ${formattedBalance}. Kindly reload your wallet to clear the outstanding balance before the next session. Thank you.`;
+    }
+
+    return `Hi ${member.name}, your BYT Club Wallet balance is ${formattedBalance}. Please reload before booking or joining the next session. Thank you.`;
+  }
+
+  async function handleCopyPaymentReminder(member) {
+    const message = getPaymentReminderMessage(member);
+
+    try {
+      await navigator.clipboard.writeText(message);
+      alert("Reminder message copied.");
+      logActivity({
+        action: "copy_payment_reminder",
+        targetType: "member",
+        targetId: String(member.id),
+        description: `Copied payment reminder for ${member.name}`,
+      });
+    } catch (error) {
+      console.error("Unable to copy payment reminder:", error);
+      alert("Unable to copy message. Please copy manually.");
+    }
+  }
+
+  function handleOpenWhatsappReminder(member) {
+    const phone = normalizeWhatsappForLink(member.whatsapp);
+
+    if (!phone) {
+      alert(
+        "This member does not have a WhatsApp number. Please update member profile first."
+      );
+      return;
+    }
+
+    const message = getPaymentReminderMessage(member);
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+    window.open(url, "_blank", "noopener,noreferrer");
+    logActivity({
+      action: "open_whatsapp_payment_reminder",
+      targetType: "member",
+      targetId: String(member.id),
+      description: `Opened WhatsApp payment reminder for ${member.name}`,
+    });
+  }
+
   // Booking and session charging
   function normalizeCutoffTime(value) {
     const rawValue = String(value || "12:00").trim().toUpperCase();
@@ -2873,6 +2947,13 @@ function App() {
     const pendingMembers = members
       .filter((member) => member.status === "pending")
       .sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+    const paymentReminderMembers = members
+      .filter(
+        (member) =>
+          member.status === "active" &&
+          Number(member.balance || 0) < MINIMUM_BOOKING_BALANCE
+      )
+      .sort((a, b) => Number(a.balance || 0) - Number(b.balance || 0));
     const allTransactions = transactions.map((transaction) => {
       const member = members.find(
         (member) => Number(member.id) === Number(transaction.memberId)
@@ -3014,6 +3095,15 @@ function App() {
               }
             >
               Transactions
+            </button>
+
+            <button
+              className={`dashboard-section-toggle ${showPaymentReminderSection ? "active" : ""}`}
+              onClick={() =>
+                setShowPaymentReminderSection(!showPaymentReminderSection)
+              }
+            >
+              Reminders
             </button>
 
             <button
@@ -3199,6 +3289,100 @@ function App() {
                 </>
               )}
             </div>
+          )}
+
+          {showPaymentReminderSection && (
+            <section className="collapsible-section">
+              <div className="collapsible-section-header">
+                <div>
+                  <h2>Payment Reminders</h2>
+                  <p>
+                    Generate reload reminders for low or negative balance members.
+                  </p>
+                </div>
+              </div>
+
+              <div className="panel payment-reminder-panel">
+                {paymentReminderMembers.length === 0 ? (
+                  <p className="empty-text">No payment reminders needed.</p>
+                ) : (
+                  <div className="payment-reminder-grid">
+                    {paymentReminderMembers.map((member) => {
+                      const hasWhatsapp = Boolean(
+                        normalizeWhatsappForLink(member.whatsapp)
+                      );
+                      const reminderType =
+                        Number(member.balance || 0) < 0
+                          ? "Negative Balance"
+                          : "Low Balance";
+
+                      return (
+                        <div key={member.id} className="payment-reminder-card">
+                          <div className="payment-reminder-card-header">
+                            <div>
+                              <h3>{member.name}</h3>
+                              {member.whatsapp ? (
+                                <p className="whatsapp-number">
+                                  WhatsApp: {member.whatsapp}
+                                </p>
+                              ) : (
+                                <p className="whatsapp-number muted">
+                                  No WhatsApp number saved.
+                                </p>
+                              )}
+                            </div>
+
+                            <span
+                              className={`reminder-type-badge ${
+                                Number(member.balance || 0) < 0
+                                  ? "negative"
+                                  : "low"
+                              }`}
+                            >
+                              {reminderType}
+                            </span>
+                          </div>
+
+                          <div className="payment-reminder-balance">
+                            <span>Current balance</span>
+                            <strong
+                              className={
+                                Number(member.balance || 0) < 0
+                                  ? "negative"
+                                  : "positive"
+                              }
+                            >
+                              {formatMoney(Number(member.balance || 0))}
+                            </strong>
+                          </div>
+
+                          <p className="payment-reminder-message">
+                            {getPaymentReminderMessage(member)}
+                          </p>
+
+                          <div className="reminder-actions">
+                            <button
+                              className="secondary-button compact-button"
+                              onClick={() => handleCopyPaymentReminder(member)}
+                            >
+                              Copy Message
+                            </button>
+
+                            <button
+                              className="action-button compact-button"
+                              disabled={!hasWhatsapp}
+                              onClick={() => handleOpenWhatsappReminder(member)}
+                            >
+                              Open WhatsApp
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </section>
           )}
 
           {showActivitySection && (

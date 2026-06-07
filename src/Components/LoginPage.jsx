@@ -47,12 +47,6 @@ function LoginPage({
                     </button>
                 </div>
 
-                <div className="demo-box">
-                    <p>Demo Account</p>
-                    <p>Admin: admin@byt.club / 123456</p>
-                    <p>Member: gordon@byt.club / 123456</p>
-                </div>
-
                 <p className="footer-text">Prototype version · BYT Club Wallet</p>
             </div>
         </div>

@@ -888,6 +888,111 @@ input[type="file"] {
   min-width: 0;
 }
 
+.payment-reminder-panel {
+  margin-top: 0;
+}
+
+.payment-reminder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.payment-reminder-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+}
+
+.payment-reminder-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.payment-reminder-card h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 18px;
+}
+
+.whatsapp-number {
+  margin: 6px 0 0;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 800;
+  word-break: break-word;
+}
+
+.whatsapp-number.muted {
+  color: #94a3b8;
+}
+
+.reminder-type-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.reminder-type-badge.negative {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.reminder-type-badge.low {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.payment-reminder-balance {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.payment-reminder-balance span {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.payment-reminder-balance strong {
+  font-size: 18px;
+}
+
+.payment-reminder-message {
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.reminder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.reminder-actions .compact-button {
+  margin-top: 0;
+}
+
 @media (max-width: 900px) {
   .balance-tools-grid {
     grid-template-columns: 1fr;
@@ -2334,6 +2439,25 @@ tbody tr:hover {
   .developer-tools-grid {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .payment-reminder-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-reminder-card-header,
+  .payment-reminder-balance {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .reminder-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .reminder-actions .compact-button {
+    width: 100%;
   }
 
   .developer-tools-unlock-row {
