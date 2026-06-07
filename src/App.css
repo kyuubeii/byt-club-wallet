@@ -1013,8 +1013,13 @@ input[type="file"] {
   margin-top: 24px;
 }
 
+.whatsapp-prompt-panel {
+  margin-top: 24px;
+}
+
 .dashboard-content > .change-password-panel,
-.dashboard-content > .change-login-id-panel {
+.dashboard-content > .change-login-id-panel,
+.dashboard-content > .whatsapp-prompt-panel {
   margin-top: 24px;
   margin-bottom: 24px;
 }
@@ -2149,6 +2154,7 @@ tbody tr:hover {
 .topup-panel,
 .change-password-panel,
 .change-login-id-panel,
+.whatsapp-prompt-panel,
 .member-session-panel {
   scroll-margin-top: 96px;
 }
@@ -2487,6 +2493,7 @@ tbody tr:hover {
   .member-session-panel,
   .reload-request-panel,
   .transaction-panel,
+  .whatsapp-prompt-panel,
   .topup-panel {
     margin-top: 18px;
     margin-bottom: 18px;

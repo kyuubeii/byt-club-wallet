@@ -16,6 +16,7 @@ function toSupabaseMemberRow(member) {
     balance: Number(member.balance || 0),
     status: member.status || "active",
     member_type: member.memberType || null,
+    whatsapp: member.whatsapp || null,
   };
 }
 

@@ -3,6 +3,7 @@ function EditMemberPanel({
   editMemberEmail,
   editMemberName,
   editMemberStatus,
+  editMemberWhatsapp,
   editingMemberId,
   handleCancelEditMember,
   handleDeactivateMember,
@@ -16,6 +17,7 @@ function EditMemberPanel({
   setEditMemberEmail,
   setEditMemberName,
   setEditMemberStatus,
+  setEditMemberWhatsapp,
   setNewPassword,
 }) {
   return (
@@ -76,6 +78,16 @@ function EditMemberPanel({
             <option value="inactive">Inactive</option>
             <option value="pending">Pending</option>
           </select>
+        </div>
+
+        <div>
+          <label>WhatsApp Number</label>
+          <input
+            type="text"
+            placeholder="Example: 60142889116"
+            value={editMemberWhatsapp}
+            onChange={(event) => setEditMemberWhatsapp(event.target.value)}
+          />
         </div>
       </div>
 

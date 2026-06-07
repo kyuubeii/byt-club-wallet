@@ -78,6 +78,34 @@ function getFriendlyCloudSyncMessage(error) {
   return `Saved locally, but cloud sync failed. ${getFriendlyErrorMessage(error)}`;
 }
 
+function normalizeWhatsappNumber(value) {
+  const trimmedValue = String(value || "").trim();
+
+  if (trimmedValue === "") {
+    return "";
+  }
+
+  if (!/^[0-9+\s-]+$/.test(trimmedValue)) {
+    return null;
+  }
+
+  let normalizedValue = trimmedValue.replace(/[\s-]/g, "");
+
+  if (normalizedValue.startsWith("+")) {
+    normalizedValue = normalizedValue.slice(1);
+  }
+
+  if (normalizedValue.startsWith("0")) {
+    normalizedValue = `60${normalizedValue.slice(1)}`;
+  }
+
+  if (!/^\d+$/.test(normalizedValue) || normalizedValue.length < 8) {
+    return null;
+  }
+
+  return normalizedValue;
+}
+
 const initialTransactions = [
   {
     id: 1,
@@ -224,6 +252,7 @@ function convertSupabaseMembers(supabaseMembers) {
     balance: Number(member.balance || 0),
     status: member.status || "active",
     memberType: member.member_type || null,
+    whatsapp: member.whatsapp || "",
   }));
 }
 
@@ -344,6 +373,7 @@ function App() {
   const [editMemberEmail, setEditMemberEmail] = useState("");
   const [editMemberBalance, setEditMemberBalance] = useState("");
   const [editMemberStatus, setEditMemberStatus] = useState("active");
+  const [editMemberWhatsapp, setEditMemberWhatsapp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [memberOldPassword, setMemberOldPassword] = useState("");
   const [memberNewPassword, setMemberNewPassword] = useState("");
@@ -352,6 +382,8 @@ function App() {
   const [memberNewLoginId, setMemberNewLoginId] = useState("");
   const [memberLoginIdPassword, setMemberLoginIdPassword] = useState("");
   const [showMemberLoginIdPanel, setShowMemberLoginIdPanel] = useState(false);
+  const [memberWhatsappInput, setMemberWhatsappInput] = useState("");
+  const [showWhatsappPrompt, setShowWhatsappPrompt] = useState(false);
 
   const [showTopUpBox, setShowTopUpBox] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState("");
@@ -540,6 +572,8 @@ function App() {
       }
 
       setCurrentUser(foundUser);
+      setMemberWhatsappInput("");
+      setShowWhatsappPrompt(!String(memberData.whatsapp || "").trim());
       setPage("member");
       return;
     }
@@ -588,6 +622,7 @@ function App() {
       balance: 0,
       status: "pending",
       memberType: "new",
+      whatsapp: "",
     };
 
     const newUser = {
@@ -636,6 +671,8 @@ function App() {
     setMemberNewLoginId("");
     setMemberLoginIdPassword("");
     setShowMemberLoginIdPanel(false);
+    setMemberWhatsappInput("");
+    setShowWhatsappPrompt(false);
   }
 
   async function syncMemberToSupabase(member) {
@@ -875,6 +912,7 @@ function App() {
       email: newMemberEmail,
       balance: startingBalance,
       status: "active",
+      whatsapp: "",
     };
 
     const newUser = {
@@ -927,6 +965,7 @@ function App() {
     setEditMemberEmail(user?.email || member.email || "");
     setEditMemberBalance(member.balance);
     setEditMemberStatus(member.status || "active");
+    setEditMemberWhatsapp(member.whatsapp || "");
     setNewPassword("");
   }
 
@@ -936,6 +975,7 @@ function App() {
     setEditMemberEmail("");
     setEditMemberBalance("");
     setEditMemberStatus("active");
+    setEditMemberWhatsapp("");
     setNewPassword("");
   }
 
@@ -976,12 +1016,20 @@ function App() {
       return;
     }
 
+    const normalizedWhatsapp = normalizeWhatsappNumber(editMemberWhatsapp);
+
+    if (normalizedWhatsapp === null) {
+      alert("Please enter a valid WhatsApp number");
+      return;
+    }
+
     const updatedMember = {
       ...currentMember,
       name: editMemberName,
       email: editMemberEmail,
       balance: updatedBalance,
       status: editMemberStatus,
+      whatsapp: normalizedWhatsapp,
     };
 
     setMembers((previousMembers) =>
@@ -1424,6 +1472,51 @@ function App() {
     }
 
     alert("Login ID updated successfully. Please use your new Login ID next time.");
+  }
+
+  async function handleMemberUpdateWhatsapp() {
+    const normalizedWhatsapp = normalizeWhatsappNumber(memberWhatsappInput);
+
+    if (normalizedWhatsapp === null || normalizedWhatsapp === "") {
+      alert("Please enter a valid WhatsApp number");
+      return;
+    }
+
+    const currentMember = members.find(
+      (member) => Number(member.id) === Number(currentUser.memberId)
+    );
+
+    if (!currentMember) {
+      alert("Member profile not found");
+      return;
+    }
+
+    const updatedMember = {
+      ...currentMember,
+      whatsapp: normalizedWhatsapp,
+    };
+
+    setMembers((previousMembers) =>
+      previousMembers.map((member) => {
+        if (Number(member.id) === Number(currentUser.memberId)) {
+          return updatedMember;
+        }
+
+        return member;
+      })
+    );
+
+    setMemberWhatsappInput("");
+    setShowWhatsappPrompt(false);
+
+    try {
+      await syncMemberToSupabase(updatedMember);
+    } catch (error) {
+      alertSupabaseMemberSyncFailed(error);
+      return;
+    }
+
+    alert("WhatsApp number updated successfully.");
   }
 
   // Reload requests
@@ -3306,6 +3399,7 @@ function App() {
                   editMemberEmail={editMemberEmail}
                   editMemberName={editMemberName}
                   editMemberStatus={editMemberStatus}
+                  editMemberWhatsapp={editMemberWhatsapp}
                   editingMemberId={editingMemberId}
                   handleCancelEditMember={handleCancelEditMember}
                   handleDeactivateMember={handleDeactivateMember}
@@ -3321,6 +3415,7 @@ function App() {
                   setEditMemberEmail={setEditMemberEmail}
                   setEditMemberName={setEditMemberName}
                   setEditMemberStatus={setEditMemberStatus}
+                  setEditMemberWhatsapp={setEditMemberWhatsapp}
                   setNewPassword={setNewPassword}
                 />
               ) : null}
@@ -3749,6 +3844,11 @@ function App() {
           handleMemberChangeLoginId={handleMemberChangeLoginId}
           showMemberLoginIdPanel={showMemberLoginIdPanel}
           setShowMemberLoginIdPanel={setShowMemberLoginIdPanel}
+          memberWhatsappInput={memberWhatsappInput}
+          setMemberWhatsappInput={setMemberWhatsappInput}
+          showWhatsappPrompt={showWhatsappPrompt}
+          setShowWhatsappPrompt={setShowWhatsappPrompt}
+          handleMemberUpdateWhatsapp={handleMemberUpdateWhatsapp}
           sessions={sessions}
           sessionBookings={sessionBookings}
           getActiveSessionBookings={getActiveSessionBookings}

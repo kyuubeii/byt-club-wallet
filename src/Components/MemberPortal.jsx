@@ -32,6 +32,11 @@ function MemberPortal({
     handleMemberChangeLoginId,
     showMemberLoginIdPanel,
     setShowMemberLoginIdPanel,
+    memberWhatsappInput,
+    setMemberWhatsappInput,
+    showWhatsappPrompt,
+    setShowWhatsappPrompt,
+    handleMemberUpdateWhatsapp,
     sessions,
     sessionBookings,
     getActiveSessionBookings,
@@ -163,6 +168,10 @@ function MemberPortal({
     );
     const belowMinimumBookingBalance =
         Number(memberData.balance) < minimumBookingBalance;
+    const shouldShowWhatsappPrompt =
+        showWhatsappPrompt &&
+        (!String(memberData.whatsapp || "").trim() ||
+            String(memberWhatsappInput || "").trim() !== "");
 
     return (
         <div className="dashboard-page">
@@ -200,6 +209,18 @@ function MemberPortal({
                                 }}
                             >
                                 Change Login ID
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    setShowMemberPasswordPanel(false);
+                                    setShowMemberLoginIdPanel(false);
+                                    setMemberWhatsappInput(memberData.whatsapp || "");
+                                    setShowWhatsappPrompt(true);
+                                    setShowMemberMenu(false);
+                                }}
+                            >
+                                Update WhatsApp Number
                             </button>
 
                             <button onClick={handleLogout}>Logout</button>
@@ -310,6 +331,43 @@ function MemberPortal({
                         <button className="action-button" onClick={handleMemberChangePassword}>
                             Change Password
                         </button>
+                    </div>
+                )}
+
+                {shouldShowWhatsappPrompt && (
+                    <div className="panel whatsapp-prompt-panel">
+                        <div className="panel-header">
+                            <div>
+                                <h2>Add WhatsApp Number</h2>
+                                <p>
+                                    Add your WhatsApp number to receive booking and payment reminders.
+                                </p>
+                            </div>
+                        </div>
+
+                        <label>WhatsApp Number</label>
+                        <input
+                            type="text"
+                            placeholder="Example: 0142889116"
+                            value={memberWhatsappInput}
+                            onChange={(event) => setMemberWhatsappInput(event.target.value)}
+                        />
+
+                        <div className="button-row">
+                            <button className="action-button" onClick={handleMemberUpdateWhatsapp}>
+                                Save WhatsApp Number
+                            </button>
+
+                            <button
+                                className="secondary-button"
+                                onClick={() => {
+                                    setMemberWhatsappInput("");
+                                    setShowWhatsappPrompt(false);
+                                }}
+                            >
+                                Skip for now
+                            </button>
+                        </div>
                     </div>
                 )}
 
