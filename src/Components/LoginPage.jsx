@@ -1,3 +1,10 @@
+const BYT_WHATSAPP_NUMBER = "60142889116";
+const WALK_IN_INQUIRY_MESSAGE = `Hi BYT, I would like to ask if there is any walk-in slot available for the next badminton session.
+
+Name:
+Preferred session date:
+Number of walk-in player(s):`;
+
 function LoginPage({
     authNotice,
     email,
@@ -7,6 +14,14 @@ function LoginPage({
     handleLogin,
     setPage,
 }) {
+    function handleWalkInInquiry() {
+        const url = `https://wa.me/${BYT_WHATSAPP_NUMBER}?text=${encodeURIComponent(
+            WALK_IN_INQUIRY_MESSAGE
+        )}`;
+
+        window.open(url, "_blank", "noopener,noreferrer");
+    }
+
     return (
         <div className="page">
             <div className="login-card">
@@ -45,9 +60,13 @@ function LoginPage({
                     >
                         New Member Register
                     </button>
+                    <button
+                        className="walkin-inquiry-button"
+                        onClick={handleWalkInInquiry}
+                    >
+                        Walk-in Inquiry
+                    </button>
                 </div>
-
-                <p className="footer-text">Prototype version · BYT Club Wallet</p>
             </div>
         </div>
     );

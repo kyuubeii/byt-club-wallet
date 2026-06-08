@@ -93,6 +93,58 @@ function EditMemberPanel({
         </div>
       </div>
 
+      {(selectedMember?.packageName ||
+        selectedMember?.registrationPaymentProofUrl) && (
+        <div className="edit-member-package-info">
+          <h3>Registration Package</h3>
+          <div className="package-info-grid">
+            <div>
+              <span>Package</span>
+              <strong>{selectedMember.packageName || "-"}</strong>
+            </div>
+            <div>
+              <span>Package Price</span>
+              <strong>
+                {Number(selectedMember.packagePrice || 0) > 0
+                  ? `RM${Number(selectedMember.packagePrice || 0).toFixed(2)}`
+                  : "-"}
+              </strong>
+            </div>
+            <div>
+              <span>Wallet Credit</span>
+              <strong>
+                {Number(selectedMember.packageCredit || 0) > 0
+                  ? `RM${Number(selectedMember.packageCredit || 0).toFixed(2)}`
+                  : "-"}
+              </strong>
+            </div>
+            <div>
+              <span>Gift</span>
+              <strong>{selectedMember.giftChoice || "-"}</strong>
+            </div>
+            <div>
+              <span>Uniform Size</span>
+              <strong>{selectedMember.uniformSize || "-"}</strong>
+            </div>
+            <div>
+              <span>Payment Proof</span>
+              {selectedMember.registrationPaymentProofUrl ? (
+                <a
+                  className="registration-proof-link"
+                  href={selectedMember.registrationPaymentProofUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View Proof
+                </a>
+              ) : (
+                <strong>-</strong>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <label>New Password</label>
       <input
         type="text"

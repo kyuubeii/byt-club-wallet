@@ -48,6 +48,17 @@ body {
   text-align: center;
 }
 
+.registration-card {
+  max-width: 860px;
+  text-align: left;
+}
+
+.registration-card .logo-box,
+.registration-card h1,
+.registration-card .subtitle {
+  text-align: center;
+}
+
 .logo-box {
   width: 64px;
   height: 64px;
@@ -131,6 +142,21 @@ input {
 }
 
 input:focus {
+  border-color: #0f172a;
+}
+
+select {
+  width: 100%;
+  padding: 15px 16px;
+  border-radius: 16px;
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #0f172a;
+  font-size: 15px;
+  outline: none;
+}
+
+select:focus {
   border-color: #0f172a;
 }
 
@@ -1073,6 +1099,15 @@ input[type="file"] {
   .analytics-card-wide {
     grid-column: auto;
   }
+
+  .registration-card {
+    max-width: 100%;
+  }
+
+  .package-selection-grid,
+  .registration-form-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .developer-tools-toggle {
@@ -1324,6 +1359,215 @@ input[type="file"] {
 
 .register-link-button:hover {
   background: #f8fafc;
+}
+
+.walkin-inquiry-button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px;
+  border: 1px solid #bfdbfe;
+  border-radius: 18px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.walkin-inquiry-button:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.package-image {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  margin: 22px 0;
+  border-radius: 22px;
+  object-fit: cover;
+  border: 1px solid #e2e8f0;
+}
+
+.registration-section {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  background: #f8fafc;
+}
+
+.registration-section h2 {
+  margin: 0 0 14px;
+  color: #0f172a;
+  font-size: 18px;
+}
+
+.package-selection-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.package-card {
+  display: flex;
+  min-height: 230px;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 18px;
+  border: 1px solid #cbd5e1;
+  border-radius: 18px;
+  background: white;
+  color: #0f172a;
+  text-align: left;
+  cursor: pointer;
+}
+
+.package-card.active {
+  border-color: #0f172a;
+  background: #eff6ff;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
+}
+
+.package-card > span {
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.package-price {
+  color: #0f172a;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.package-benefits {
+  margin: 0;
+  padding-left: 18px;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.registration-option-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.registration-radio,
+.terms-checkbox {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  background: white;
+  color: #334155;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.registration-radio input,
+.terms-checkbox input {
+  width: auto;
+  padding: 0;
+  margin: 0;
+}
+
+.registration-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 18px;
+}
+
+.registration-bank-box {
+  display: grid;
+  gap: 5px;
+  padding: 16px;
+  border-radius: 16px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+}
+
+.registration-bank-box span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.registration-bank-box strong {
+  font-size: 18px;
+}
+
+.registration-bank-box p,
+.registration-bank-box small,
+.registration-helper-text {
+  margin: 0;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.registration-helper-text {
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.terms-box {
+  margin-top: 22px;
+  padding: 18px;
+  border-radius: 18px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+}
+
+.terms-box p {
+  margin: 0 0 14px;
+  color: #7c2d12;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.payment-proof-preview {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.pending-package-info {
+  display: grid;
+  gap: 4px;
+  min-width: 150px;
+}
+
+.pending-package-info strong {
+  color: #0f172a;
+}
+
+.pending-package-info span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.registration-proof-link {
+  color: #1d4ed8;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.registration-proof-link:hover {
+  text-decoration: underline;
 }
 
 /* Session Calculator preferred grid style */
@@ -2240,6 +2484,46 @@ button:disabled {
 .edit-member-grid input,
 .edit-member-grid select {
   width: 100%;
+}
+
+.edit-member-package-info {
+  margin: 24px 0;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.edit-member-package-info h3 {
+  margin: 0 0 14px;
+  color: #0f172a;
+  font-size: 18px;
+}
+
+.package-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.package-info-grid > div {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border-radius: 14px;
+  background: white;
+  border: 1px solid #e2e8f0;
+}
+
+.package-info-grid span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.package-info-grid strong {
+  color: #0f172a;
 }
 
 .edit-member-password-row {

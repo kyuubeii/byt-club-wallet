@@ -17,6 +17,20 @@ function toSupabaseMemberRow(member) {
     status: member.status || "active",
     member_type: member.memberType || null,
     whatsapp: member.whatsapp || null,
+    package_type: member.packageType || null,
+    package_name: member.packageName || null,
+    package_price: Number(member.packagePrice || 0),
+    package_credit: Number(member.packageCredit || 0),
+    registration_fee: Number(member.registrationFee || 0),
+    gift_choice: member.giftChoice || null,
+    uniform_size: member.uniformSize || null,
+    gender: member.gender || null,
+    birthday: member.birthday || null,
+    emergency_contact: member.emergencyContact || null,
+    registration_payment_proof_name:
+      member.registrationPaymentProofName || null,
+    registration_payment_proof_url: member.registrationPaymentProofUrl || null,
+    agreed_terms: Boolean(member.agreedTerms),
   };
 }
 
@@ -288,6 +302,44 @@ export async function uploadReloadScreenshotToSupabase(file, memberId) {
     return {
       screenshotName: file.name,
       screenshotUrl: data.publicUrl,
+    };
+  } catch (error) {
+    throw new Error(getSupabaseErrorMessage(error));
+  }
+}
+
+export async function uploadRegistrationProofToSupabase(file, memberId) {
+  try {
+    if (!file) {
+      throw new Error("Registration payment proof file is required");
+    }
+
+    const bucketName = "registration-proofs";
+    const safeFileName = String(file.name || "registration-payment-proof")
+      .replace(/[/\\]/g, "-")
+      .replace(/\s+/g, "-");
+    const filePath = `member-${memberId}/${Date.now()}-${safeFileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(bucketName)
+      .upload(filePath, file, {
+        contentType: file.type || "application/octet-stream",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      throw new Error(getSupabaseErrorMessage(uploadError));
+    }
+
+    const { data } = supabase.storage.from(bucketName).getPublicUrl(filePath);
+
+    if (!data?.publicUrl) {
+      throw new Error("Unable to get public URL for uploaded registration proof");
+    }
+
+    return {
+      proofName: file.name,
+      proofUrl: data.publicUrl,
     };
   } catch (error) {
     throw new Error(getSupabaseErrorMessage(error));

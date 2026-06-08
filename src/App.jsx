@@ -16,6 +16,24 @@ const USE_SUPABASE_DATA = true;
 const APP_VERSION = "1.0.0";
 const APP_ENVIRONMENT = import.meta.env.MODE;
 const APP_DATA_MODE = USE_SUPABASE_DATA ? "Supabase Online" : "Local Cache";
+const MEMBER_PACKAGES = {
+  exclusive: {
+    packageType: "exclusive",
+    packageName: "BYT Exclusive Member",
+    packagePrice: 128,
+    packageCredit: 100,
+    registrationFee: 28,
+  },
+  extreme: {
+    packageType: "extreme",
+    packageName: "BYT Extreme Member",
+    packagePrice: 158,
+    packageCredit: 100,
+    registrationFee: 58,
+  },
+};
+const GIFT_CHOICES = ["wristband", "headband"];
+const UNIFORM_SIZES = ["XS", "S", "M", "L", "XL", "2XL", "3XL"];
 
 function withTimeout(promise, timeoutMs, timeoutMessage) {
   return Promise.race([
@@ -126,6 +144,24 @@ function normalizeWhatsappForLink(value) {
   }
 
   return normalizedValue;
+}
+
+function getMemberRegistrationDefaults(member = {}) {
+  return {
+    packageType: member.packageType || "",
+    packageName: member.packageName || "",
+    packagePrice: Number(member.packagePrice || 0),
+    packageCredit: Number(member.packageCredit || 0),
+    registrationFee: Number(member.registrationFee || 0),
+    giftChoice: member.giftChoice || "",
+    uniformSize: member.uniformSize || "",
+    gender: member.gender || "",
+    birthday: member.birthday || "",
+    emergencyContact: member.emergencyContact || "",
+    registrationPaymentProofName: member.registrationPaymentProofName || "",
+    registrationPaymentProofUrl: member.registrationPaymentProofUrl || "",
+    agreedTerms: Boolean(member.agreedTerms),
+  };
 }
 
 const initialTransactions = [
@@ -310,6 +346,21 @@ function convertSupabaseMembers(supabaseMembers) {
     status: member.status || "active",
     memberType: member.member_type || null,
     whatsapp: member.whatsapp || "",
+    ...getMemberRegistrationDefaults({
+      packageType: member.package_type,
+      packageName: member.package_name,
+      packagePrice: member.package_price,
+      packageCredit: member.package_credit,
+      registrationFee: member.registration_fee,
+      giftChoice: member.gift_choice,
+      uniformSize: member.uniform_size,
+      gender: member.gender,
+      birthday: member.birthday,
+      emergencyContact: member.emergency_contact,
+      registrationPaymentProofName: member.registration_payment_proof_name,
+      registrationPaymentProofUrl: member.registration_payment_proof_url,
+      agreedTerms: member.agreed_terms,
+    }),
   }));
 }
 
@@ -411,6 +462,17 @@ function App() {
   const [password, setPassword] = useState("");
   const [authNotice, setAuthNotice] = useState("");
   const [registerName, setRegisterName] = useState("");
+  const [registerPackageType, setRegisterPackageType] = useState("");
+  const [registerGiftChoice, setRegisterGiftChoice] = useState("");
+  const [registerUniformSize, setRegisterUniformSize] = useState("");
+  const [registerGender, setRegisterGender] = useState("");
+  const [registerBirthday, setRegisterBirthday] = useState("");
+  const [registerWhatsapp, setRegisterWhatsapp] = useState("");
+  const [registerEmergencyContact, setRegisterEmergencyContact] = useState("");
+  const [registerAgreedTerms, setRegisterAgreedTerms] = useState(false);
+  const [registerPaymentProof, setRegisterPaymentProof] = useState(null);
+  const [isSubmittingRegistration, setIsSubmittingRegistration] =
+    useState(false);
 
   const [selectedMemberId, setSelectedMemberId] = useState(3);
   const [manualBalance, setManualBalance] = useState("");
@@ -649,9 +711,58 @@ function App() {
       return;
     }
   }
+  function clearRegistrationForm() {
+    setRegisterName("");
+    setRegisterPackageType("");
+    setRegisterGiftChoice("");
+    setRegisterUniformSize("");
+    setRegisterGender("");
+    setRegisterBirthday("");
+    setRegisterWhatsapp("");
+    setRegisterEmergencyContact("");
+    setRegisterEmail("");
+    setRegisterPassword("");
+    setRegisterConfirmPassword("");
+    setRegisterAgreedTerms(false);
+    setRegisterPaymentProof(null);
+  }
+
   async function handleRegister() {
+    if (isSubmittingRegistration) {
+      return;
+    }
+
+    const selectedPackage = MEMBER_PACKAGES[registerPackageType];
+
+    if (!selectedPackage) {
+      alert("Please select a member package");
+      return;
+    }
+
+    if (registerGiftChoice.trim() === "") {
+      alert("Please choose your gift");
+      return;
+    }
+
     if (registerName.trim() === "") {
       alert("Please enter your full name");
+      return;
+    }
+
+    if (registerGender.trim() === "") {
+      alert("Please select your gender");
+      return;
+    }
+
+    if (registerBirthday.trim() === "") {
+      alert("Please enter your birthday");
+      return;
+    }
+
+    const normalizedWhatsapp = normalizeWhatsappNumber(registerWhatsapp);
+
+    if (!normalizedWhatsapp) {
+      alert("Please enter a valid WhatsApp / mobile number");
       return;
     }
 
@@ -670,13 +781,38 @@ function App() {
       return;
     }
 
+    if (registerEmergencyContact.trim() === "") {
+      alert("Please enter emergency contact name and number");
+      return;
+    }
+
+    if (
+      selectedPackage.packageType === "extreme" &&
+      registerUniformSize.trim() === ""
+    ) {
+      alert("Please select your uniform size");
+      return;
+    }
+
+    if (!registerAgreedTerms) {
+      alert("Please agree to BYT Club Terms & Conditions");
+      return;
+    }
+
+    if (!registerPaymentProof) {
+      alert("Please upload payment proof");
+      return;
+    }
+
+    const normalizedRegisterEmail = registerEmail.trim();
     const emailExistsInMembers = members.some(
       (member) =>
-        (member.email || "").toLowerCase() === registerEmail.toLowerCase()
+        (member.email || "").toLowerCase() ===
+        normalizedRegisterEmail.toLowerCase()
     );
 
     const emailExistsInUsers = users.some(
-      (user) => user.email.toLowerCase() === registerEmail.toLowerCase()
+      (user) => user.email.toLowerCase() === normalizedRegisterEmail.toLowerCase()
     );
 
     if (emailExistsInMembers || emailExistsInUsers) {
@@ -685,22 +821,48 @@ function App() {
     }
 
     const newId = Date.now();
+    setIsSubmittingRegistration(true);
+
+    let uploadedProof;
+
+    try {
+      uploadedProof = await uploadRegistrationProof(registerPaymentProof, newId);
+    } catch (error) {
+      console.error("Registration payment proof upload failed:", error);
+      alert("Failed to upload registration payment proof. Please try again.");
+      setIsSubmittingRegistration(false);
+      return;
+    }
 
     const newMember = {
       id: newId,
-      name: registerName,
-      email: registerEmail,
+      name: registerName.trim(),
+      email: normalizedRegisterEmail,
+      whatsapp: normalizedWhatsapp,
       balance: 0,
       status: "pending",
       memberType: "new",
-      whatsapp: "",
+      packageType: selectedPackage.packageType,
+      packageName: selectedPackage.packageName,
+      packagePrice: selectedPackage.packagePrice,
+      packageCredit: selectedPackage.packageCredit,
+      registrationFee: selectedPackage.registrationFee,
+      giftChoice: registerGiftChoice,
+      uniformSize:
+        selectedPackage.packageType === "extreme" ? registerUniformSize : "",
+      gender: registerGender,
+      birthday: registerBirthday,
+      emergencyContact: registerEmergencyContact.trim(),
+      registrationPaymentProofName: uploadedProof.proofName,
+      registrationPaymentProofUrl: uploadedProof.proofUrl,
+      agreedTerms: true,
     };
 
     const newUser = {
       id: newId,
       memberId: newId,
-      name: registerName,
-      email: registerEmail,
+      name: registerName.trim(),
+      email: normalizedRegisterEmail,
       password: registerPassword,
       role: "member",
     };
@@ -718,14 +880,13 @@ function App() {
       console.error("Registration cloud sync failed:", error);
       registrationMessage =
         "Registration saved locally, but cloud sync failed. Please contact admin if your account does not appear.";
+    } finally {
+      setIsSubmittingRegistration(false);
     }
 
     alert(registrationMessage);
     setAuthNotice(registrationMessage);
-    setRegisterName("");
-    setRegisterEmail("");
-    setRegisterPassword("");
-    setRegisterConfirmPassword("");
+    clearRegistrationForm();
     setPage("login");
   }
 
@@ -824,6 +985,14 @@ function App() {
     );
 
     return uploadReloadScreenshotToSupabase(file, memberId);
+  }
+
+  async function uploadRegistrationProof(file, memberId) {
+    const { uploadRegistrationProofToSupabase } = await import(
+      "./services/supabaseServices.js"
+    );
+
+    return uploadRegistrationProofToSupabase(file, memberId);
   }
 
   async function syncReloadRequestUpdateToSupabase(requestId, updates) {
@@ -984,6 +1153,7 @@ function App() {
       balance: startingBalance,
       status: "active",
       whatsapp: "",
+      ...getMemberRegistrationDefaults(),
     };
 
     const newUser = {
@@ -1256,6 +1426,10 @@ function App() {
     const updatedMember = {
       ...pendingMember,
       status: "active",
+      balance:
+        Number(pendingMember.packageCredit || 0) > 0
+          ? Number(pendingMember.packageCredit)
+          : Number(pendingMember.balance || 0),
     };
 
     setMembers((previousMembers) =>
@@ -1270,6 +1444,7 @@ function App() {
 
     if (Number(editingMemberId) === Number(memberId)) {
       setEditMemberStatus("active");
+      setEditMemberBalance(updatedMember.balance);
     }
 
     try {
@@ -1283,7 +1458,9 @@ function App() {
       action: "approve_member",
       targetType: "member",
       targetId: memberId,
-      description: `Approved member ${pendingMember.name}`,
+      description: pendingMember.packageName
+        ? `Approved member ${pendingMember.name} - ${pendingMember.packageName} RM${Number(pendingMember.packagePrice || 0)}`
+        : `Approved member ${pendingMember.name}`,
     });
 
     alert("Member approved successfully");
@@ -4246,6 +4423,14 @@ function App() {
                     <th>Login ID / Email</th>
                     <th>Balance</th>
                     <th>Registered Type</th>
+                    <th>Package</th>
+                    <th>Price</th>
+                    <th>Wallet Credit</th>
+                    <th>Gift</th>
+                    <th>Uniform</th>
+                    <th>WhatsApp</th>
+                    <th>Emergency Contact</th>
+                    <th>Payment Proof</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -4259,6 +4444,40 @@ function App() {
                         {formatMoney(member.balance)}
                       </td>
                       <td>{member.memberType || "-"}</td>
+                      <td>
+                        <div className="pending-package-info">
+                          <strong>{member.packageName || "-"}</strong>
+                          {member.packageType && <span>{member.packageType}</span>}
+                        </div>
+                      </td>
+                      <td>
+                        {Number(member.packagePrice || 0) > 0
+                          ? formatMoney(Number(member.packagePrice || 0))
+                          : "-"}
+                      </td>
+                      <td>
+                        {Number(member.packageCredit || 0) > 0
+                          ? formatMoney(Number(member.packageCredit || 0))
+                          : "-"}
+                      </td>
+                      <td>{member.giftChoice || "-"}</td>
+                      <td>{member.uniformSize || "-"}</td>
+                      <td>{member.whatsapp || "-"}</td>
+                      <td>{member.emergencyContact || "-"}</td>
+                      <td>
+                        {member.registrationPaymentProofUrl ? (
+                          <a
+                            className="registration-proof-link"
+                            href={member.registrationPaymentProofUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            View Proof
+                          </a>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
                       <td>
                         <div className="table-actions">
                           <button
@@ -4867,60 +5086,256 @@ function App() {
     );
   }
   if (page === "register") {
+    const selectedRegisterPackage = MEMBER_PACKAGES[registerPackageType];
 
     return (
       <>
         {renderSupabaseLoadNotice()}
         <div className="page">
-          <div className="login-card">
+          <div className="login-card registration-card">
             <div className="logo-box">BYT</div>
 
-            <h1>New Member Register</h1>
+            <h1>BYT Member Package Registration</h1>
             <p className="subtitle">
-              For new members only. Existing members can login using the account ID provided by admin.
+              Choose your member package, complete your details, and upload payment proof for admin approval.
             </p>
 
+            <img
+              className="package-image"
+              src="/byt-member-packages.jpeg"
+              alt="BYT member packages"
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+            />
+
             <div className="form">
-              <label>Full Name</label>
-              <input
-                type="text"
-                placeholder="Enter your full name"
-                value={registerName}
-                onChange={(event) => setRegisterName(event.target.value)}
-              />
+              <div className="registration-section">
+                <h2>Choose Package</h2>
+                <div className="package-selection-grid">
+                  {Object.values(MEMBER_PACKAGES).map((memberPackage) => (
+                    <button
+                      key={memberPackage.packageType}
+                      className={`package-card ${
+                        registerPackageType === memberPackage.packageType
+                          ? "active"
+                          : ""
+                      }`}
+                      onClick={() => {
+                        setRegisterPackageType(memberPackage.packageType);
+                        if (memberPackage.packageType !== "extreme") {
+                          setRegisterUniformSize("");
+                        }
+                      }}
+                    >
+                      <span>{memberPackage.packageName}</span>
+                      <strong className="package-price">
+                        RM{memberPackage.packagePrice}
+                      </strong>
+                      <ul className="package-benefits">
+                        <li>RM100 wallet credit</li>
+                        <li>
+                          Gift: choose wristband or headband
+                        </li>
+                        {memberPackage.packageType === "extreme" ? (
+                          <li>Includes BYT Exclusive Member uniform</li>
+                        ) : (
+                          <li>No uniform included</li>
+                        )}
+                      </ul>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-              <label>Email / Login ID</label>
-              <input
-                type="text"
-                placeholder="Enter email or login ID"
-                value={registerEmail}
-                onChange={(event) => setRegisterEmail(event.target.value)}
-              />
+              <div className="registration-section">
+                <h2>Gift Choice</h2>
+                <div className="registration-option-row">
+                  {GIFT_CHOICES.map((giftChoice) => (
+                    <label className="registration-radio" key={giftChoice}>
+                      <input
+                        type="radio"
+                        name="giftChoice"
+                        checked={registerGiftChoice === giftChoice}
+                        onChange={() => setRegisterGiftChoice(giftChoice)}
+                      />
+                      {giftChoice === "wristband" ? "Wristband" : "Headband"}
+                    </label>
+                  ))}
+                </div>
+              </div>
 
-              <label>Password</label>
-              <input
-                type="password"
-                placeholder="Create password"
-                value={registerPassword}
-                onChange={(event) => setRegisterPassword(event.target.value)}
-              />
+              <div className="registration-section">
+                <h2>Personal Details</h2>
+                <div className="registration-form-grid">
+                  <div>
+                    <label>Full Name</label>
+                    <input
+                      type="text"
+                      placeholder="Enter your full name"
+                      value={registerName}
+                      onChange={(event) => setRegisterName(event.target.value)}
+                    />
+                  </div>
 
-              <label>Confirm Password</label>
-              <input
-                type="password"
-                placeholder="Confirm password"
-                value={registerConfirmPassword}
-                onChange={(event) =>
-                  setRegisterConfirmPassword(event.target.value)
-                }
-              />
+                  <div>
+                    <label>Gender</label>
+                    <select
+                      value={registerGender}
+                      onChange={(event) => setRegisterGender(event.target.value)}
+                    >
+                      <option value="">Select gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
 
-              <button className="login-button" onClick={handleRegister}>
-                Register New Member
+                  <div>
+                    <label>Birthday</label>
+                    <input
+                      type="date"
+                      value={registerBirthday}
+                      onChange={(event) => setRegisterBirthday(event.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label>WhatsApp / Mobile Number</label>
+                    <input
+                      type="text"
+                      placeholder="Example: 0142889116"
+                      value={registerWhatsapp}
+                      onChange={(event) => setRegisterWhatsapp(event.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label>Email</label>
+                    <input
+                      type="email"
+                      placeholder="Enter email"
+                      value={registerEmail}
+                      onChange={(event) => setRegisterEmail(event.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label>Emergency Contact Name & Number</label>
+                    <input
+                      type="text"
+                      placeholder="Example: Parent 0123456789"
+                      value={registerEmergencyContact}
+                      onChange={(event) =>
+                        setRegisterEmergencyContact(event.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label>Password</label>
+                    <input
+                      type="password"
+                      placeholder="Create password"
+                      value={registerPassword}
+                      onChange={(event) =>
+                        setRegisterPassword(event.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label>Confirm Password</label>
+                    <input
+                      type="password"
+                      placeholder="Confirm password"
+                      value={registerConfirmPassword}
+                      onChange={(event) =>
+                        setRegisterConfirmPassword(event.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {selectedRegisterPackage?.packageType === "extreme" && (
+                <div className="registration-section">
+                  <h2>Uniform Size</h2>
+                  <select
+                    value={registerUniformSize}
+                    onChange={(event) => setRegisterUniformSize(event.target.value)}
+                  >
+                    <option value="">Select uniform size</option>
+                    {UNIFORM_SIZES.map((size) => (
+                      <option value={size} key={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="registration-section">
+                <h2>Payment</h2>
+                <div className="registration-bank-box">
+                  <span>Bank Transfer</span>
+                  <strong>B.Y.T. ENTERPRISE</strong>
+                  <p>UOB MALAYSIA</p>
+                  <p>2383066532</p>
+                  <small>Finance WhatsApp: 60142889116 Oscar Kho</small>
+                </div>
+                <p className="registration-helper-text">
+                  Please upload your payment proof after transferring the membership fee.
+                </p>
+                {selectedRegisterPackage && (
+                  <p className="registration-helper-text">
+                    Selected package amount:{" "}
+                    <strong>RM{selectedRegisterPackage.packagePrice}</strong>
+                  </p>
+                )}
+                <label>Payment Proof / Receipt Screenshot</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) =>
+                    setRegisterPaymentProof(event.target.files?.[0] || null)
+                  }
+                />
+                {registerPaymentProof && (
+                  <p className="payment-proof-preview">
+                    Selected: {registerPaymentProof.name}
+                  </p>
+                )}
+              </div>
+
+              <div className="terms-box">
+                <p>
+                  By registering as a BYT member, you agree to follow BYT Club rules, safety guidelines, privacy terms, and payment rules.
+                </p>
+                <label className="terms-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={registerAgreedTerms}
+                    onChange={(event) =>
+                      setRegisterAgreedTerms(event.target.checked)
+                    }
+                  />
+                  I agree to BYT Club Terms & Conditions
+                </label>
+              </div>
+
+              <button
+                className="login-button"
+                onClick={handleRegister}
+                disabled={isSubmittingRegistration}
+              >
+                {isSubmittingRegistration
+                  ? "Submitting Registration..."
+                  : "Submit Registration"}
               </button>
 
               <button
                 className="register-link-button"
+                disabled={isSubmittingRegistration}
                 onClick={() => {
                   setAuthNotice("");
                   setPage("login");
@@ -4929,8 +5344,6 @@ function App() {
                 Back to Login
               </button>
             </div>
-
-            <p className="footer-text">Prototype version · BYT Club Wallet</p>
           </div>
         </div>
       </>
