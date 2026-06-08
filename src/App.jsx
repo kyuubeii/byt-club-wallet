@@ -253,6 +253,40 @@ function formatMoney(amount) {
   return `RM${amount.toFixed(2)}`;
 }
 
+function safeParseDate(dateValue) {
+  if (!dateValue) {
+    return null;
+  }
+
+  if (dateValue instanceof Date) {
+    return Number.isNaN(dateValue.getTime()) ? null : dateValue;
+  }
+
+  const dateText = String(dateValue).trim();
+  const slashDateMatch = dateText.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+
+  if (slashDateMatch) {
+    const [, day, month, year] = slashDateMatch;
+    const parsedSlashDate = new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day)
+    );
+
+    if (!Number.isNaN(parsedSlashDate.getTime())) {
+      return parsedSlashDate;
+    }
+  }
+
+  const parsedDate = new Date(dateText);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return null;
+  }
+
+  return parsedDate;
+}
+
 function downloadCsv(filename, csvContent) {
   const blob = new Blob([csvContent], {
     type: "text/csv;charset=utf-8;",
@@ -399,6 +433,7 @@ function App() {
   const [showActivitySection, setShowActivitySection] = useState(false);
   const [showPaymentReminderSection, setShowPaymentReminderSection] =
     useState(false);
+  const [showAnalyticsSection, setShowAnalyticsSection] = useState(false);
   const [newMemberName, setNewMemberName] = useState("");
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberBalance, setNewMemberBalance] = useState("");
@@ -3612,6 +3647,93 @@ function App() {
       (safePendingMemberApprovalPage - 1) * pendingMemberApprovalPageSize,
       safePendingMemberApprovalPage * pendingMemberApprovalPageSize
     );
+    const currentDate = new Date();
+    const monthlyTransactions = transactions.filter((transaction) => {
+      const transactionDate = safeParseDate(transaction.date);
+
+      return (
+        transactionDate &&
+        transactionDate.getFullYear() === currentDate.getFullYear() &&
+        transactionDate.getMonth() === currentDate.getMonth()
+      );
+    });
+    const thisMonthReloadTotal = monthlyTransactions
+      .filter((transaction) => {
+        const amount = Number(transaction.amount || 0);
+        const description = String(transaction.description || "").toLowerCase();
+        const type = String(transaction.type || "").toLowerCase();
+
+        return (
+          amount > 0 &&
+          (description.includes("reload") || type === "reload")
+        );
+      })
+      .reduce((total, transaction) => total + Number(transaction.amount || 0), 0);
+    const thisMonthSessionCharges = monthlyTransactions
+      .filter((transaction) => {
+        const amount = Number(transaction.amount || 0);
+        const description = String(transaction.description || "").toLowerCase();
+
+        return amount < 0 && description.includes("session charge");
+      })
+      .reduce(
+        (total, transaction) => total + Math.abs(Number(transaction.amount || 0)),
+        0
+      );
+    const thisMonthExpenses = monthlyTransactions
+      .filter((transaction) => {
+        const amount = Number(transaction.amount || 0);
+        const description = String(transaction.description || "").toLowerCase();
+
+        return amount < 0 && description.includes("expense");
+      })
+      .reduce(
+        (total, transaction) => total + Math.abs(Number(transaction.amount || 0)),
+        0
+      );
+    const negativeBalanceTotal = members
+      .filter((member) => Number(member.balance || 0) < 0)
+      .reduce((total, member) => total + Number(member.balance || 0), 0);
+    const lowBalanceMembers = members.filter(
+      (member) =>
+        member.status === "active" &&
+        Number(member.balance || 0) >= 0 &&
+        Number(member.balance || 0) < MINIMUM_BOOKING_BALANCE
+    );
+    const bookingCountByMemberId = sessionBookings.reduce((bookingCounts, booking) => {
+      if (!isConfirmedSessionBooking(booking)) {
+        return bookingCounts;
+      }
+
+      const memberId = String(booking.memberId);
+      bookingCounts[memberId] = (bookingCounts[memberId] || 0) + 1;
+      return bookingCounts;
+    }, {});
+    const topActiveMembersByBooking = Object.entries(bookingCountByMemberId)
+      .map(([memberId, bookingCount]) => {
+        const member = members.find(
+          (member) =>
+            Number(member.id) === Number(memberId) &&
+            member.status === "active"
+        );
+
+        return member
+          ? {
+              memberId,
+              name: member.name,
+              bookingCount,
+            }
+          : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => {
+        if (b.bookingCount !== a.bookingCount) {
+          return b.bookingCount - a.bookingCount;
+        }
+
+        return a.name.localeCompare(b.name);
+      })
+      .slice(0, 5);
 
     const filteredMembers = members.filter((member) => {
       const matchesSearch = (member.name || "").toLowerCase().includes(memberSearch.toLowerCase());
@@ -3680,6 +3802,13 @@ function App() {
             </button>
 
             <button
+              className={`dashboard-section-toggle ${showAnalyticsSection ? "active" : ""}`}
+              onClick={() => setShowAnalyticsSection(!showAnalyticsSection)}
+            >
+              Analytics
+            </button>
+
+            <button
               className={`dashboard-section-toggle ${showTransactionsSection ? "active" : ""}`}
               onClick={() =>
                 setShowTransactionsSection(!showTransactionsSection)
@@ -3719,6 +3848,80 @@ function App() {
               Developer
             </button>
           </div>
+
+          {showAnalyticsSection && (
+            <section className="collapsible-section">
+              <div className="collapsible-section-header">
+                <div>
+                  <h2>Admin Analytics</h2>
+                  <p>
+                    Quick overview of reloads, charges, balances, and member activity.
+                  </p>
+                </div>
+              </div>
+
+              <div className="analytics-grid">
+                <div className="analytics-card">
+                  <span className="analytics-label">This Month Reload Total</span>
+                  <strong className="analytics-value">
+                    {formatMoney(thisMonthReloadTotal)}
+                  </strong>
+                  <p className="analytics-muted">Approved reload transactions this month.</p>
+                </div>
+
+                <div className="analytics-card">
+                  <span className="analytics-label">This Month Session Charges</span>
+                  <strong className="analytics-value">
+                    {formatMoney(thisMonthSessionCharges)}
+                  </strong>
+                  <p className="analytics-muted">Session charge deductions this month.</p>
+                </div>
+
+                <div className="analytics-card">
+                  <span className="analytics-label">This Month Expenses</span>
+                  <strong className="analytics-value">
+                    {formatMoney(thisMonthExpenses)}
+                  </strong>
+                  <p className="analytics-muted">Expense deductions this month.</p>
+                </div>
+
+                <div className="analytics-card">
+                  <span className="analytics-label">Negative Balance Total</span>
+                  <strong className="analytics-value negative">
+                    {formatMoney(negativeBalanceTotal)}
+                  </strong>
+                  <p className="analytics-muted">Outstanding balance across all members.</p>
+                </div>
+
+                <div className="analytics-card">
+                  <span className="analytics-label">Low Balance Members</span>
+                  <strong className="analytics-value">
+                    {lowBalanceMembers.length}
+                  </strong>
+                  <p className="analytics-muted">
+                    Active members below {formatMoney(MINIMUM_BOOKING_BALANCE)}.
+                  </p>
+                </div>
+
+                <div className="analytics-card analytics-card-wide">
+                  <span className="analytics-label">Top Active Members by Booking</span>
+
+                  {topActiveMembersByBooking.length === 0 ? (
+                    <p className="analytics-muted">No data yet.</p>
+                  ) : (
+                    <div className="analytics-list">
+                      {topActiveMembersByBooking.map((member) => (
+                        <div className="analytics-list-row" key={member.memberId}>
+                          <span>{member.name}</span>
+                          <strong>{member.bookingCount} bookings</strong>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
 
           {showDeveloperTools && (
             <div className="panel developer-tools-panel">
