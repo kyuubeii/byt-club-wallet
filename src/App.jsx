@@ -5102,11 +5102,8 @@ function App() {
 
             <img
               className="package-image"
-              src="/byt-member-packages.jpeg"
-              alt="BYT member packages"
-              onError={(event) => {
-                event.currentTarget.style.display = "none";
-              }}
+              src="/byt-member-packages.png"
+              alt="BYT Member Packages"
             />
 
             <div className="form">
@@ -5283,6 +5280,11 @@ function App() {
                   <p>2383066532</p>
                   <small>Finance WhatsApp: 60142889116 Oscar Kho</small>
                 </div>
+                <img
+                  src="/duitnow-qr.png"
+                  alt="BYT DuitNow QR"
+                  className="bank-qr-image"
+                />
                 <p className="registration-helper-text">
                   Please upload your payment proof after transferring the membership fee.
                 </p>
@@ -5311,6 +5313,14 @@ function App() {
                 <p>
                   By registering as a BYT member, you agree to follow BYT Club rules, safety guidelines, privacy terms, and payment rules.
                 </p>
+                <a
+                  className="terms-link"
+                  href="/byt-terms-and-conditions.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  View Terms & Conditions
+                </a>
                 <label className="terms-checkbox">
                   <input
                     type="checkbox"
