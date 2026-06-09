@@ -8,6 +8,14 @@ function nullable(value) {
   return value === undefined || value === "" ? null : value;
 }
 
+function toSupabaseMemberType(memberType) {
+  if (memberType === "existing") {
+    return "regular";
+  }
+
+  return memberType || null;
+}
+
 function toSupabaseMemberRow(member) {
   return {
     id: member.id,
@@ -15,7 +23,7 @@ function toSupabaseMemberRow(member) {
     email: member.email || null,
     balance: Number(member.balance || 0),
     status: member.status || "active",
-    member_type: member.memberType || null,
+    member_type: toSupabaseMemberType(member.memberType),
     whatsapp: member.whatsapp || null,
     package_type: member.packageType || null,
     package_name: member.packageName || null,
@@ -489,6 +497,86 @@ export async function seedMembersToSupabase(members) {
     }
 
     return data || [];
+  } catch (error) {
+    throw new Error(getSupabaseErrorMessage(error));
+  }
+}
+
+async function clearTableByPositiveId(tableName) {
+  const { data, error } = await supabase
+    .from(tableName)
+    .delete()
+    .gte("id", 0)
+    .select();
+
+  if (error) {
+    throw new Error(getSupabaseErrorMessage(error));
+  }
+
+  return data || [];
+}
+
+export async function clearSupabaseMembers() {
+  try {
+    return await clearTableByPositiveId("members");
+  } catch (error) {
+    throw new Error(getSupabaseErrorMessage(error));
+  }
+}
+
+export async function clearSupabaseMemberUsers() {
+  try {
+    const { data, error } = await supabase
+      .from("app_users")
+      .delete()
+      .eq("role", "member")
+      .select();
+
+    if (error) {
+      throw new Error(getSupabaseErrorMessage(error));
+    }
+
+    return data || [];
+  } catch (error) {
+    throw new Error(getSupabaseErrorMessage(error));
+  }
+}
+
+export async function clearSupabaseTransactions() {
+  try {
+    return await clearTableByPositiveId("transactions");
+  } catch (error) {
+    throw new Error(getSupabaseErrorMessage(error));
+  }
+}
+
+export async function clearSupabaseReloadRequests() {
+  try {
+    return await clearTableByPositiveId("reload_requests");
+  } catch (error) {
+    throw new Error(getSupabaseErrorMessage(error));
+  }
+}
+
+export async function clearSupabaseSessionBookings() {
+  try {
+    return await clearTableByPositiveId("session_bookings");
+  } catch (error) {
+    throw new Error(getSupabaseErrorMessage(error));
+  }
+}
+
+export async function clearSupabaseActivityLogs() {
+  try {
+    return await clearTableByPositiveId("activity_logs");
+  } catch (error) {
+    throw new Error(getSupabaseErrorMessage(error));
+  }
+}
+
+export async function clearSupabaseSessions() {
+  try {
+    return await clearTableByPositiveId("sessions");
   } catch (error) {
     throw new Error(getSupabaseErrorMessage(error));
   }

@@ -10,6 +10,7 @@ import AdminBookingManagement from "./Components/AdminBookingManagement.jsx";
 import EditMemberPanel from "./Components/EditMemberPanel.jsx";
 import { initialMembers } from "./data/initialMembers.js";
 import { initialUsers } from "./data/initialUsers.js";
+import memberResetCsv from "./data/byt_june_2026_member_reset.csv?raw";
 
 const MINIMUM_BOOKING_BALANCE = 15;
 const USE_SUPABASE_DATA = true;
@@ -162,6 +163,91 @@ function getMemberRegistrationDefaults(member = {}) {
     registrationPaymentProofUrl: member.registrationPaymentProofUrl || "",
     agreedTerms: Boolean(member.agreedTerms),
   };
+}
+
+function parseCsvLine(line) {
+  const values = [];
+  let currentValue = "";
+  let isInsideQuotes = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const character = line[index];
+    const nextCharacter = line[index + 1];
+
+    if (character === "\"" && nextCharacter === "\"") {
+      currentValue += "\"";
+      index += 1;
+      continue;
+    }
+
+    if (character === "\"") {
+      isInsideQuotes = !isInsideQuotes;
+      continue;
+    }
+
+    if (character === "," && !isInsideQuotes) {
+      values.push(currentValue);
+      currentValue = "";
+      continue;
+    }
+
+    currentValue += character;
+  }
+
+  values.push(currentValue);
+  return values.map((value) => value.trim());
+}
+
+function parseMemberResetCsv(csvText) {
+  const lines = String(csvText || "")
+    .replace(/\r/g, "")
+    .split("\n")
+    .filter((line) => line.trim() !== "");
+
+  if (lines.length < 2) {
+    return [];
+  }
+
+  const headers = parseCsvLine(lines[0]);
+
+  return lines.slice(1).map((line) => {
+    const values = parseCsvLine(line);
+    const row = headers.reduce((rowData, header, index) => {
+      rowData[header] = values[index] || "";
+      return rowData;
+    }, {});
+    const memberId = Number(row.member_no);
+
+    if (!memberId || Number.isNaN(memberId)) {
+      throw new Error(`Invalid member_no in CSV row: ${line}`);
+    }
+
+    const memberName = row.name.trim();
+    const loginId = row.default_login_id.trim();
+    const defaultPassword = row.default_password.trim() || "123456";
+    const balance = Number(row.balance_cf || 0);
+
+    return {
+      member: {
+        id: memberId,
+        name: memberName,
+        balance: Number.isNaN(balance) ? 0 : balance,
+        status: "active",
+        memberType: "existing",
+        email: loginId,
+        whatsapp: "",
+        ...getMemberRegistrationDefaults(),
+      },
+      user: {
+        id: memberId,
+        memberId,
+        name: memberName,
+        email: loginId,
+        password: defaultPassword,
+        role: "member",
+      },
+    };
+  });
 }
 
 const initialTransactions = [
@@ -344,7 +430,8 @@ function convertSupabaseMembers(supabaseMembers) {
     email: member.email || "",
     balance: Number(member.balance || 0),
     status: member.status || "active",
-    memberType: member.member_type || null,
+    memberType:
+      member.member_type === "regular" ? "existing" : member.member_type || null,
     whatsapp: member.whatsapp || "",
     ...getMemberRegistrationDefaults({
       packageType: member.package_type,
@@ -2092,6 +2179,83 @@ function App() {
     setShowMemberLoginIdPanel(false);
 
     alert("Demo data has been reset.");
+  }
+
+  async function handleResetProductionMembersJune2026() {
+    if (currentUser?.role !== "admin") {
+      alert("Admin access required.");
+      return;
+    }
+
+    const confirmReset = prompt(
+      "Type RESET PRODUCTION DATA to confirm production data reset."
+    );
+
+    if (confirmReset !== "RESET PRODUCTION DATA") {
+      alert("Reset cancelled.");
+      return;
+    }
+
+    let resetRows;
+
+    try {
+      resetRows = parseMemberResetCsv(memberResetCsv);
+    } catch (error) {
+      console.error("Failed to parse production member reset CSV:", error);
+      alert(`Failed to parse member reset CSV: ${getFriendlyErrorMessage(error)}`);
+      return;
+    }
+
+    const resetMembers = resetRows.map((row) => row.member);
+    const resetMemberUsers = resetRows.map((row) => row.user);
+    const preservedAdminUsers = users.filter((user) => user.role === "admin");
+    const resetUsers = [...preservedAdminUsers, ...resetMemberUsers];
+
+    setMembers(resetMembers);
+    setUsers(resetUsers);
+    setTransactions([]);
+    setReloadRequests([]);
+    setSessions([]);
+    setSessionBookings([]);
+    setActivityLogs([]);
+    saveToStorage(STORAGE_KEYS.members, resetMembers);
+    saveToStorage(STORAGE_KEYS.users, resetUsers);
+    saveToStorage(STORAGE_KEYS.transactions, []);
+    saveToStorage(STORAGE_KEYS.reloadRequests, []);
+    saveToStorage(STORAGE_KEYS.sessions, []);
+    saveToStorage(STORAGE_KEYS.sessionBookings, []);
+
+    try {
+      const {
+        clearSupabaseMembers,
+        clearSupabaseMemberUsers,
+        clearSupabaseTransactions,
+        clearSupabaseReloadRequests,
+        clearSupabaseSessionBookings,
+        clearSupabaseActivityLogs,
+        clearSupabaseSessions,
+        seedMembersToSupabase,
+        seedUsersToSupabase,
+      } = await import("./services/supabaseServices.js");
+
+      await clearSupabaseSessionBookings();
+      await clearSupabaseTransactions();
+      await clearSupabaseReloadRequests();
+      await clearSupabaseActivityLogs();
+      await clearSupabaseMemberUsers();
+      await clearSupabaseSessions();
+      await clearSupabaseMembers();
+      await seedMembersToSupabase(resetMembers);
+      await seedUsersToSupabase(resetMemberUsers);
+      await loadAllDataFromSupabase();
+
+      alert(
+        `Production data reset completed. Imported ${resetMembers.length} members. Admin account preserved.`
+      );
+    } catch (error) {
+      console.error("Production data reset failed:", error);
+      alert(`Production data reset failed: ${getFriendlyErrorMessage(error)}`);
+    }
   }
 
   // Transaction and account export
@@ -4255,6 +4419,13 @@ function App() {
                       onClick={handleResetDemoData}
                     >
                       Danger: Reset Local Demo Data
+                    </button>
+
+                    <button
+                      className="danger-button compact-button"
+                      onClick={handleResetProductionMembersJune2026}
+                    >
+                      Reset Production Members - June 2026
                     </button>
                   </div>
                 </>
