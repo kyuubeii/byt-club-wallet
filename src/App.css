@@ -1694,8 +1694,38 @@ input[type="file"] {
 
 .session-form-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  align-items: end;
+}
+
+.session-form-grid > div {
+  min-width: 0;
+}
+
+.session-form-grid input,
+.session-form-grid select {
+  width: 100%;
+  min-width: 0;
+  height: 52px;
+  box-sizing: border-box;
+}
+
+.session-date-input {
+  height: 52px;
+  min-height: 52px;
+}
+
+.session-form-grid .create-session-submit {
+  min-width: 0;
+}
+
+.session-form-grid .create-session-submit .action-button {
+  width: 100%;
+  max-width: 100%;
+  height: 52px;
+  min-height: 52px;
+  margin-top: 0;
 }
 
 .session-list {
@@ -2145,7 +2175,7 @@ input[type="file"] {
 
 @media (max-width: 900px) {
   .session-form-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -3437,7 +3467,6 @@ tbody tr:hover {
   .calculator-summary-grid,
   .edit-member-grid,
   .add-member-grid,
-  .session-form-grid,
   .member-tools {
     grid-template-columns: 1fr;
   }
@@ -3481,7 +3510,6 @@ tbody tr:hover {
 .registration-form-grid,
 .calculator-grid,
 .calculator-summary-grid,
-.session-form-grid,
 .session-capacity-summary,
 .walkin-name-grid,
 .walkin-admin-edit,
@@ -3535,7 +3563,6 @@ tbody tr:hover {
   .developer-tools-unlock-row,
   .calculator-grid,
   .calculator-summary-grid,
-  .session-form-grid,
   .session-charge-grid,
   .edit-member-grid,
   .add-member-grid,
@@ -4146,7 +4173,6 @@ label {
   gap: 26px;
 }
 
-.session-form-grid,
 .calculator-grid,
 .calculator-summary-grid,
 .session-charge-grid,
@@ -4155,10 +4181,6 @@ label {
 .edit-member-grid,
 .member-tools {
   gap: 18px;
-}
-
-.session-form-grid {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .calculator-grid {
@@ -5026,64 +5048,4 @@ tbody tr:hover {
   position: sticky;
   top: 12px;
   z-index: 30;
-}
-
-/* -------------------- Create session form redesign -------------------- */
-.session-booking-panel .create-session-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
-  align-items: end;
-  width: 100%;
-  min-width: 0;
-}
-
-.session-booking-panel .create-session-field,
-.session-booking-panel .session-form-grid > div {
-  min-width: 0;
-}
-
-.session-booking-panel .create-session-field label {
-  min-width: 0;
-}
-
-.session-booking-panel .create-session-field input,
-.session-booking-panel .create-session-field select,
-.session-booking-panel .session-form-grid input,
-.session-booking-panel .session-form-grid select {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  height: 52px;
-  border-radius: 16px;
-  box-sizing: border-box;
-}
-
-.session-booking-panel .create-session-field input[type="date"],
-.session-booking-panel .create-session-field input[type="time"] {
-  max-width: 100%;
-}
-
-.session-booking-panel .create-session-submit-field {
-  align-self: end;
-}
-
-.session-booking-panel .create-session-submit {
-  width: 100%;
-  max-width: 100%;
-  height: 52px;
-  min-height: 52px;
-  margin-top: 0;
-}
-
-@media (max-width: 900px) {
-  .session-booking-panel .create-session-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 600px) {
-  .session-booking-panel .create-session-grid {
-    grid-template-columns: 1fr;
-  }
 }

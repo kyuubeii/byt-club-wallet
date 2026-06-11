@@ -565,17 +565,18 @@ function AdminBookingManagement({
         </div>
       </div>
 
-      <div className="session-form-grid create-session-grid">
-        <div className="create-session-field">
+      <div className="session-form-grid">
+        <div>
           <label>Date</label>
           <input
+            className="session-date-input"
             type="date"
             value={newSessionDate}
             onChange={(event) => setNewSessionDate(event.target.value)}
           />
         </div>
 
-        <div className="create-session-field">
+        <div>
           <label>Time</label>
           <input
             type="text"
@@ -585,7 +586,7 @@ function AdminBookingManagement({
           />
         </div>
 
-        <div className="create-session-field">
+        <div>
           <label>Venue</label>
           <input
             type="text"
@@ -595,7 +596,7 @@ function AdminBookingManagement({
           />
         </div>
 
-        <div className="create-session-field">
+        <div>
           <label>Court Count</label>
           <input
             type="number"
@@ -605,7 +606,7 @@ function AdminBookingManagement({
           />
         </div>
 
-        <div className="create-session-field">
+        <div>
           <label>Max Players</label>
           <input
             type="number"
@@ -615,7 +616,7 @@ function AdminBookingManagement({
           />
         </div>
 
-        <div className="create-session-field">
+        <div>
           <label>Walk-in Limit</label>
           <input
             type="number"
@@ -626,7 +627,7 @@ function AdminBookingManagement({
           />
         </div>
 
-        <div className="create-session-field">
+        <div>
           <label>Total Court Fee</label>
           <input
             type="number"
@@ -640,7 +641,7 @@ function AdminBookingManagement({
           />
         </div>
 
-        <div className="create-session-field">
+        <div>
           <label>Cancel Cutoff</label>
           <input
             type="time"
@@ -649,9 +650,9 @@ function AdminBookingManagement({
           />
         </div>
 
-        <div className="create-session-field create-session-submit-field">
+        <div className="create-session-submit">
           <button
-            className="action-button add-member-button create-session-submit"
+            className="action-button add-member-button"
             onClick={handleCreateSession}
           >
             Create Session
