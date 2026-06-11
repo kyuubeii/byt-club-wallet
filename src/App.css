@@ -81,17 +81,6 @@ body {
   display: block;
 }
 
-.login-brand-header {
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-}
-
-.login-brand-header .logo-box {
-  margin: 0 auto;
-}
-
 h1 {
   margin: 0;
   font-size: 32px;
@@ -5042,8 +5031,8 @@ tbody tr:hover {
 /* -------------------- Create session form layout fix -------------------- */
 .session-booking-panel .session-form-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 22px;
   align-items: end;
   width: 100%;
   min-width: 0;
@@ -5065,19 +5054,8 @@ tbody tr:hover {
   height: 56px;
 }
 
-.session-booking-panel .session-form-grid input[type="date"],
-.session-booking-panel .session-form-grid input[type="time"] {
-  max-width: 100%;
-}
-
-@media (max-width: 900px) {
+@media (max-width: 700px) {
   .session-booking-panel .session-form-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 600px) {
-  .session-booking-panel .session-form-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }

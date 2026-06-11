@@ -38,7 +38,7 @@ function LoginPage({
         <div className="page">
             <Paper className="login-card premium-auth-card" shadow="xl">
                 <Stack gap="lg">
-                    <Group className="login-brand-header" justify="center" align="center">
+                    <Group justify="space-between" align="flex-start">
                         <div className="logo-box">
                             <img src="/byt-logo.jpeg" alt="BYT Logo" />
                         </div>
@@ -59,7 +59,7 @@ function LoginPage({
                     <Stack className="form" gap="md">
                         <TextInput
                             label="Email / Phone"
-                            placeholder="Enter email or member ID"
+                            placeholder="admin@byt.club"
                             value={email}
                             onChange={(event) => setEmail(event.target.value)}
                         />
