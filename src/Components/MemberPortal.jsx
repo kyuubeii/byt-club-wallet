@@ -1113,31 +1113,35 @@ function MemberPortal({
                 <div className="panel">
                     <h2>My Recent Transactions</h2>
 
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Description</th>
-                                <th>Amount</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {paginatedTransactions.map((transaction) => (
-                                <tr key={transaction.id}>
-                                    <td>{transaction.date}</td>
-                                    <td>{transaction.description}</td>
-                                    <td
-                                        className={
-                                            transaction.amount < 0 ? "negative" : "positive"
-                                        }
-                                    >
-                                        {formatMoney(transaction.amount)}
-                                    </td>
+                    {sortedTransactions.length === 0 ? (
+                        <p className="empty-text">No recent transaction yet.</p>
+                    ) : (
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+
+                            <tbody>
+                                {paginatedTransactions.map((transaction) => (
+                                    <tr key={transaction.id}>
+                                        <td>{transaction.date}</td>
+                                        <td>{transaction.description}</td>
+                                        <td
+                                            className={
+                                                transaction.amount < 0 ? "negative" : "positive"
+                                            }
+                                        >
+                                            {formatMoney(transaction.amount)}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
 
                     {sortedTransactions.length > memberTransactionPageSize && (
                         <div className="pagination-controls">

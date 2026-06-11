@@ -4786,3 +4786,163 @@ tbody tr:hover {
     text-align: center;
   }
 }
+
+/* -------------------- UI regression alignment fixes -------------------- */
+.dashboard-page .collapsible-section > .collapsible-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 18px;
+  padding-bottom: 14px;
+  text-align: center;
+}
+
+.dashboard-page .collapsible-section > .collapsible-section-header > div {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.dashboard-page .collapsible-section > .collapsible-section-header h2 {
+  margin: 0;
+  text-align: center;
+  line-height: 1.18;
+}
+
+.dashboard-page .collapsible-section > .collapsible-section-header p {
+  max-width: 620px;
+  margin: 6px auto 0;
+  text-align: center;
+  line-height: 1.45;
+}
+
+.dashboard-page .collapsible-section:has(.balance-tools-grid) > .collapsible-section-header p {
+  margin-top: 6px;
+}
+
+.dashboard-page .developer-tools-panel > .panel-header,
+.dashboard-page .recent-activity-panel.collapsible-section > .panel-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.dashboard-page .developer-tools-panel > .panel-header > div,
+.dashboard-page .recent-activity-panel.collapsible-section > .panel-header > div {
+  max-width: 760px;
+}
+
+.dashboard-page .developer-tools-panel > .panel-header p,
+.dashboard-page .recent-activity-panel.collapsible-section > .panel-header p {
+  margin: 6px auto 0;
+  text-align: center;
+}
+
+.stats-grid .stat-card {
+  min-height: 128px;
+}
+
+.stats-grid .stat-card .mantine-Group-root {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 56px;
+  align-items: center;
+  column-gap: 14px;
+  width: 100%;
+  height: 100%;
+}
+
+.stats-grid .stat-card .mantine-Stack-root {
+  display: grid !important;
+  grid-template-rows: 34px 40px;
+  align-content: center;
+  align-items: stretch !important;
+  gap: 8px !important;
+  min-width: 0;
+  text-align: left;
+}
+
+.stats-grid .stat-card p {
+  display: flex;
+  align-items: flex-end;
+  min-height: 34px;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.stats-grid .stat-card h3 {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  margin: 0;
+  line-height: 1.05;
+}
+
+.stats-grid .stat-card .mantine-RingProgress-root {
+  justify-self: end;
+}
+
+.dashboard-page .panel > .empty-text,
+.dashboard-page .member-session-panel > .empty-text,
+.dashboard-page .reload-request-panel > .empty-text,
+.dashboard-page .transaction-panel > .empty-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 112px;
+  margin: 16px 0 0;
+  padding: 24px;
+  text-align: center;
+}
+
+.dashboard-page .member-session-panel > .empty-text {
+  min-height: 148px;
+}
+
+.whatsapp-prompt-panel .button-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 12px;
+}
+
+.whatsapp-prompt-panel .button-row .action-button {
+  width: 100%;
+}
+
+.whatsapp-prompt-panel .button-row .secondary-button {
+  width: fit-content;
+  min-width: 160px;
+  margin-top: 0;
+}
+
+@media (max-width: 760px) {
+  .dashboard-page .collapsible-section > .collapsible-section-header {
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+  }
+
+  .stats-grid .stat-card {
+    min-height: 120px;
+  }
+
+  .stats-grid .stat-card .mantine-Stack-root {
+    grid-template-rows: 30px 38px;
+  }
+}
+
+@media (max-width: 600px) {
+  .whatsapp-prompt-panel .button-row .secondary-button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboard-page .panel > .empty-text,
+  .dashboard-page .member-session-panel > .empty-text,
+  .dashboard-page .reload-request-panel > .empty-text,
+  .dashboard-page .transaction-panel > .empty-text {
+    min-height: 96px;
+    padding: 20px 14px;
+  }
+}
