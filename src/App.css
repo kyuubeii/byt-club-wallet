@@ -81,6 +81,17 @@ body {
   display: block;
 }
 
+.login-brand-header {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.login-brand-header .logo-box {
+  margin: 0 auto;
+}
+
 h1 {
   margin: 0;
   font-size: 32px;
