@@ -5014,3 +5014,16 @@ tbody tr:hover {
     margin-bottom: 40px;
   }
 }
+
+/* -------------------- Admin/member topbar behavior -------------------- */
+.admin-topbar {
+  position: relative;
+  top: auto;
+  z-index: 1;
+}
+
+.member-topbar {
+  position: sticky;
+  top: 12px;
+  z-index: 30;
+}

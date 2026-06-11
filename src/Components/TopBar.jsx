@@ -8,7 +8,7 @@ function TopBar({
   onReset,
 }) {
   return (
-    <Paper className="topbar" component="header" shadow="sm">
+    <Paper className="topbar admin-topbar" component="header" shadow="sm">
       <Group justify="space-between" align="center" w="100%">
         <Group gap="md" align="center">
           <div className="logo-box topbar-logo">

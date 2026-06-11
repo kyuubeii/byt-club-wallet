@@ -83,7 +83,7 @@ function MemberPortal({
     if (!memberData) {
         return (
             <div className="dashboard-page">
-                <div className="topbar">
+                <div className="topbar member-topbar">
                     <div>
                         <h2>BYT Club Wallet</h2>
                         <p>Member Portal</p>
@@ -267,7 +267,7 @@ function MemberPortal({
 
     return (
         <div className="dashboard-page">
-            <div className="topbar">
+            <div className="topbar member-topbar">
                 <div>
                     <h2>BYT Club Wallet</h2>
                     <p>Member Portal</p>
