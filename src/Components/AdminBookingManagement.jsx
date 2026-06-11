@@ -565,8 +565,8 @@ function AdminBookingManagement({
         </div>
       </div>
 
-      <div className="session-form-grid">
-        <div>
+      <div className="session-form-grid create-session-grid">
+        <div className="create-session-field">
           <label>Date</label>
           <input
             type="date"
@@ -575,7 +575,7 @@ function AdminBookingManagement({
           />
         </div>
 
-        <div>
+        <div className="create-session-field">
           <label>Time</label>
           <input
             type="text"
@@ -585,7 +585,7 @@ function AdminBookingManagement({
           />
         </div>
 
-        <div>
+        <div className="create-session-field">
           <label>Venue</label>
           <input
             type="text"
@@ -595,7 +595,7 @@ function AdminBookingManagement({
           />
         </div>
 
-        <div>
+        <div className="create-session-field">
           <label>Court Count</label>
           <input
             type="number"
@@ -605,7 +605,7 @@ function AdminBookingManagement({
           />
         </div>
 
-        <div>
+        <div className="create-session-field">
           <label>Max Players</label>
           <input
             type="number"
@@ -615,7 +615,7 @@ function AdminBookingManagement({
           />
         </div>
 
-        <div>
+        <div className="create-session-field">
           <label>Walk-in Limit</label>
           <input
             type="number"
@@ -626,7 +626,7 @@ function AdminBookingManagement({
           />
         </div>
 
-        <div>
+        <div className="create-session-field">
           <label>Total Court Fee</label>
           <input
             type="number"
@@ -640,7 +640,7 @@ function AdminBookingManagement({
           />
         </div>
 
-        <div>
+        <div className="create-session-field">
           <label>Cancel Cutoff</label>
           <input
             type="time"
@@ -648,14 +648,16 @@ function AdminBookingManagement({
             onChange={(event) => setNewSessionCancelCutoff(event.target.value)}
           />
         </div>
-      </div>
 
-      <button
-        className="action-button add-member-button"
-        onClick={handleCreateSession}
-      >
-        Create Session
-      </button>
+        <div className="create-session-field create-session-submit-field">
+          <button
+            className="action-button add-member-button create-session-submit"
+            onClick={handleCreateSession}
+          >
+            Create Session
+          </button>
+        </div>
+      </div>
 
       <hr />
 
