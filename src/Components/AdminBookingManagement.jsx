@@ -570,6 +570,10 @@ function AdminBookingManagement({
           <label>Date</label>
           <input
             type="date"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             value={newSessionDate}
             onChange={(event) => setNewSessionDate(event.target.value)}
           />
@@ -579,6 +583,10 @@ function AdminBookingManagement({
           <label>Time</label>
           <input
             type="text"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             placeholder="Example: 7:00 PM - 9:00 PM"
             value={newSessionTime}
             onChange={(event) => setNewSessionTime(event.target.value)}
@@ -589,6 +597,10 @@ function AdminBookingManagement({
           <label>Venue</label>
           <input
             type="text"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             placeholder="Example: Arena Sukan"
             value={newSessionVenue}
             onChange={(event) => setNewSessionVenue(event.target.value)}
@@ -599,6 +611,10 @@ function AdminBookingManagement({
           <label>Court Count</label>
           <input
             type="number"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             placeholder="Example: 4"
             value={newSessionCourtCount}
             onChange={(event) => setNewSessionCourtCount(event.target.value)}
@@ -609,6 +625,10 @@ function AdminBookingManagement({
           <label>Max Players</label>
           <input
             type="number"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             placeholder="Example: 24"
             value={newSessionMaxPlayers}
             onChange={(event) => setNewSessionMaxPlayers(event.target.value)}
@@ -619,6 +639,10 @@ function AdminBookingManagement({
           <label>Walk-in Limit</label>
           <input
             type="number"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             min="0"
             placeholder="Example: 5"
             value={newSessionWalkInLimit}
@@ -630,6 +654,10 @@ function AdminBookingManagement({
           <label>Total Court Fee</label>
           <input
             type="number"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             step="0.01"
             inputMode="decimal"
             placeholder="Example: 160"
@@ -644,6 +672,10 @@ function AdminBookingManagement({
           <label>Cancel Cutoff</label>
           <input
             type="time"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             value={newSessionCancelCutoff}
             onChange={(event) => setNewSessionCancelCutoff(event.target.value)}
           />
