@@ -5361,8 +5361,10 @@ function App() {
                   <div>
                     <label>Birthday</label>
                     <input
+                      className="registration-date-input"
                       type="date"
                       value={registerBirthday}
+                      max={new Date().toISOString().split("T")[0]}
                       onChange={(event) => setRegisterBirthday(event.target.value)}
                     />
                   </div>

@@ -1482,6 +1482,24 @@ input[type="file"] {
   gap: 16px 18px;
 }
 
+.registration-date-input {
+  min-height: 74px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: white;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.registration-date-input::-webkit-date-and-time-value {
+  min-height: 1.2em;
+  text-align: left;
+}
+
+.registration-date-input::-webkit-calendar-picker-indicator {
+  opacity: 0.55;
+}
+
 .registration-bank-box {
   display: grid;
   gap: 5px;
