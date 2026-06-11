@@ -4165,3 +4165,396 @@ label {
     border-radius: 22px;
   }
 }
+
+/* -------------------- UI-only layout refinement pass -------------------- */
+.dashboard-content {
+  display: grid;
+  gap: 24px;
+  padding-top: 30px;
+}
+
+.dashboard-content > h1 {
+  margin-bottom: -14px;
+}
+
+.dashboard-subtitle {
+  margin: -10px 0 4px;
+  max-width: 720px;
+  font-size: 15px;
+}
+
+.panel,
+.member-card,
+.session-card,
+.member-session-card,
+.registration-section,
+.terms-box {
+  scroll-margin-top: 24px;
+}
+
+.panel-header,
+.session-section-header,
+.collapsible-section-header {
+  gap: 18px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.panel-header h2,
+.session-section-header h2,
+.collapsible-section-header h2,
+.panel > h2 {
+  font-size: clamp(20px, 2.4vw, 25px);
+  line-height: 1.15;
+}
+
+.panel-header p,
+.session-section-header p,
+.collapsible-section-header p {
+  max-width: 760px;
+}
+
+.dashboard-section-toggle-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.dashboard-section-toggle {
+  min-height: 52px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  text-align: center;
+}
+
+.stats-grid,
+.analytics-grid,
+.payment-reminder-grid,
+.member-session-list,
+.session-list,
+.dashboard-section-stack {
+  align-items: stretch;
+}
+
+.main-grid,
+.balance-tools-grid {
+  gap: 26px;
+}
+
+.session-form-grid,
+.calculator-grid,
+.calculator-summary-grid,
+.session-charge-grid,
+.registration-form-grid,
+.add-member-grid,
+.edit-member-grid,
+.member-tools {
+  gap: 18px;
+}
+
+.session-form-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.calculator-grid {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.calculator-summary-grid,
+.session-charge-summary-grid {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.member-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px 22px;
+}
+
+.member-card p,
+.member-card h3,
+.member-card .status-badge {
+  grid-column: 1;
+}
+
+.member-card .topup-button {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: center;
+  margin-top: 0;
+  min-width: 150px;
+}
+
+.member-session-card,
+.session-card {
+  display: grid;
+  gap: 18px;
+}
+
+.session-card-actions,
+.member-session-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.session-card-actions .secondary-button,
+.member-session-actions .action-button,
+.member-session-actions .secondary-button {
+  width: auto;
+  min-width: 150px;
+  margin-top: 0;
+}
+
+.session-booking-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(220px, auto) minmax(270px, 0.9fr);
+  gap: 14px;
+  align-items: center;
+  padding: 14px 0;
+}
+
+.session-booking-status {
+  justify-content: flex-start;
+}
+
+.session-booking-status .booking-status-pill {
+  flex: 0 0 auto;
+}
+
+.session-status-select {
+  min-width: 170px;
+}
+
+.walkin-admin-edit {
+  min-width: 0;
+  grid-template-columns: minmax(88px, 0.35fr) minmax(130px, 1fr);
+}
+
+.walkin-admin-edit input {
+  min-width: 0;
+}
+
+.waitlist-section {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.waitlist-row {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.session-capacity-summary {
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+}
+
+.capacity-summary-wide {
+  grid-column: span 2;
+}
+
+.walkin-summary,
+.session-booking-summary,
+.system-status-row {
+  gap: 10px;
+}
+
+.walkin-summary span,
+.session-booking-summary span,
+.system-status-badge {
+  line-height: 1.25;
+}
+
+.bank-box,
+.registration-bank-box,
+.expense-summary,
+.my-booking-summary,
+.session-finalize-box,
+.attendee-panel,
+.walkin-option,
+.walkin-edit-panel {
+  border-radius: 20px;
+}
+
+table,
+.premium-table {
+  font-size: 14px;
+}
+
+th,
+td,
+.mantine-Table-th,
+.mantine-Table-td {
+  vertical-align: middle;
+}
+
+tbody tr {
+  transition: background 0.16s ease;
+}
+
+tbody tr:hover {
+  background: rgba(124, 250, 79, 0.055);
+}
+
+.member-table-scroll,
+.pending-member-approvals-panel,
+.recent-activity-panel,
+.reload-request-panel,
+.transaction-panel {
+  border-radius: 20px;
+}
+
+.pagination-controls {
+  margin-top: 18px;
+  gap: 10px;
+}
+
+.pagination-info {
+  min-width: fit-content;
+  color: #58708a;
+  font-weight: 900;
+}
+
+@media (max-width: 1100px) {
+  .session-booking-row {
+    grid-template-columns: minmax(180px, 1fr) minmax(210px, 0.8fr);
+  }
+
+  .walkin-admin-edit {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-content {
+    gap: 20px;
+  }
+
+  .panel {
+    overflow-x: visible;
+  }
+
+  .panel:has(table),
+  .member-table-scroll,
+  .pending-member-approvals-panel,
+  .recent-activity-panel,
+  .reload-request-panel,
+  .transaction-panel {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .member-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .member-card .topup-button {
+    grid-column: 1;
+    grid-row: auto;
+    width: 100%;
+  }
+
+  .session-card-actions .secondary-button,
+  .member-session-actions .action-button,
+  .member-session-actions .secondary-button {
+    flex: 1 1 180px;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-content {
+    padding: 22px 12px 36px;
+    gap: 16px;
+  }
+
+  .dashboard-content > h1 {
+    margin-bottom: -8px;
+    font-size: 26px;
+    line-height: 1.15;
+  }
+
+  .dashboard-subtitle {
+    margin-top: -6px;
+    font-size: 14px;
+  }
+
+  .panel,
+  .member-card,
+  .session-card,
+  .member-session-card {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .panel-header,
+  .session-section-header,
+  .collapsible-section-header {
+    gap: 10px;
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .panel-header h2,
+  .session-section-header h2,
+  .collapsible-section-header h2,
+  .panel > h2 {
+    font-size: 19px;
+  }
+
+  .dashboard-section-toggle-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-section-toggle {
+    min-height: 46px;
+    padding: 12px 10px;
+  }
+
+  .session-booking-row,
+  .waitlist-row,
+  .walkin-admin-edit {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .session-booking-status,
+  .session-card-actions,
+  .member-session-actions,
+  .waitlist-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .session-booking-status > *,
+  .session-card-actions > *,
+  .member-session-actions > *,
+  .waitlist-actions > * {
+    width: 100%;
+  }
+
+  .capacity-summary-wide {
+    grid-column: 1 / -1;
+  }
+
+  .walkin-summary span,
+  .session-booking-summary span {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .pagination-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pagination-info {
+    grid-column: 1 / -1;
+    text-align: center;
+  }
+}
+
+@media (max-width: 380px) {
+  .dashboard-section-toggle-grid,
+  .session-capacity-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
