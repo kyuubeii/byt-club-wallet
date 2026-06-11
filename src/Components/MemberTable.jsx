@@ -1,49 +1,67 @@
+import { Badge, Button, Table } from "@mantine/core";
+
 function MemberTable({ filteredMembers, formatMoney, onEditMember }) {
+  function getMemberStatus(member) {
+    if (member.status === "inactive") {
+      return { label: "Inactive", color: "gray" };
+    }
+
+    if (member.status === "pending") {
+      return { label: "Pending Approval", color: "yellow" };
+    }
+
+    if (member.balance < 0) {
+      return { label: "Need Reload", color: "red" };
+    }
+
+    if (member.balance < 30) {
+      return { label: "Low Balance", color: "orange" };
+    }
+
+    return { label: "Good", color: "green" };
+  }
+
   return (
     <div className="member-table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Member</th>
-            <th>Balance</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
+      <Table className="premium-table" striped highlightOnHover verticalSpacing="md">
+        <Table.Thead>
+          <Table.Tr>
+            <Table.Th>Member</Table.Th>
+            <Table.Th>Balance</Table.Th>
+            <Table.Th>Status</Table.Th>
+            <Table.Th>Actions</Table.Th>
+          </Table.Tr>
+        </Table.Thead>
 
-        <tbody>
+        <Table.Tbody>
           {filteredMembers.map((member) => (
-            <tr key={member.id}>
-              <td>{member.name}</td>
+            <Table.Tr key={member.id}>
+              <Table.Td>{member.name}</Table.Td>
 
-              <td className={member.balance < 0 ? "negative" : "positive"}>
+              <Table.Td className={member.balance < 0 ? "negative" : "positive"}>
                 {formatMoney(member.balance)}
-              </td>
+              </Table.Td>
 
-              <td>
-                {member.status === "inactive"
-                  ? "Inactive"
-                  : member.status === "pending"
-                  ? "Pending Approval"
-                  : member.balance < 0
-                  ? "Need Reload"
-                  : member.balance < 30
-                  ? "Low Balance"
-                  : "Good"}
-              </td>
+              <Table.Td>
+                <Badge color={getMemberStatus(member).color} variant="light">
+                  {getMemberStatus(member).label}
+                </Badge>
+              </Table.Td>
 
-              <td>
-                <button
+              <Table.Td>
+                <Button
                   className="member-edit-button"
+                  variant="light"
+                  size="xs"
                   onClick={() => onEditMember(member.id)}
                 >
                   Edit
-                </button>
-              </td>
-            </tr>
+                </Button>
+              </Table.Td>
+            </Table.Tr>
           ))}
-        </tbody>
-      </table>
+        </Table.Tbody>
+      </Table>
     </div>
   );
 }

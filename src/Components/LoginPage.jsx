@@ -1,3 +1,15 @@
+import {
+    Badge,
+    Button,
+    Group,
+    PasswordInput,
+    Paper,
+    Stack,
+    Text,
+    TextInput,
+    Title,
+} from "@mantine/core";
+
 const BYT_WHATSAPP_NUMBER = "60142889116";
 const WALK_IN_INQUIRY_MESSAGE = `Hi BYT, I would like to ask if there is any walk-in slot available for the next badminton session.
 
@@ -24,50 +36,59 @@ function LoginPage({
 
     return (
         <div className="page">
-            <div className="login-card">
-                <div className="logo-box">BYT</div>
+            <Paper className="login-card premium-auth-card" shadow="xl">
+                <Stack gap="lg">
+                    <Group justify="space-between" align="flex-start">
+                        <div className="logo-box">BYT</div>
+                        <Badge className="premium-badge" variant="light">
+                            Club Wallet
+                        </Badge>
+                    </Group>
 
-                <h1>BYT Club Wallet</h1>
-                <p className="subtitle">
-                    Club management system for reload, expenses and member balance.
-                </p>
+                    <div>
+                        <Title order={1}>BYT Club Wallet</Title>
+                        <Text className="subtitle">
+                            Premium club management for reloads, sessions, expenses and member balances.
+                        </Text>
+                    </div>
 
-                {authNotice && <div className="auth-notice">{authNotice}</div>}
+                    {authNotice && <div className="auth-notice">{authNotice}</div>}
 
-                <div className="form">
-                    <label>Email / Phone</label>
-                    <input
-                        type="text"
-                        placeholder="admin@byt.club"
-                        value={email}
-                        onChange={(event) => setEmail(event.target.value)}
-                    />
+                    <Stack className="form" gap="md">
+                        <TextInput
+                            label="Email / Phone"
+                            placeholder="admin@byt.club"
+                            value={email}
+                            onChange={(event) => setEmail(event.target.value)}
+                        />
 
-                    <label>Password</label>
-                    <input
-                        type="password"
-                        placeholder="Enter password"
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
-                    />
+                        <PasswordInput
+                            label="Password"
+                            placeholder="Enter password"
+                            value={password}
+                            onChange={(event) => setPassword(event.target.value)}
+                        />
 
-                    <button className="login-button" onClick={handleLogin}>
-                        Login
-                    </button>
-                    <button
-                        className="register-link-button"
-                        onClick={() => setPage("register")}
-                    >
-                        New Member Register
-                    </button>
-                    <button
-                        className="walkin-inquiry-button"
-                        onClick={handleWalkInInquiry}
-                    >
-                        Walk-in Inquiry
-                    </button>
-                </div>
-            </div>
+                        <Button className="login-button" onClick={handleLogin} size="lg">
+                            Login
+                        </Button>
+                        <Button
+                            className="register-link-button"
+                            variant="light"
+                            onClick={() => setPage("register")}
+                        >
+                            New Member Register
+                        </Button>
+                        <Button
+                            className="walkin-inquiry-button"
+                            variant="subtle"
+                            onClick={handleWalkInInquiry}
+                        >
+                            Walk-in Inquiry
+                        </Button>
+                    </Stack>
+                </Stack>
+            </Paper>
         </div>
     );
 }

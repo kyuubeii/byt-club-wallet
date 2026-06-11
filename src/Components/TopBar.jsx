@@ -1,3 +1,5 @@
+import { Badge, Button, Group, Paper, Stack, Text, Title } from "@mantine/core";
+
 function TopBar({
   title,
   subtitle,
@@ -6,24 +8,34 @@ function TopBar({
   onReset,
 }) {
   return (
-    <div className="topbar">
-      <div>
-        <h2>{title}</h2>
-        <p>{subtitle}</p>
-      </div>
+    <Paper className="topbar" component="header" shadow="sm">
+      <Group justify="space-between" align="center" w="100%">
+        <Group gap="md" align="center">
+          <div className="logo-box topbar-logo">BYT</div>
+          <Stack gap={2}>
+            <Group gap="xs">
+              <Title order={2}>{title}</Title>
+              <Badge className="premium-badge" variant="light">
+                Live
+              </Badge>
+            </Group>
+            <Text>{subtitle}</Text>
+          </Stack>
+        </Group>
 
-      <div className="topbar-actions">
-        {showResetButton && (
-          <button className="reset-button" onClick={onReset}>
-            Reset Demo Data
-          </button>
-        )}
+        <Group className="topbar-actions" gap="sm">
+          {showResetButton && (
+            <Button className="reset-button" variant="light" onClick={onReset}>
+              Reset Demo Data
+            </Button>
+          )}
 
-        <button className="logout-button" onClick={onLogout}>
-          Logout
-        </button>
-      </div>
-    </div>
+          <Button className="logout-button" variant="outline" onClick={onLogout}>
+            Logout
+          </Button>
+        </Group>
+      </Group>
+    </Paper>
   );
 }
 

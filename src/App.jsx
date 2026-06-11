@@ -1,4 +1,21 @@
 import { useEffect, useState } from "react";
+import {
+  Badge,
+  Button,
+  Card,
+  Checkbox,
+  Group,
+  Image,
+  Paper,
+  PasswordInput,
+  Radio,
+  Select,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from "@mantine/core";
+import { DatePickerInput } from "@mantine/dates";
 import "./App.css";
 import LoginPage from "./Components/LoginPage.jsx";
 import MemberTable from "./Components/MemberTable.jsx";
@@ -1000,14 +1017,6 @@ function App() {
     );
 
     await upsertMemberToSupabase(member);
-  }
-
-  async function syncMemberStatusToSupabase(memberId, status) {
-    const { updateMemberStatusInSupabase } = await import(
-      "./services/supabaseServices.js"
-    );
-
-    await updateMemberStatusInSupabase(memberId, status);
   }
 
   async function syncUserToSupabase(user) {
@@ -3897,10 +3906,6 @@ function App() {
       0
     );
 
-    const lowBalanceCount = members.filter(
-      (member) => member.balance >= 0 && member.balance < 30
-    ).length;
-
     const negativeBalanceCount = members.filter(
       (member) => member.balance < 0
     ).length;
@@ -5263,26 +5268,36 @@ function App() {
       <>
         {renderSupabaseLoadNotice()}
         <div className="page">
-          <div className="login-card registration-card">
-            <div className="logo-box">BYT</div>
+          <Paper className="login-card registration-card premium-auth-card" shadow="xl">
+            <Stack gap="lg">
+              <Group justify="space-between" align="flex-start">
+                <div className="logo-box">BYT</div>
+                <Badge className="premium-badge" variant="light">
+                  Member Onboarding
+                </Badge>
+              </Group>
 
-            <h1>BYT Member Package Registration</h1>
-            <p className="subtitle">
-              Choose your member package, complete your details, and upload payment proof for admin approval.
-            </p>
+              <div>
+                <Title order={1}>BYT Member Package Registration</Title>
+                <Text className="subtitle">
+                  Choose your member package, complete your details, and upload payment proof for admin approval.
+                </Text>
+              </div>
 
-            <img
-              className="package-image"
-              src="/byt-member-packages.png"
-              alt="BYT Member Packages"
-            />
+              <Image
+                className="package-image"
+                src="/byt-member-packages.png"
+                alt="BYT Member Packages"
+                radius="xl"
+              />
 
-            <div className="form">
+            <Stack className="form" gap="lg">
               <div className="registration-section">
-                <h2>Choose Package</h2>
+                <Title order={2}>Choose Package</Title>
                 <div className="package-selection-grid">
                   {Object.values(MEMBER_PACKAGES).map((memberPackage) => (
-                    <button
+                    <Card
+                      component="button"
                       key={memberPackage.packageType}
                       className={`package-card ${
                         registerPackageType === memberPackage.packageType
@@ -5311,141 +5326,111 @@ function App() {
                           <li>No uniform included</li>
                         )}
                       </ul>
-                    </button>
+                    </Card>
                   ))}
                 </div>
               </div>
 
               <div className="registration-section">
-                <h2>Gift Choice</h2>
-                <div className="registration-option-row">
+                <Title order={2}>Gift Choice</Title>
+                <Radio.Group value={registerGiftChoice} onChange={setRegisterGiftChoice}>
                   {GIFT_CHOICES.map((giftChoice) => (
-                    <label className="registration-radio" key={giftChoice}>
-                      <input
-                        type="radio"
-                        name="giftChoice"
-                        checked={registerGiftChoice === giftChoice}
-                        onChange={() => setRegisterGiftChoice(giftChoice)}
-                      />
-                      {giftChoice === "wristband" ? "Wristband" : "Headband"}
-                    </label>
+                    <Radio
+                      className="registration-radio"
+                      key={giftChoice}
+                      value={giftChoice}
+                      label={giftChoice === "wristband" ? "Wristband" : "Headband"}
+                    />
                   ))}
-                </div>
+                </Radio.Group>
               </div>
 
               <div className="registration-section">
-                <h2>Personal Details</h2>
+                <Title order={2}>Personal Details</Title>
                 <div className="registration-form-grid">
-                  <div>
-                    <label>Full Name</label>
-                    <input
-                      type="text"
-                      placeholder="Enter your full name"
-                      value={registerName}
-                      onChange={(event) => setRegisterName(event.target.value)}
-                    />
-                  </div>
+                  <TextInput
+                    label="Full Name"
+                    placeholder="Enter your full name"
+                    value={registerName}
+                    onChange={(event) => setRegisterName(event.target.value)}
+                  />
 
-                  <div>
-                    <label>Gender</label>
-                    <select
-                      value={registerGender}
-                      onChange={(event) => setRegisterGender(event.target.value)}
-                    >
-                      <option value="">Select gender</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                    </select>
-                  </div>
+                  <Select
+                    label="Gender"
+                    placeholder="Select gender"
+                    value={registerGender || null}
+                    data={["Male", "Female"]}
+                    onChange={(value) => setRegisterGender(value || "")}
+                  />
 
-                  <div>
-                    <label>Birthday</label>
-                    <input
-                      className="registration-date-input"
-                      type="date"
-                      value={registerBirthday}
-                      max={new Date().toISOString().split("T")[0]}
-                      onChange={(event) => setRegisterBirthday(event.target.value)}
-                    />
-                  </div>
+                  <DatePickerInput
+                    className="registration-date-input"
+                    label="Birthday"
+                    placeholder="Select birthday"
+                    value={registerBirthday || null}
+                    maxDate={new Date().toISOString().split("T")[0]}
+                    valueFormat="MMM D, YYYY"
+                    onChange={(value) => setRegisterBirthday(value || "")}
+                  />
 
-                  <div>
-                    <label>WhatsApp / Mobile Number</label>
-                    <input
-                      type="text"
-                      placeholder="Example: 0142889116"
-                      value={registerWhatsapp}
-                      onChange={(event) => setRegisterWhatsapp(event.target.value)}
-                    />
-                  </div>
+                  <TextInput
+                    label="WhatsApp / Mobile Number"
+                    placeholder="Example: 0142889116"
+                    value={registerWhatsapp}
+                    onChange={(event) => setRegisterWhatsapp(event.target.value)}
+                  />
 
-                  <div>
-                    <label>Email</label>
-                    <input
-                      type="email"
-                      placeholder="Enter email"
-                      value={registerEmail}
-                      onChange={(event) => setRegisterEmail(event.target.value)}
-                    />
-                  </div>
+                  <TextInput
+                    label="Email"
+                    type="email"
+                    placeholder="Enter email"
+                    value={registerEmail}
+                    onChange={(event) => setRegisterEmail(event.target.value)}
+                  />
 
-                  <div>
-                    <label>Emergency Contact</label>
-                    <input
-                      type="text"
-                      placeholder="Parent 0123456789"
-                      value={registerEmergencyContact}
-                      onChange={(event) =>
-                        setRegisterEmergencyContact(event.target.value)
-                      }
-                    />
-                  </div>
+                  <TextInput
+                    label="Emergency Contact"
+                    placeholder="Parent 0123456789"
+                    value={registerEmergencyContact}
+                    onChange={(event) =>
+                      setRegisterEmergencyContact(event.target.value)
+                    }
+                  />
 
-                  <div>
-                    <label>Password</label>
-                    <input
-                      type="password"
-                      placeholder="Create password"
-                      value={registerPassword}
-                      onChange={(event) =>
-                        setRegisterPassword(event.target.value)
-                      }
-                    />
-                  </div>
+                  <PasswordInput
+                    label="Password"
+                    placeholder="Create password"
+                    value={registerPassword}
+                    onChange={(event) =>
+                      setRegisterPassword(event.target.value)
+                    }
+                  />
 
-                  <div>
-                    <label>Confirm Password</label>
-                    <input
-                      type="password"
-                      placeholder="Confirm password"
-                      value={registerConfirmPassword}
-                      onChange={(event) =>
-                        setRegisterConfirmPassword(event.target.value)
-                      }
-                    />
-                  </div>
+                  <PasswordInput
+                    label="Confirm Password"
+                    placeholder="Confirm password"
+                    value={registerConfirmPassword}
+                    onChange={(event) =>
+                      setRegisterConfirmPassword(event.target.value)
+                    }
+                  />
                 </div>
               </div>
 
               {selectedRegisterPackage?.packageType === "extreme" && (
                 <div className="registration-section">
-                  <h2>Uniform Size</h2>
-                  <select
-                    value={registerUniformSize}
-                    onChange={(event) => setRegisterUniformSize(event.target.value)}
-                  >
-                    <option value="">Select uniform size</option>
-                    {UNIFORM_SIZES.map((size) => (
-                      <option value={size} key={size}>
-                        {size}
-                      </option>
-                    ))}
-                  </select>
+                  <Title order={2}>Uniform Size</Title>
+                  <Select
+                    placeholder="Select uniform size"
+                    value={registerUniformSize || null}
+                    data={UNIFORM_SIZES}
+                    onChange={(value) => setRegisterUniformSize(value || "")}
+                  />
                 </div>
               )}
 
               <div className="registration-section">
-                <h2>Payment</h2>
+                <Title order={2}>Payment</Title>
                 <div className="registration-bank-box">
                   <span>Bank Transfer</span>
                   <strong>B.Y.T. ENTERPRISE</strong>
@@ -5453,19 +5438,20 @@ function App() {
                   <p>2383066532</p>
                   <small>Finance WhatsApp: 60142889116 Oscar Kho</small>
                 </div>
-                <img
+                <Image
                   src="/duitnow-qr.png"
                   alt="BYT DuitNow QR"
                   className="bank-qr-image"
+                  radius="lg"
                 />
-                <p className="registration-helper-text">
+                <Text className="registration-helper-text">
                   Please upload your payment proof after transferring the membership fee.
-                </p>
+                </Text>
                 {selectedRegisterPackage && (
-                  <p className="registration-helper-text">
+                  <Text className="registration-helper-text">
                     Selected package amount:{" "}
                     <strong>RM{selectedRegisterPackage.packagePrice}</strong>
-                  </p>
+                  </Text>
                 )}
                 <label>Payment Proof / Receipt Screenshot</label>
                 <input
@@ -5483,9 +5469,9 @@ function App() {
               </div>
 
               <div className="terms-box">
-                <p>
+                <Text>
                   By registering as a BYT member, you agree to follow BYT Club rules, safety guidelines, privacy terms, and payment rules.
-                </p>
+                </Text>
                 <a
                   className="terms-link"
                   href="/byt-terms-and-conditions.pdf"
@@ -5494,40 +5480,41 @@ function App() {
                 >
                   View Terms & Conditions
                 </a>
-                <label className="terms-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={registerAgreedTerms}
-                    onChange={(event) =>
-                      setRegisterAgreedTerms(event.target.checked)
-                    }
-                  />
-                  I agree to BYT Club Terms & Conditions
-                </label>
+                <Checkbox
+                  className="terms-checkbox"
+                  checked={registerAgreedTerms}
+                  onChange={(event) =>
+                    setRegisterAgreedTerms(event.target.checked)
+                  }
+                  label="I agree to BYT Club Terms & Conditions"
+                />
               </div>
 
-              <button
+              <Button
                 className="login-button"
                 onClick={handleRegister}
                 disabled={isSubmittingRegistration}
+                size="lg"
               >
                 {isSubmittingRegistration
                   ? "Submitting Registration..."
                   : "Submit Registration"}
-              </button>
+              </Button>
 
-              <button
+              <Button
                 className="register-link-button"
                 disabled={isSubmittingRegistration}
+                variant="light"
                 onClick={() => {
                   setAuthNotice("");
                   setPage("login");
                 }}
               >
                 Back to Login
-              </button>
-            </div>
-          </div>
+              </Button>
+            </Stack>
+            </Stack>
+          </Paper>
         </div>
       </>
     );

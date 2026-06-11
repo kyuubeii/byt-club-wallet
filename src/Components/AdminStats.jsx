@@ -1,3 +1,5 @@
+import { Card, Group, RingProgress, Stack, Text, Title } from "@mantine/core";
+
 function AdminStats({
   totalClubBalance,
   activeMemberCount,
@@ -5,27 +7,55 @@ function AdminStats({
   negativeBalanceCount,
   formatMoney,
 }) {
+  const stats = [
+    {
+      label: "Total Club Balance",
+      value: formatMoney(totalClubBalance),
+      tone: "positive",
+      progress: 78,
+    },
+    {
+      label: "Active Members",
+      value: activeMemberCount,
+      tone: "neutral",
+      progress: 66,
+    },
+    {
+      label: "Pending Reload",
+      value: pendingRequestCount,
+      tone: "warning",
+      progress: 36,
+    },
+    {
+      label: "Negative Balance",
+      value: negativeBalanceCount,
+      tone: "danger",
+      progress: 22,
+    },
+  ];
+
   return (
     <div className="stats-grid">
-      <div className="stat-card">
-        <p>Total Club Balance</p>
-        <h3>{formatMoney(totalClubBalance)}</h3>
-      </div>
-
-      <div className="stat-card">
-        <p>Active Members</p>
-        <h3>{activeMemberCount}</h3>
-      </div>
-
-      <div className="stat-card">
-        <p>Pending Reload</p>
-        <h3>{pendingRequestCount}</h3>
-      </div>
-
-      <div className="stat-card danger">
-        <p>Negative Balance</p>
-        <h3>{negativeBalanceCount}</h3>
-      </div>
+      {stats.map((stat) => (
+        <Card className={`stat-card stat-card-${stat.tone}`} key={stat.label}>
+          <Group justify="space-between" align="center" wrap="nowrap">
+            <Stack gap={6}>
+              <Text>{stat.label}</Text>
+              <Title order={3}>{stat.value}</Title>
+            </Stack>
+            <RingProgress
+              size={56}
+              thickness={5}
+              sections={[
+                {
+                  value: stat.progress,
+                  color: stat.tone === "danger" ? "red" : stat.tone === "warning" ? "yellow" : "lime",
+                },
+              ]}
+            />
+          </Group>
+        </Card>
+      ))}
     </div>
   );
 }

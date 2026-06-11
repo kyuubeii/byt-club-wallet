@@ -1,5 +1,4 @@
 import { useState } from "react";
-import TopBar from "./TopBar.jsx";
 
 function MemberPortal({
     currentUser,

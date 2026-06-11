@@ -3,7 +3,6 @@ import { useState } from "react";
 function AdminBookingManagement({
   bookingStatusOptions,
   formatMoney,
-  getActiveSessionBookings,
   getSessionConfirmedBookings,
   getSessionBookings,
   getSessionMemberBookingCount,
