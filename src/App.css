@@ -98,28 +98,6 @@ h1 {
   line-height: 1.4;
 }
 
-.role-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 24px;
-}
-
-.role {
-  border: none;
-  padding: 14px;
-  border-radius: 16px;
-  background: #e2e8f0;
-  color: #334155;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.role.active {
-  background: #0f172a;
-  color: white;
-}
-
 .form {
   text-align: left;
 }
@@ -175,12 +153,6 @@ select:focus {
 
 .login-button:hover {
   background: #1e293b;
-}
-
-.footer-text {
-  margin-top: 22px;
-  color: #94a3b8;
-  font-size: 13px;
 }
 
 .supabase-load-notice {
@@ -309,13 +281,6 @@ select:focus {
   color: #dc2626;
 }
 
-.main-grid {
-  margin-top: 24px;
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 24px;
-}
-
 .panel {
   background: white;
   padding: 24px;
@@ -395,9 +360,6 @@ hr {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .main-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 600px) {
@@ -446,21 +408,6 @@ hr {
   color: #991b1b;
   font-weight: 800;
   font-size: 13px;
-}
-
-.demo-box {
-  margin-top: 20px;
-  padding: 14px;
-  border-radius: 16px;
-  background: #f1f5f9;
-  text-align: left;
-  color: #475569;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.demo-box p {
-  margin: 2px 0;
 }
 
 .topup-button {
@@ -826,14 +773,6 @@ input[type="file"] {
   align-items: center;
 }
 
-.admin-dashboard-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: flex-start;
-  margin-top: 18px;
-}
-
 .dashboard-section-toggle-grid {
   display: flex;
   flex-wrap: wrap;
@@ -1108,10 +1047,6 @@ input[type="file"] {
   .registration-form-grid {
     grid-template-columns: 1fr;
   }
-}
-
-.developer-tools-toggle {
-  margin-top: 18px;
 }
 
 .developer-tools-panel {
@@ -1446,12 +1381,6 @@ input[type="file"] {
   color: #475569;
   font-size: 14px;
   line-height: 1.5;
-}
-
-.registration-option-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
 }
 
 .registration-radio,
@@ -1921,7 +1850,6 @@ input[type="file"] {
 }
 
 .walkin-summary span,
-.walkin-count-badge,
 .waitlist-badge {
   display: inline-flex;
   align-items: center;
@@ -2567,34 +2495,9 @@ button:disabled {
   color: #0f172a;
 }
 
-.edit-member-password-row {
-  margin-top: 22px;
-}
-
-.edit-member-actions {
-  margin-top: 24px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  align-items: center;
-}
-
-.edit-member-actions button {
-  min-width: 170px;
-}
-
 @media (max-width: 900px) {
   .edit-member-grid {
     grid-template-columns: 1fr;
-  }
-
-  .edit-member-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .edit-member-actions button {
-    width: 100%;
   }
 }
 /* DuitNow QR image */
@@ -3093,8 +2996,7 @@ tbody tr:hover {
     width: 100%;
   }
 
-  .stats-grid,
-  .main-grid {
+  .stats-grid {
     gap: 16px;
   }
 
@@ -3540,7 +3442,6 @@ tbody tr:hover {
     gap: 10px;
   }
 
-  .edit-member-actions,
   .button-row,
   .small-button-row,
   .change-login-id-actions,
@@ -3564,7 +3465,6 @@ tbody tr:hover {
 
 /* Mobile grid alignment fixes */
 .stats-grid,
-.main-grid,
 .balance-tools-grid,
 .analytics-grid,
 .payment-reminder-grid,
@@ -4035,7 +3935,6 @@ label {
 .booking-status-pill,
 .session-booking-summary span,
 .walkin-summary span,
-.walkin-count-badge,
 .waitlist-badge {
   border: 1px solid rgba(148, 163, 184, 0.26);
   background: rgba(248, 250, 252, 0.9);
@@ -4235,7 +4134,6 @@ label {
   align-items: stretch;
 }
 
-.main-grid,
 .balance-tools-grid {
   gap: 26px;
 }
@@ -4556,5 +4454,335 @@ tbody tr:hover {
   .dashboard-section-toggle-grid,
   .session-capacity-summary {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* -------------------- UI regression fixes -------------------- */
+.dashboard-page .dashboard-content > h1 {
+  margin: 0;
+  color: #ffffff;
+  text-align: center;
+  text-shadow: 0 2px 18px rgba(7, 17, 31, 0.38);
+}
+
+.dashboard-page .dashboard-subtitle {
+  max-width: 760px;
+  margin: 6px auto 8px;
+  color: rgba(255, 255, 255, 0.78);
+  text-align: center;
+}
+
+.dashboard-page .panel h1,
+.dashboard-page .panel h2,
+.dashboard-page .panel h3,
+.dashboard-page .panel h4,
+.dashboard-page .panel p,
+.dashboard-page .panel label,
+.dashboard-page .member-session-card h3,
+.dashboard-page .session-card h3,
+.dashboard-page .member-session-card p,
+.dashboard-page .session-card p {
+  text-shadow: none;
+}
+
+.login-button,
+.register-link-button,
+.walkin-inquiry-button,
+.mantine-Button-root.login-button,
+.mantine-Button-root.register-link-button,
+.mantine-Button-root.walkin-inquiry-button {
+  min-height: 52px;
+  height: auto;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  line-height: 1.2;
+  overflow: visible;
+}
+
+.mantine-Button-root.login-button,
+.mantine-Button-root.register-link-button,
+.mantine-Button-root.walkin-inquiry-button {
+  --button-height: auto;
+}
+
+.mantine-Button-root .mantine-Button-label {
+  overflow: visible;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+.registration-card,
+.premium-auth-card.registration-card,
+.login-card.registration-card {
+  width: min(100%, 860px);
+  max-width: 860px;
+}
+
+.dashboard-section-toggle-grid {
+  justify-content: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.dashboard-section-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.stat-card {
+  text-align: center;
+}
+
+.stat-card .mantine-Group-root {
+  justify-content: center !important;
+}
+
+.stat-card .mantine-Stack-root {
+  align-items: center;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .premium-auth-card.registration-card,
+  .login-card.registration-card {
+    width: min(100%, calc(100vw - 28px));
+    max-width: calc(100vw - 28px);
+  }
+
+  .dashboard-page .dashboard-content > h1 {
+    font-size: 27px;
+  }
+
+  .dashboard-page .dashboard-subtitle {
+    margin-top: 8px;
+    font-size: 14px;
+  }
+}
+
+/* -------------------- Balance & Calculator alignment polish -------------------- */
+.dashboard-page .collapsible-section:has(.balance-tools-grid) {
+  margin-top: 34px;
+}
+
+.dashboard-page .collapsible-section:has(.balance-tools-grid) > .collapsible-section-header {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 18px;
+  padding-bottom: 14px;
+  text-align: center;
+}
+
+.dashboard-page .collapsible-section:has(.balance-tools-grid) > .collapsible-section-header > div {
+  max-width: 720px;
+}
+
+.dashboard-page .collapsible-section:has(.balance-tools-grid) > .collapsible-section-header h2 {
+  margin: 0;
+  color: #111827;
+  font-size: clamp(21px, 2.2vw, 27px);
+  line-height: 1.18;
+}
+
+.dashboard-page .collapsible-section:has(.balance-tools-grid) > .collapsible-section-header p {
+  margin: 8px auto 0;
+  max-width: 560px;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.dashboard-page .collapsible-section .balance-tools-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.9fr);
+  gap: 26px;
+  align-items: start;
+  width: 100%;
+}
+
+.balance-tools-grid .session-calculator-panel,
+.balance-side-stack .panel {
+  width: 100%;
+  min-width: 0;
+}
+
+.balance-tools-grid .session-calculator-panel {
+  margin-top: 0;
+  padding: 26px;
+}
+
+.session-calculator-panel .panel-header,
+.balance-side-stack .panel > h2 {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.session-calculator-panel .panel-header {
+  display: flex;
+  justify-content: center;
+}
+
+.session-calculator-panel .panel-header > div {
+  max-width: 620px;
+}
+
+.session-calculator-panel .panel-header h2,
+.balance-side-stack .panel > h2 {
+  margin-top: 0;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.session-calculator-panel .panel-header p {
+  margin: 8px auto 0;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.session-calculator-panel .calculator-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  align-items: end;
+}
+
+.session-calculator-panel .calculator-grid > div,
+.balance-side-stack .panel > label {
+  min-width: 0;
+}
+
+.session-calculator-panel .calculator-grid label,
+.balance-side-stack .panel > label {
+  margin: 0 0 9px;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.session-calculator-panel .calculator-grid input,
+.balance-side-stack .panel > input,
+.balance-side-stack .panel > select {
+  min-height: 52px;
+  width: 100%;
+  border-color: #cbd5e1;
+  border-radius: 16px;
+  background-color: #ffffff;
+  line-height: 1.25;
+}
+
+.session-calculator-panel .calculator-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.session-calculator-panel .summary-card {
+  display: flex;
+  min-height: 104px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 17px 14px;
+  text-align: center;
+}
+
+.session-calculator-panel .summary-card p,
+.session-calculator-panel .summary-card h3 {
+  overflow-wrap: anywhere;
+}
+
+.session-calculator-panel .summary-card h3 {
+  font-size: clamp(19px, 1.6vw, 23px);
+  line-height: 1.18;
+}
+
+.balance-side-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.balance-side-stack .panel {
+  padding: 26px 24px;
+}
+
+.balance-side-stack .panel > label:not(:first-of-type) {
+  margin-top: 18px;
+}
+
+.balance-side-stack .panel > .action-button {
+  min-height: 52px;
+  margin-top: 20px;
+  line-height: 1.2;
+}
+
+.balance-side-stack .expense-summary {
+  margin-top: 18px;
+}
+
+.balance-side-stack .expense-summary p {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  text-align: left;
+}
+
+.balance-side-stack .expense-summary p + p {
+  margin-top: 8px;
+}
+
+@media (max-width: 980px) {
+  .dashboard-page .collapsible-section .balance-tools-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .balance-side-stack {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .balance-side-stack,
+  .session-calculator-panel .calculator-grid,
+  .session-calculator-panel .calculator-summary-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dashboard-page .collapsible-section:has(.balance-tools-grid) {
+    margin-top: 24px;
+  }
+
+  .balance-tools-grid .session-calculator-panel,
+  .balance-side-stack .panel {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 430px) {
+  .dashboard-page .collapsible-section .balance-tools-grid {
+    gap: 16px;
+  }
+
+  .balance-side-stack {
+    gap: 16px;
+  }
+
+  .session-calculator-panel .calculator-grid {
+    gap: 14px;
+  }
+
+  .session-calculator-panel .calculator-summary-grid {
+    gap: 12px;
+  }
+
+  .balance-side-stack .expense-summary p {
+    display: block;
+    text-align: center;
   }
 }
