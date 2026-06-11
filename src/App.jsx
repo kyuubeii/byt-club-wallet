@@ -5390,10 +5390,10 @@ function App() {
                   </div>
 
                   <div>
-                    <label>Emergency Contact Name & Number</label>
+                    <label>Emergency Contact</label>
                     <input
                       type="text"
-                      placeholder="Example: Parent 0123456789"
+                      placeholder="Parent 0123456789"
                       value={registerEmergencyContact}
                       onChange={(event) =>
                         setRegisterEmergencyContact(event.target.value)
