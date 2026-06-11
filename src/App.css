@@ -4984,3 +4984,25 @@ tbody tr:hover {
     z-index: 1;
   }
 }
+
+/* -------------------- Mobile topbar and hero spacing fix -------------------- */
+.topbar {
+  position: relative;
+  top: auto;
+  z-index: 1;
+}
+
+@media (max-width: 600px) {
+  .dashboard-page:has(.member-card) {
+    background:
+      linear-gradient(180deg, #07111f 0, #0f2238 360px, #eef4f8 360px, #f7fafc 100%);
+  }
+
+  .dashboard-page:has(.member-card) .dashboard-content {
+    padding-bottom: 56px;
+  }
+
+  .dashboard-page:has(.member-card) .dashboard-subtitle {
+    margin-bottom: 40px;
+  }
+}
