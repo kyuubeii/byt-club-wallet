@@ -3543,3 +3543,141 @@ tbody tr:hover {
     justify-self: start;
   }
 }
+
+/* Mobile grid alignment fixes */
+.stats-grid,
+.main-grid,
+.balance-tools-grid,
+.analytics-grid,
+.payment-reminder-grid,
+.developer-tools-unlock-row,
+.package-selection-grid,
+.registration-form-grid,
+.calculator-grid,
+.calculator-summary-grid,
+.session-form-grid,
+.session-capacity-summary,
+.walkin-name-grid,
+.walkin-admin-edit,
+.waitlist-row,
+.session-charge-grid,
+.edit-member-grid,
+.add-member-grid,
+.member-tools,
+.dashboard-section-toggle-grid {
+  min-width: 0;
+}
+
+.stat-card,
+.panel,
+.member-card,
+.member-session-card,
+.session-card,
+.summary-card,
+.analytics-card,
+.payment-reminder-card,
+.capacity-summary-item,
+.waitlist-row,
+.walkin-option,
+.walkin-edit-panel,
+.session-booking-member,
+.session-booking-status,
+.session-booking-row,
+.session-member-row,
+.member-checkbox-row {
+  min-width: 0;
+}
+
+.session-booking-member span,
+.session-booking-member small,
+.attendee-name,
+.attendee-meta,
+.waitlist-row strong,
+.waitlist-row small,
+.capacity-summary-value,
+.payment-reminder-card h3,
+.analytics-muted {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .balance-tools-grid,
+  .analytics-grid,
+  .payment-reminder-grid,
+  .registration-form-grid,
+  .package-selection-grid,
+  .developer-tools-unlock-row,
+  .calculator-grid,
+  .calculator-summary-grid,
+  .session-form-grid,
+  .session-charge-grid,
+  .edit-member-grid,
+  .add-member-grid,
+  .member-tools {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .analytics-card-wide {
+    grid-column: auto;
+  }
+
+  .payment-reminder-card-header,
+  .payment-reminder-balance {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .session-capacity-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .session-booking-row {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .session-booking-status,
+  .walkin-admin-edit,
+  .waitlist-row,
+  .waitlist-actions,
+  .member-session-actions,
+  .session-booking-quick-actions,
+  .small-button-row,
+  .button-row,
+  .table-actions,
+  .change-login-id-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
+  }
+
+  .session-booking-status > *,
+  .walkin-admin-edit > *,
+  .waitlist-actions > *,
+  .member-session-actions > *,
+  .session-booking-quick-actions > *,
+  .small-button-row > *,
+  .button-row > *,
+  .table-actions > *,
+  .change-login-id-actions > * {
+    width: 100%;
+  }
+
+  .session-member-row,
+  .member-checkbox-row {
+    grid-template-columns: 22px minmax(0, 1fr);
+  }
+
+  .dashboard-section-toggle-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 380px) {
+  .stats-grid,
+  .session-capacity-summary,
+  .dashboard-section-toggle-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
