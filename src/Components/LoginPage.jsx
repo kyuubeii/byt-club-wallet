@@ -39,7 +39,9 @@ function LoginPage({
             <Paper className="login-card premium-auth-card" shadow="xl">
                 <Stack gap="lg">
                     <Group justify="space-between" align="flex-start">
-                        <div className="logo-box">BYT</div>
+                        <div className="logo-box">
+                            <img src="/byt-logo.jpeg" alt="BYT Logo" />
+                        </div>
                         <Badge className="premium-badge" variant="light">
                             Club Wallet
                         </Badge>

@@ -11,7 +11,9 @@ function TopBar({
     <Paper className="topbar" component="header" shadow="sm">
       <Group justify="space-between" align="center" w="100%">
         <Group gap="md" align="center">
-          <div className="logo-box topbar-logo">BYT</div>
+          <div className="logo-box topbar-logo">
+            <img src="/byt-logo.jpeg" alt="BYT Logo" />
+          </div>
           <Stack gap={2}>
             <Group gap="xs">
               <Title order={2}>{title}</Title>
