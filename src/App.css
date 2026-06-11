@@ -4946,3 +4946,41 @@ tbody tr:hover {
     padding: 20px 14px;
   }
 }
+
+/* -------------------- Member portal hero overlap fix -------------------- */
+.dashboard-page:has(.member-card) .dashboard-content > h1,
+.dashboard-page:has(.member-card) .dashboard-subtitle {
+  position: relative;
+  z-index: 2;
+}
+
+.dashboard-page:has(.member-card) .dashboard-subtitle {
+  margin-bottom: 28px;
+}
+
+@media (max-width: 600px) {
+  .dashboard-page:has(.member-card) {
+    background:
+      linear-gradient(180deg, #07111f 0, #0f2238 340px, #eef4f8 340px, #f7fafc 100%);
+  }
+
+  .dashboard-page:has(.member-card) .dashboard-content {
+    padding-top: 28px;
+    padding-bottom: 44px;
+  }
+
+  .dashboard-page:has(.member-card) .dashboard-content > h1 {
+    margin-bottom: 8px;
+  }
+
+  .dashboard-page:has(.member-card) .dashboard-subtitle {
+    margin-top: 0;
+    margin-bottom: 32px;
+    color: rgba(255, 255, 255, 0.84);
+  }
+
+  .dashboard-page:has(.member-card) .member-card {
+    position: relative;
+    z-index: 1;
+  }
+}
