@@ -952,18 +952,18 @@ function AdminBookingManagement({
 
           <div className="session-charge-summary-grid">
             <div>
-              <small>Court denominator</small>
+              <small>Court denominator incl. walk-ins</small>
               <strong>{chargeSummary.courtDenominator}</strong>
             </div>
 
             <div>
-              <small>Independent walk-ins</small>
-              <strong>{chargeSummary.confirmedIndependentWalkInCount}</strong>
+              <small>Shuttlecock denominator incl. walk-ins</small>
+              <strong>{chargeSummary.shuttlecockDenominator}</strong>
             </div>
 
             <div>
-              <small>Attended players</small>
-              <strong>{chargeSummary.attendedBookings.length}</strong>
+              <small>Total confirmed walk-ins</small>
+              <strong>{chargeSummary.totalConfirmedWalkInCount}</strong>
             </div>
 
             <div>
@@ -977,10 +977,15 @@ function AdminBookingManagement({
             </div>
 
             <div>
-              <small>Attended extra per player</small>
+              <small>Attended member extra per player</small>
               <strong>
                 {formatMoney(chargeSummary.attendedFeePerPlayer)}
               </strong>
+            </div>
+
+            <div>
+              <small>Walk-ins fixed fee only</small>
+              <strong>No wallet charge</strong>
             </div>
 
             <div>

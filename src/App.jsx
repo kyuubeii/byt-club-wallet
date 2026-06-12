@@ -2908,6 +2908,14 @@ function App() {
     const attendedBookings = confirmedBookings.filter(
       (booking) => booking.status === "attended"
     );
+    const confirmedMemberAttachedWalkInCount = confirmedBookings.reduce(
+      (total, booking) => total + Number(booking.walkInCount || 0),
+      0
+    );
+    const shuttlecockDenominator =
+      attendedBookings.length +
+      confirmedMemberAttachedWalkInCount +
+      confirmedIndependentWalkInCount;
 
     const courtFeeTotal = Number(session.courtFeeTotal || 0);
     const shuttlecockFeeTotal = getSessionShuttlecockFee(session);
@@ -2915,10 +2923,16 @@ function App() {
     const attendedFeeTotal = shuttlecockFeeTotal + otherFeeTotal;
     const courtFeePerPlayer =
       courtDenominator > 0 ? courtFeeTotal / courtDenominator : 0;
-    const attendedFeePerPlayer =
-      attendedBookings.length > 0
-        ? attendedFeeTotal / attendedBookings.length
+    const shuttlecockFeePerPlayer =
+      shuttlecockDenominator > 0
+        ? shuttlecockFeeTotal / shuttlecockDenominator
         : 0;
+    const otherFeePerAttendedPlayer =
+      attendedBookings.length > 0
+        ? otherFeeTotal / attendedBookings.length
+        : 0;
+    const attendedFeePerPlayer =
+      shuttlecockFeePerPlayer + otherFeePerAttendedPlayer;
 
     const chargeRows = confirmedBookings
       .map((booking) => {
@@ -2943,13 +2957,17 @@ function App() {
       courtBookings: courtBookings,
       attendedBookings: attendedBookings,
       courtBookingWalkInCount: courtBookingWalkInCount,
+      confirmedMemberAttachedWalkInCount: confirmedMemberAttachedWalkInCount,
       confirmedIndependentWalkInCount: confirmedIndependentWalkInCount,
       totalConfirmedWalkInCount: totalConfirmedWalkInCount,
       courtDenominator: courtDenominator,
+      shuttlecockDenominator: shuttlecockDenominator,
       courtFeeTotal: courtFeeTotal,
       shuttlecockFeeTotal: shuttlecockFeeTotal,
       otherFeeTotal: otherFeeTotal,
       attendedFeeTotal: attendedFeeTotal,
+      shuttlecockFeePerPlayer: shuttlecockFeePerPlayer,
+      otherFeePerAttendedPlayer: otherFeePerAttendedPlayer,
       courtFeePerPlayer: courtFeePerPlayer,
       attendedFeePerPlayer: attendedFeePerPlayer,
       chargeRows: chargeRows,

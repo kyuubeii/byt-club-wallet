@@ -8,6 +8,10 @@ function nullable(value) {
   return value === undefined || value === "" ? null : value;
 }
 
+function firstRow(data) {
+  return Array.isArray(data) ? data[0] || null : data;
+}
+
 function toSupabaseMemberType(memberType) {
   if (memberType === "existing") {
     return "regular";
@@ -643,14 +647,13 @@ export async function upsertMemberToSupabase(member) {
     const { data, error } = await supabase
       .from("members")
       .upsert(toSupabaseMemberRow(member), { onConflict: "id" })
-      .select()
-      .single();
+      .select();
 
     if (error) {
       throw new Error(getSupabaseErrorMessage(error));
     }
 
-    return data;
+    return firstRow(data);
   } catch (error) {
     throw new Error(getSupabaseErrorMessage(error));
   }
@@ -698,14 +701,13 @@ export async function upsertUserToSupabase(user) {
     const { data, error } = await supabase
       .from("app_users")
       .upsert(toSupabaseUserRow(user), { onConflict: "email" })
-      .select()
-      .single();
+      .select();
 
     if (error) {
       throw new Error(getSupabaseErrorMessage(error));
     }
 
-    return data;
+    return firstRow(data);
   } catch (error) {
     throw new Error(getSupabaseErrorMessage(error));
   }
@@ -791,14 +793,13 @@ export async function upsertSessionToSupabase(session) {
     const { data, error } = await supabase
       .from("sessions")
       .upsert(toSupabaseSessionRow(session), { onConflict: "id" })
-      .select()
-      .single();
+      .select();
 
     if (error) {
       throw new Error(getSupabaseErrorMessage(error));
     }
 
-    return data;
+    return firstRow(data);
   } catch (error) {
     throw new Error(getSupabaseErrorMessage(error));
   }
@@ -810,14 +811,13 @@ export async function updateSessionInSupabase(sessionId, updates) {
       .from("sessions")
       .update(toSupabaseSessionUpdates(updates))
       .eq("id", sessionId)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       throw new Error(getSupabaseErrorMessage(error));
     }
 
-    return data;
+    return firstRow(data);
   } catch (error) {
     throw new Error(getSupabaseErrorMessage(error));
   }
@@ -855,7 +855,7 @@ export async function upsertSessionBookingToSupabase(booking) {
       throw new Error(getSupabaseErrorMessage(error));
     }
 
-    return Array.isArray(data) ? data[0] || null : data;
+    return firstRow(data);
   } catch (error) {
     throw new Error(getSupabaseErrorMessage(error));
   }
@@ -873,7 +873,7 @@ export async function updateSessionBookingInSupabase(bookingId, updates) {
       throw new Error(getSupabaseErrorMessage(error));
     }
 
-    return Array.isArray(data) ? data[0] || null : data;
+    return firstRow(data);
   } catch (error) {
     throw new Error(getSupabaseErrorMessage(error));
   }
@@ -905,14 +905,13 @@ export async function upsertSessionWalkinToSupabase(walkin) {
     const { data, error } = await supabase
       .from("session_walkins")
       .upsert(toSupabaseSessionWalkinRow(walkin), { onConflict: "id" })
-      .select()
-      .single();
+      .select();
 
     if (error) {
       throw new Error(getSupabaseErrorMessage(error));
     }
 
-    return data;
+    return firstRow(data);
   } catch (error) {
     throw new Error(getSupabaseErrorMessage(error));
   }
@@ -924,14 +923,13 @@ export async function updateSessionWalkinInSupabase(walkinId, updates) {
       .from("session_walkins")
       .update(toSupabaseSessionWalkinUpdates(updates))
       .eq("id", walkinId)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       throw new Error(getSupabaseErrorMessage(error));
     }
 
-    return data;
+    return firstRow(data);
   } catch (error) {
     throw new Error(getSupabaseErrorMessage(error));
   }
@@ -943,14 +941,13 @@ export async function deleteSessionWalkinFromSupabase(walkinId) {
       .from("session_walkins")
       .delete()
       .eq("id", walkinId)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       throw new Error(getSupabaseErrorMessage(error));
     }
 
-    return data;
+    return firstRow(data);
   } catch (error) {
     throw new Error(getSupabaseErrorMessage(error));
   }
@@ -1003,14 +1000,13 @@ export async function upsertReloadRequestToSupabase(request) {
     const { data, error } = await supabase
       .from("reload_requests")
       .upsert(toSupabaseReloadRequestRow(request), { onConflict: "id" })
-      .select()
-      .single();
+      .select();
 
     if (error) {
       throw new Error(getSupabaseErrorMessage(error));
     }
 
-    return data;
+    return firstRow(data);
   } catch (error) {
     throw new Error(getSupabaseErrorMessage(error));
   }
@@ -1028,14 +1024,13 @@ export async function updateReloadRequestInSupabase(requestId, updates) {
       .from("reload_requests")
       .update(supabaseUpdates)
       .eq("id", requestId)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       throw new Error(getSupabaseErrorMessage(error));
     }
 
-    return data;
+    return firstRow(data);
   } catch (error) {
     throw new Error(getSupabaseErrorMessage(error));
   }
@@ -1046,14 +1041,13 @@ export async function upsertTransactionToSupabase(transaction) {
     const { data, error } = await supabase
       .from("transactions")
       .upsert(toSupabaseTransactionRow(transaction), { onConflict: "id" })
-      .select()
-      .single();
+      .select();
 
     if (error) {
       throw new Error(getSupabaseErrorMessage(error));
     }
 
-    return data;
+    return firstRow(data);
   } catch (error) {
     throw new Error(getSupabaseErrorMessage(error));
   }
@@ -1086,14 +1080,13 @@ export async function updateMemberBalanceInSupabase(memberId, balance) {
       .from("members")
       .update({ balance: Number(balance || 0) })
       .eq("id", memberId)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       throw new Error(getSupabaseErrorMessage(error));
     }
 
-    return data;
+    return firstRow(data);
   } catch (error) {
     throw new Error(getSupabaseErrorMessage(error));
   }
