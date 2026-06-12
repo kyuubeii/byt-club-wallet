@@ -2337,3 +2337,57 @@ h1 {
   align-items: center;
   justify-content: center;
 }
+.stats-grid .stat-card .mantine-Group-root {
+  grid-template-columns: minmax(0, 1fr) 54px !important;
+  column-gap: 18px !important;
+}
+
+.stats-grid .stat-card .mantine-Stack-root {
+  min-width: 0 !important;
+}
+
+.stats-grid .stat-card h3 {
+  max-width: 100%;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  white-space: nowrap;
+}
+
+.stats-grid .stat-card:first-child h3 {
+  font-size: clamp(22px, 2.2vw, 30px);
+  letter-spacing: -0.03em;
+}
+
+.stats-grid .stat-card .mantine-RingProgress-root {
+  width: 54px !important;
+  min-width: 54px !important;
+  justify-self: end !important;
+}
+
+@media (max-width: 600px) {
+  .stats-grid .stat-card:first-child h3 {
+    font-size: clamp(24px, 8vw, 30px);
+  }
+}
+
+/* Restore Weekly Expense member list scrolling so the panel does not become too tall. */
+.member-checkbox-list {
+  max-height: 420px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain;
+}
+
+.weekly-expense-panel .member-checkbox-list,
+.session-calculator-panel .member-checkbox-list {
+  max-height: 420px !important;
+  overflow-y: auto !important;
+}
+
+@media (max-width: 700px) {
+  .member-checkbox-list,
+  .weekly-expense-panel .member-checkbox-list,
+  .session-calculator-panel .member-checkbox-list {
+    max-height: 360px !important;
+  }
+}
