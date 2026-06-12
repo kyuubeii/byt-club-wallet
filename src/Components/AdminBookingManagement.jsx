@@ -183,18 +183,24 @@ function AdminBookingManagement({
     }));
   }
 
-  function renderSessionSection(session, sectionName, label, children) {
+  function renderSessionSection(session, sectionName, label, detail, children) {
     const isOpen = isSessionSectionOpen(session.id, sectionName);
 
     return (
-      <div className="admin-session-section">
+      <div className={`admin-session-section ${isOpen ? "is-open" : ""}`}>
         <button
           className="admin-session-section-toggle"
           type="button"
+          aria-expanded={isOpen}
           onClick={() => toggleSessionSection(session.id, sectionName)}
         >
-          <span>{label}</span>
-          <span>{isOpen ? "Hide" : "Open"}</span>
+          <span className="admin-session-section-toggle-copy">
+            <span>{label}</span>
+            {detail && <small>{detail}</small>}
+          </span>
+          <span className="admin-section-toggle-state">
+            {isOpen ? "Hide" : "Open"}
+          </span>
         </button>
 
         {isOpen && <div className="admin-session-section-body">{children}</div>}
@@ -220,6 +226,16 @@ function AdminBookingManagement({
         ...updates,
       },
     }));
+  }
+
+  function renderOverviewStat(label, value, detail) {
+    return (
+      <div className="admin-overview-stat">
+        <small>{label}</small>
+        <strong>{value}</strong>
+        {detail && <span>{detail}</span>}
+      </div>
+    );
   }
 
   function renderSessionCard(session) {
@@ -315,79 +331,83 @@ function AdminBookingManagement({
 
     return (
       <div key={session.id} className="session-card">
-        <div>
-          <h3>{session.date}</h3>
-          <p>
-            {session.time} · {session.venue}
-          </p>
-          <p>
-            Courts: <strong>{session.courtCount}</strong> · Players:{" "}
-            <strong>
-              {totalParticipantCount}/{session.maxPlayers}
-            </strong>
-          </p>
-          <div className="walkin-summary">
-            <span>Members: {memberBookingCount}</span>
-            <span>Walk-ins: {walkInCount}/{walkInLimit}</span>
-            <span>Total Participants: {totalParticipantCount}/{session.maxPlayers}</span>
-            <span>Remaining Slots: {remainingParticipantSlots}</span>
-            <span>Member Waitlist: {memberWaitlist.length}</span>
-            <span>
-              Walk-in Waitlist:{" "}
-              {walkInWaitlist.length + waitingIndependentWalkins.length}
-            </span>
+        <div className="admin-session-overview">
+          <div className="admin-session-overview-header">
+            <div className="admin-session-title-block">
+              <span className="admin-session-eyebrow">Session Overview</span>
+              <h3>{session.date}</h3>
+              <p>
+                {session.time} · {session.venue}
+              </p>
+            </div>
+
+            <div className="admin-session-status-stack">
+              <span
+                className={`admin-status-chip ${
+                  session.status === "open" ? "is-positive" : "is-negative"
+                }`}
+              >
+                {session.status.toUpperCase()}
+              </span>
+              <span
+                className={`admin-status-chip ${
+                  isCharged ? "is-positive" : "is-negative"
+                }`}
+              >
+                {(session.chargeStatus || "not_charged")
+                  .replace("_", " ")
+                  .toUpperCase()}
+              </span>
+            </div>
           </div>
-          <p>
-            Court Fee Total:{" "}
-            <strong>{formatMoney(session.courtFeeTotal)}</strong>
-          </p>
-          <p>
-            Cancel Cutoff: <strong>{session.cancelCutoff}</strong>
-          </p>
-          <p>
-            Status:{" "}
-            <span
-              className={session.status === "open" ? "positive" : "negative"}
-            >
-              {session.status.toUpperCase()}
-            </span>
-          </p>
-          <p>
-            Charge Status:{" "}
-            <span className={isCharged ? "positive" : "negative"}>
-              {(session.chargeStatus || "not_charged")
-                .replace("_", " ")
-                .toUpperCase()}
-            </span>
-          </p>
-        </div>
 
-        <div className="session-card-actions">
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={() => toggleAttendees(session.id)}
-          >
-            {isAttendeeExpanded ? "Hide Attendees" : "View Attendees"}
-          </button>
+          <div className="admin-overview-stats">
+            {renderOverviewStat("Members", memberBookingCount)}
+            {renderOverviewStat("Walk-ins", `${walkInCount}/${walkInLimit}`)}
+            {renderOverviewStat(
+              "Participants",
+              `${totalParticipantCount}/${session.maxPlayers}`,
+              `${remainingParticipantSlots} slots left`
+            )}
+            {renderOverviewStat(
+              "Waitlist",
+              memberWaitlist.length + walkInWaitlist.length + waitingIndependentWalkins.length,
+              `${memberWaitlist.length} member · ${
+                walkInWaitlist.length + waitingIndependentWalkins.length
+              } walk-in`
+            )}
+            {renderOverviewStat("Courts", session.courtCount)}
+            {renderOverviewStat("Court Fee", formatMoney(session.courtFeeTotal))}
+            {renderOverviewStat("Cancel Cutoff", session.cancelCutoff)}
+          </div>
 
-          {isCharged ? (
-            <span className="positive">Charged and closed</span>
-          ) : session.status === "open" ? (
+          <div className="session-card-actions">
             <button
               className="secondary-button"
-              onClick={() => handleCloseSession(session.id)}
+              type="button"
+              onClick={() => toggleAttendees(session.id)}
             >
-              Close Booking
+              {isAttendeeExpanded ? "Hide Attendees" : "View Attendees"}
             </button>
-          ) : (
-            <button
-              className="secondary-button"
-              onClick={() => handleOpenSession(session.id)}
-            >
-              Open Booking
-            </button>
-          )}
+
+            {isCharged ? (
+              <span className="admin-closed-note">Charged and closed</span>
+            ) : session.status === "open" ? (
+              <button
+                className="secondary-button"
+                onClick={() => handleCloseSession(session.id)}
+              >
+                Close Booking
+              </button>
+            ) : (
+              <button
+                className="secondary-button"
+                onClick={() => handleOpenSession(session.id)}
+              >
+                Open Booking
+              </button>
+            )}
+          </div>
         </div>
 
         {isAttendeeExpanded && (
@@ -478,10 +498,15 @@ function AdminBookingManagement({
         )}
 
         {(canManageIndependentWalkins || canAdminAddMember) &&
-          renderSessionSection(session, "addPeople", "Add People", (
+          renderSessionSection(
+            session,
+            "addPeople",
+            "Add People",
+            "Add members and independent walk-ins",
+            (
             <>
         {canManageIndependentWalkins && (
-          <div className="admin-walkin-section">
+          <div className="admin-walkin-section admin-workflow-card">
             <div className="admin-walkin-header">
               <div>
                 <h4>Admin Walk-ins</h4>
@@ -590,45 +615,12 @@ function AdminBookingManagement({
                   ))
                 )}
               </div>
-
-              <div>
-                <h4>Walk-in Waitlist</h4>
-                {waitingIndependentWalkins.length === 0 ? (
-                  <p className="empty-text">No independent walk-in waitlist.</p>
-                ) : (
-                  waitingIndependentWalkins.map((walkin) => (
-                    <div key={walkin.id} className="waitlist-row">
-                      <div>
-                        <strong>{walkin.name}</strong>
-                        <small>{walkin.createdAt || "Waiting request"}</small>
-                      </div>
-                      <span className="waitlist-badge">waiting</span>
-                      <div className="waitlist-actions">
-                        <button
-                          className="small-approve-button"
-                          type="button"
-                          onClick={() => handlePromoteIndependentWalkin(walkin.id)}
-                        >
-                          Promote
-                        </button>
-                        <button
-                          className="small-reject-button"
-                          type="button"
-                          onClick={() => handleRemoveIndependentWalkin(walkin.id)}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
             </div>
           </div>
         )}
 
         {canAdminAddMember && (
-          <div className="admin-add-member-section">
+          <div className="admin-add-member-section admin-workflow-card">
             <div className="admin-walkin-header">
               <div>
                 <h4>Admin Add Member</h4>
@@ -685,9 +677,17 @@ function AdminBookingManagement({
           </div>
         )}
             </>
-          ))}
+            )
+          )}
 
-        {renderSessionSection(session, "attendance", "Manage Attendance", (
+        {renderSessionSection(
+          session,
+          "attendance",
+          "Manage Attendance",
+          `${confirmedBookings.length} booked member${
+            confirmedBookings.length === 1 ? "" : "s"
+          }`,
+          (
         <div className="session-booking-list">
           <div className="session-booking-header">
             <h4>Booked Members</h4>
@@ -874,11 +874,19 @@ function AdminBookingManagement({
             </>
           )}
         </div>
-        ))}
+          )
+        )}
 
-        {renderSessionSection(session, "waitingList", "Waiting List", (
+        {renderSessionSection(
+          session,
+          "waitingList",
+          "Waiting List",
+          `${
+            memberWaitlist.length + walkInWaitlist.length + waitingIndependentWalkins.length
+          } waiting`,
+          (
         <div className="waitlist-section">
-          <div>
+          <div className="waitlist-column admin-workflow-card">
             <h4>Member Waiting List</h4>
             {memberWaitlist.length === 0 ? (
               <p className="empty-text">No member waiting list.</p>
@@ -917,55 +925,94 @@ function AdminBookingManagement({
             )}
           </div>
 
-          <div>
+          <div className="waitlist-column admin-workflow-card">
             <h4>Walk-in Waiting List</h4>
-            {walkInWaitlist.length === 0 ? (
+            {walkInWaitlist.length === 0 && waitingIndependentWalkins.length === 0 ? (
               <p className="empty-text">No walk-in waiting list.</p>
             ) : (
-              walkInWaitlist.map((booking) => {
-                const member = members.find(
-                  (member) => Number(member.id) === Number(booking.memberId)
-                );
+              <>
+                {walkInWaitlist.map((booking) => {
+                  const member = members.find(
+                    (member) => Number(member.id) === Number(booking.memberId)
+                  );
 
-                return (
-                  <div key={booking.id} className="waitlist-row">
-                    <div>
-                      <strong>{member?.name || "Unknown Member"}</strong>
-                      <small>{booking.bookedAt || "Waiting request"}</small>
-                      <small>
-                        Walk-in: {Number(booking.walkInCount || 0)}
-                        {booking.walkInNames?.length
-                          ? ` · ${booking.walkInNames.join(", ")}`
-                          : ""}
-                      </small>
+                  return (
+                    <div key={booking.id} className="waitlist-row">
+                      <div>
+                        <strong>{member?.name || "Unknown Member"}</strong>
+                        <small>{booking.bookedAt || "Waiting request"}</small>
+                        <small>
+                          Walk-in: {Number(booking.walkInCount || 0)}
+                          {booking.walkInNames?.length
+                            ? ` · ${booking.walkInNames.join(", ")}`
+                            : ""}
+                        </small>
+                      </div>
+                      <span className="waitlist-badge">Walk-in</span>
+                      <div className="waitlist-actions">
+                        <button
+                          className="small-approve-button"
+                          disabled={isCharged}
+                          onClick={() => handlePromoteWaitlistBooking(booking.id)}
+                        >
+                          Promote
+                        </button>
+                        <button
+                          className="small-reject-button"
+                          disabled={isCharged}
+                          onClick={() => handleRemoveWaitlistBooking(booking.id)}
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </div>
-                    <span className="waitlist-badge">Walk-in</span>
+                  );
+                })}
+                {waitingIndependentWalkins.map((walkin) => (
+                  <div key={walkin.id} className="waitlist-row">
+                    <div>
+                      <strong>{walkin.name}</strong>
+                      <small>{walkin.createdAt || "Waiting request"}</small>
+                    </div>
+                    <span className="waitlist-badge">Independent</span>
                     <div className="waitlist-actions">
                       <button
                         className="small-approve-button"
+                        type="button"
                         disabled={isCharged}
-                        onClick={() => handlePromoteWaitlistBooking(booking.id)}
+                        onClick={() => handlePromoteIndependentWalkin(walkin.id)}
                       >
                         Promote
                       </button>
                       <button
                         className="small-reject-button"
+                        type="button"
                         disabled={isCharged}
-                        onClick={() => handleRemoveWaitlistBooking(booking.id)}
+                        onClick={() => handleRemoveIndependentWalkin(walkin.id)}
                       >
                         Remove
                       </button>
                     </div>
                   </div>
-                );
-              })
+                ))}
+              </>
             )}
           </div>
         </div>
-        ))}
+          )
+        )}
 
-        {renderSessionSection(session, "finalizeCharge", "Finalize Charge", (
-        <div className="session-finalize-box">
+        {renderSessionSection(
+          session,
+          "finalizeCharge",
+          "Finalize Charge",
+          isCharged
+            ? "Already charged"
+            : `${chargeSummary.chargeRows.length} member${
+                chargeSummary.chargeRows.length === 1 ? "" : "s"
+              } to charge`,
+          (
+        <div className="session-finalize-box admin-workflow-card">
           <h4>Finalize Charge</h4>
 
           <div className="session-charge-grid">
@@ -1098,7 +1145,8 @@ function AdminBookingManagement({
             {isCharged ? "Session Charged" : "Finalize Session Charge"}
           </button>
         </div>
-        ))}
+          )
+        )}
       </div>
     );
   }

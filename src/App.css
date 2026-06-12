@@ -1524,19 +1524,138 @@ h1 {
 }
 
 .session-card-actions {
-  margin-top: 14px;
+  margin-top: 18px;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
 }
 
-.admin-session-section {
-  margin-top: 14px;
-  border: 1px solid var(--byt-line);
+.admin-session-overview {
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid #dbeafe;
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(239, 246, 255, 0.96), rgba(255, 255, 255, 0.98)),
+    #ffffff;
+}
+
+.admin-session-overview-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.admin-session-title-block {
+  min-width: 0;
+}
+
+.admin-session-eyebrow {
+  display: inline-flex;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-session-title-block h3 {
+  margin: 5px 0 4px;
+  color: var(--byt-ink);
+  font-size: clamp(22px, 3vw, 30px);
+  line-height: 1.1;
+}
+
+.admin-session-title-block p {
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.admin-session-status-stack {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.admin-status-chip,
+.admin-closed-note {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 8px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.admin-status-chip.is-positive,
+.admin-closed-note {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.admin-status-chip.is-negative {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.admin-overview-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-overview-stat {
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: 16px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.admin-overview-stat small,
+.admin-overview-stat span {
+  display: block;
+  color: var(--byt-muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.admin-overview-stat strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--byt-ink);
+  font-size: 20px;
+  line-height: 1.1;
+  word-break: break-word;
+}
+
+.admin-overview-stat span {
+  margin-top: 5px;
+  line-height: 1.3;
+}
+
+.admin-session-section {
+  margin-top: 16px;
+  border: 1px solid var(--byt-line);
+  border-radius: 18px;
   overflow: hidden;
   background: #ffffff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+}
+
+.admin-session-section.is-open {
+  border-color: #bfdbfe;
 }
 
 .admin-session-section-toggle {
@@ -1546,16 +1665,41 @@ h1 {
   gap: 12px;
   align-items: center;
   margin: 0;
-  padding: 14px 16px;
+  padding: 15px 16px;
   border: 0;
   border-radius: 0;
   background: #f8fafc;
   color: var(--byt-ink);
   font-weight: 950;
   cursor: pointer;
+  text-align: left;
 }
 
-.admin-session-section-toggle span:last-child {
+.admin-session-section-toggle:hover {
+  background: #eff6ff;
+}
+
+.admin-session-section-toggle-copy {
+  display: grid;
+  gap: 3px;
+}
+
+.admin-session-section-toggle-copy small {
+  color: var(--byt-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-section-toggle-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 62px;
+  min-height: 32px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px var(--byt-line);
   color: var(--byt-muted);
   font-size: 12px;
   text-transform: uppercase;
@@ -1563,6 +1707,14 @@ h1 {
 
 .admin-session-section-body {
   padding: 16px;
+  background: #ffffff;
+}
+
+.admin-workflow-card {
+  padding: 16px;
+  border: 1px solid var(--byt-line);
+  border-radius: 18px;
+  background: #f8fafc;
 }
 
 .session-booking-list {
@@ -1596,6 +1748,10 @@ h1 {
   display: grid;
   gap: 12px;
   margin-bottom: 12px;
+  padding: 14px;
+  border: 1px solid var(--byt-line);
+  border-radius: 18px;
+  background: #f8fafc;
 }
 
 .session-booking-tools input {
@@ -1619,12 +1775,15 @@ h1 {
   grid-template-columns: minmax(180px, 1fr) auto minmax(240px, 0.8fr) auto;
   align-items: center;
   gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--byt-line);
+  margin-top: 10px;
+  padding: 14px;
+  border: 1px solid var(--byt-line);
+  border-radius: 18px;
+  background: #ffffff;
 }
 
 .session-booking-row:last-child {
-  border-bottom: 0;
+  border-bottom: 1px solid var(--byt-line);
 }
 
 .session-booking-row span {
@@ -1695,15 +1854,11 @@ h1 {
 .admin-walkin-section,
 .admin-add-member-section {
   margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--byt-line);
 }
 
 .admin-session-section-body > .admin-walkin-section:first-child,
 .admin-session-section-body > .admin-add-member-section:first-child {
   margin-top: 0;
-  padding-top: 0;
-  border-top: 0;
 }
 
 .admin-walkin-header {
@@ -1776,7 +1931,7 @@ h1 {
 }
 
 .admin-walkin-list-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   margin-top: 16px;
 }
 
@@ -1799,7 +1954,9 @@ h1 {
   align-items: center;
   margin-top: 10px;
   padding: 12px;
+  border: 1px solid var(--byt-line);
   border-radius: 16px;
+  background: #ffffff;
 }
 
 .waitlist-row small {
@@ -1818,8 +1975,6 @@ h1 {
 
 .session-finalize-box {
   margin-top: 18px;
-  padding: 18px;
-  border-radius: 18px;
 }
 
 .admin-session-section-body > .session-finalize-box {
@@ -2211,6 +2366,7 @@ h1 {
 
   .session-charge-grid,
   .session-charge-summary-grid,
+  .admin-overview-stats,
   .calculator-grid,
   .calculator-summary-grid,
   .session-capacity-summary {
@@ -2269,6 +2425,23 @@ h1 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .admin-session-overview-header,
+  .admin-session-status-stack {
+    display: grid;
+    justify-content: stretch;
+  }
+
+  .admin-status-chip,
+  .admin-closed-note {
+    width: 100%;
+  }
+
+  .admin-session-section-toggle {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
   .dashboard-section-toggle {
     width: 100%;
   }
@@ -2292,6 +2465,7 @@ h1 {
   .change-login-id-actions > *,
   .admin-add-member-controls > *,
   .admin-walkin-controls > *,
+  .admin-section-toggle-state,
   .reminder-actions > *,
   .session-booking-quick-actions > *,
   .session-booking-actions > *,
@@ -2383,6 +2557,7 @@ h1 {
   .stats-grid,
   .session-charge-grid,
   .session-charge-summary-grid,
+  .admin-overview-stats,
   .calculator-grid,
   .calculator-summary-grid,
   .session-capacity-summary,
