@@ -597,15 +597,16 @@ hr {
 
 .logo-box img,
 .topbar-logo img {
-  width: 86%;
-  height: 86%;
+  width: 70%;
+  height: 70%;
   object-fit: contain;
   display: block;
 }
 
-.topbar-logo img {
-  width: 70%;
-  height: 70%;
+.login-card:not(.registration-card) .logo-box img {
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
 }
 
 .topbar-logo {
@@ -642,8 +643,7 @@ h1 {
   text-transform: uppercase;
 }
 
-.login-card:not(.registration-card) .premium-badge,
-.premium-auth-card:not(.registration-card) .premium-badge {
+.login-card:not(.registration-card) .premium-badge {
   display: none;
 }
 
@@ -2188,7 +2188,7 @@ h1 {
     text-align: center;
   }
 
-  .premium-auth-card .premium-badge {
+  .login-card:not(.registration-card) .premium-badge {
     max-width: 100%;
     white-space: normal;
   }
