@@ -59,7 +59,7 @@ function LoginPage({
                     <Stack className="form" gap="md">
                         <TextInput
                             label="Email / Phone"
-                            placeholder="admin@byt.club"
+                            placeholder="Enter email or member ID"
                             value={email}
                             onChange={(event) => setEmail(event.target.value)}
                         />
