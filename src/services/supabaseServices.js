@@ -879,6 +879,24 @@ export async function updateSessionBookingInSupabase(bookingId, updates) {
   }
 }
 
+export async function deleteSessionBookingFromSupabase(bookingId) {
+  try {
+    const { data, error } = await supabase
+      .from("session_bookings")
+      .delete()
+      .eq("id", bookingId)
+      .select();
+
+    if (error) {
+      throw new Error(getSupabaseErrorMessage(error));
+    }
+
+    return firstRow(data);
+  } catch (error) {
+    throw new Error(getSupabaseErrorMessage(error));
+  }
+}
+
 export async function seedSessionWalkinsToSupabase(walkins) {
   try {
     const sessionWalkinRows = (walkins || []).map((walkin) =>

@@ -24,6 +24,7 @@ function AdminBookingManagement({
   handleOpenSession,
   handlePromoteIndependentWalkin,
   handlePromoteWaitlistBooking,
+  handleAdminRemoveMemberFromSession,
   handleRemoveIndependentWalkin,
   handleRemoveWaitlistBooking,
   handleBulkUpdateSessionBookingStatus,
@@ -58,6 +59,8 @@ function AdminBookingManagement({
   const [adminMemberBySession, setAdminMemberBySession] = useState({});
   const [adminMemberModeBySession, setAdminMemberModeBySession] = useState({});
   const [attendeesBySession, setAttendeesBySession] = useState({});
+  const [openSectionsBySession, setOpenSectionsBySession] = useState({});
+  const [bookingWalkInDrafts, setBookingWalkInDrafts] = useState({});
 
   const activeSessions = sessions.filter(
     (session) => session.chargeStatus !== "charged"
@@ -164,6 +167,58 @@ function AdminBookingManagement({
     setAttendeesBySession((previousSessions) => ({
       ...previousSessions,
       [sessionId]: !previousSessions[sessionId],
+    }));
+  }
+
+  function isSessionSectionOpen(sessionId, sectionName) {
+    return Boolean(openSectionsBySession[`${sessionId}-${sectionName}`]);
+  }
+
+  function toggleSessionSection(sessionId, sectionName) {
+    const sectionKey = `${sessionId}-${sectionName}`;
+
+    setOpenSectionsBySession((previousSections) => ({
+      ...previousSections,
+      [sectionKey]: !previousSections[sectionKey],
+    }));
+  }
+
+  function renderSessionSection(session, sectionName, label, children) {
+    const isOpen = isSessionSectionOpen(session.id, sectionName);
+
+    return (
+      <div className="admin-session-section">
+        <button
+          className="admin-session-section-toggle"
+          type="button"
+          onClick={() => toggleSessionSection(session.id, sectionName)}
+        >
+          <span>{label}</span>
+          <span>{isOpen ? "Hide" : "Open"}</span>
+        </button>
+
+        {isOpen && <div className="admin-session-section-body">{children}</div>}
+      </div>
+    );
+  }
+
+  function getBookingWalkInDraft(booking) {
+    return (
+      bookingWalkInDrafts[booking.id] || {
+        count: booking.walkInCount ?? 0,
+        namesText: (booking.walkInNames || []).join(", "),
+      }
+    );
+  }
+
+  function updateBookingWalkInDraft(booking, updates) {
+    setBookingWalkInDrafts((previousDrafts) => ({
+      ...previousDrafts,
+      [booking.id]: {
+        ...getBookingWalkInDraft(booking),
+        ...(previousDrafts[booking.id] || {}),
+        ...updates,
+      },
     }));
   }
 
@@ -422,6 +477,9 @@ function AdminBookingManagement({
           </div>
         )}
 
+        {(canManageIndependentWalkins || canAdminAddMember) &&
+          renderSessionSection(session, "addPeople", "Add People", (
+            <>
         {canManageIndependentWalkins && (
           <div className="admin-walkin-section">
             <div className="admin-walkin-header">
@@ -626,7 +684,10 @@ function AdminBookingManagement({
             </div>
           </div>
         )}
+            </>
+          ))}
 
+        {renderSessionSection(session, "attendance", "Manage Attendance", (
         <div className="session-booking-list">
           <div className="session-booking-header">
             <h4>Booked Members</h4>
@@ -688,17 +749,18 @@ function AdminBookingManagement({
                 <p className="empty-text">No matched booking.</p>
               ) : (
                 <div className="session-booking-scroll">
-                  {visibleBookings.map((booking) => {
-                    const member = members.find(
-                      (member) =>
-                        Number(member.id) === Number(booking.memberId)
-                    );
-                    const currentStatus = bookingStatusOptions.find(
-                      (option) => option.value === booking.status
-                    );
+	                  {visibleBookings.map((booking) => {
+	                    const member = members.find(
+	                      (member) =>
+	                        Number(member.id) === Number(booking.memberId)
+	                    );
+	                    const currentStatus = bookingStatusOptions.find(
+	                      (option) => option.value === booking.status
+	                    );
+	                    const walkInDraft = getBookingWalkInDraft(booking);
 
-                    return (
-                      <div key={booking.id} className="session-booking-row">
+	                    return (
+	                      <div key={booking.id} className="session-booking-row">
                         <div className="session-booking-member">
                           <span>{member ? member.name : "Unknown Member"}</span>
                           <small>
@@ -748,45 +810,73 @@ function AdminBookingManagement({
                           </select>
                         </div>
 
-                        <div className="walkin-admin-edit">
-                          <label>Walk-in Count</label>
-                          <input
-                            type="number"
-                            min="0"
-                            defaultValue={booking.walkInCount ?? 0}
-                            disabled={isCharged}
-                            onBlur={(event) =>
-                              handleUpdateBookingWalkIns(
-                                booking.id,
-                                event.target.value,
-                                (booking.walkInNames || []).join(", ")
-                              )
-                            }
-                          />
-                          <label>Walk-in Names</label>
-                          <input
-                            type="text"
-                            placeholder="Alex, Jason"
-                            defaultValue={(booking.walkInNames || []).join(", ")}
-                            disabled={isCharged}
-                            onBlur={(event) =>
-                              handleUpdateBookingWalkIns(
-                                booking.id,
-                                booking.walkInCount || 0,
-                                event.target.value
-                              )
-                            }
-                          />
-                        </div>
-                      </div>
-                    );
+	                        <div className="walkin-admin-edit">
+	                          <label>Walk-in Count</label>
+	                          <input
+	                            type="number"
+	                            min="0"
+	                            value={walkInDraft.count}
+	                            disabled={isCharged}
+	                            onChange={(event) =>
+	                              updateBookingWalkInDraft(booking, {
+	                                count: event.target.value,
+	                              })
+	                            }
+	                          />
+	                          <label>Walk-in Names</label>
+	                          <input
+	                            type="text"
+	                            placeholder="Alex, Jason"
+	                            value={walkInDraft.namesText}
+	                            disabled={isCharged}
+	                            onChange={(event) =>
+	                              updateBookingWalkInDraft(booking, {
+	                                namesText: event.target.value,
+	                              })
+	                            }
+	                          />
+	                          <button
+	                            className="secondary-button"
+	                            type="button"
+	                            disabled={isCharged}
+	                            onClick={() =>
+	                              handleUpdateBookingWalkIns(
+	                                booking.id,
+	                                walkInDraft.count,
+	                                walkInDraft.namesText
+	                              )
+	                            }
+	                          >
+	                            Update Walk-ins
+	                          </button>
+	                        </div>
+
+	                        <div className="session-booking-actions">
+	                          <button
+	                            className="small-reject-button"
+	                            type="button"
+	                            disabled={isCharged}
+	                            onClick={() =>
+	                              handleAdminRemoveMemberFromSession(
+	                                session.id,
+	                                booking.id
+	                              )
+	                            }
+	                          >
+	                            Remove Member
+	                          </button>
+	                        </div>
+	                      </div>
+	                    );
                   })}
                 </div>
               )}
             </>
           )}
         </div>
+        ))}
 
+        {renderSessionSection(session, "waitingList", "Waiting List", (
         <div className="waitlist-section">
           <div>
             <h4>Member Waiting List</h4>
@@ -872,7 +962,9 @@ function AdminBookingManagement({
             )}
           </div>
         </div>
+        ))}
 
+        {renderSessionSection(session, "finalizeCharge", "Finalize Charge", (
         <div className="session-finalize-box">
           <h4>Finalize Charge</h4>
 
@@ -1006,6 +1098,7 @@ function AdminBookingManagement({
             {isCharged ? "Session Charged" : "Finalize Session Charge"}
           </button>
         </div>
+        ))}
       </div>
     );
   }

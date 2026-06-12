@@ -1098,6 +1098,14 @@ function App() {
     await updateSessionBookingInSupabase(bookingId, updates);
   }
 
+  async function syncSessionBookingDeleteToSupabase(bookingId) {
+    const { deleteSessionBookingFromSupabase } = await import(
+      "./services/supabaseServices.js"
+    );
+
+    await deleteSessionBookingFromSupabase(bookingId);
+  }
+
   async function syncSessionWalkinUpdateToSupabase(walkinId, updates) {
     const { updateSessionWalkinInSupabase } = await import(
       "./services/supabaseServices.js"
@@ -3441,6 +3449,28 @@ function App() {
   }
 
   async function handleUpdateBookingStatus(bookingId, status) {
+    const booking = sessionBookings.find(
+      (booking) => Number(booking.id) === Number(bookingId)
+    );
+    const session = sessions.find(
+      (session) => Number(session.id) === Number(booking?.sessionId)
+    );
+
+    if (!booking) {
+      alert("Booking not found");
+      return;
+    }
+
+    if (!session) {
+      alert("Session not found");
+      return;
+    }
+
+    if (session.chargeStatus === "charged") {
+      alert("Charged sessions cannot be changed.");
+      return;
+    }
+
     const updatedAt = new Date().toLocaleString();
 
     setSessionBookings((previousBookings) =>
@@ -3467,6 +3497,64 @@ function App() {
     }
   }
 
+  async function handleAdminRemoveMemberFromSession(sessionId, bookingId) {
+    const session = sessions.find(
+      (session) => Number(session.id) === Number(sessionId)
+    );
+    const booking = sessionBookings.find(
+      (booking) => Number(booking.id) === Number(bookingId)
+    );
+
+    if (!session) {
+      alert("Session not found");
+      return;
+    }
+
+    if (session.chargeStatus === "charged") {
+      alert("Charged sessions cannot be changed.");
+      return;
+    }
+
+    if (!booking || Number(booking.sessionId) !== Number(sessionId)) {
+      alert("Booking not found");
+      return;
+    }
+
+    const shouldRemove = confirm("Remove this member from the session?");
+
+    if (!shouldRemove) {
+      return;
+    }
+
+    setSessionBookings((previousBookings) =>
+      previousBookings.filter(
+        (booking) => Number(booking.id) !== Number(bookingId)
+      )
+    );
+
+    try {
+      await syncSessionBookingDeleteToSupabase(bookingId);
+    } catch (error) {
+      alertSupabaseBookingSyncFailed(error);
+      return;
+    }
+
+    const member = members.find(
+      (member) => Number(member.id) === Number(booking.memberId)
+    );
+
+    logActivity({
+      action: "admin_remove_session_booking",
+      targetType: "session",
+      targetId: String(session.id),
+      description: `Admin removed ${
+        member?.name || "Unknown Member"
+      } from session ${session.date}`,
+    });
+
+    alert("Member removed from session.");
+  }
+
   async function handleUpdateBookingWalkIns(bookingId, walkInCount, walkInNamesText) {
     const booking = sessionBookings.find(
       (booking) => Number(booking.id) === Number(bookingId)
@@ -3486,11 +3574,17 @@ function App() {
       return;
     }
 
+    if (session.chargeStatus === "charged") {
+      alert("Charged sessions cannot be changed.");
+      return;
+    }
+
     const nextWalkInCount = Math.max(0, Number(walkInCount || 0));
-    const nextWalkInNames = String(walkInNamesText || "")
+    const parsedWalkInNames = String(walkInNamesText || "")
       .split(",")
       .map((name) => name.trim())
       .filter(Boolean);
+    const nextWalkInNames = nextWalkInCount > 0 ? parsedWalkInNames : [];
 
     if (nextWalkInCount > 0 && nextWalkInNames.length !== nextWalkInCount) {
       alert("Walk-in names must match walk-in count.");
@@ -5395,6 +5489,7 @@ function App() {
             handleOpenSession={handleOpenSession}
             handlePromoteIndependentWalkin={handlePromoteIndependentWalkin}
             handlePromoteWaitlistBooking={handlePromoteWaitlistBooking}
+            handleAdminRemoveMemberFromSession={handleAdminRemoveMemberFromSession}
             handleRemoveIndependentWalkin={handleRemoveIndependentWalkin}
             handleRemoveWaitlistBooking={handleRemoveWaitlistBooking}
             handleBulkUpdateSessionBookingStatus={

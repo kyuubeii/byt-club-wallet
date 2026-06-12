@@ -1531,10 +1531,42 @@ h1 {
   align-items: center;
 }
 
+.admin-session-section {
+  margin-top: 14px;
+  border: 1px solid var(--byt-line);
+  border-radius: 16px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.admin-session-section-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin: 0;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 0;
+  background: #f8fafc;
+  color: var(--byt-ink);
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.admin-session-section-toggle span:last-child {
+  color: var(--byt-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.admin-session-section-body {
+  padding: 16px;
+}
+
 .session-booking-list {
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid var(--byt-line);
+  margin-top: 0;
 }
 
 .session-booking-list h4 {
@@ -1584,7 +1616,7 @@ h1 {
 
 .session-booking-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) auto minmax(220px, 0.8fr);
+  grid-template-columns: minmax(180px, 1fr) auto minmax(240px, 0.8fr) auto;
   align-items: center;
   gap: 12px;
   padding: 12px 0;
@@ -1643,6 +1675,16 @@ h1 {
   padding: 10px 12px;
 }
 
+.walkin-admin-edit .secondary-button {
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+
+.session-booking-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .walkin-summary {
   display: flex;
   flex-wrap: wrap;
@@ -1652,9 +1694,16 @@ h1 {
 
 .admin-walkin-section,
 .admin-add-member-section {
-  margin-top: 18px;
+  margin-top: 16px;
   padding-top: 14px;
   border-top: 1px solid var(--byt-line);
+}
+
+.admin-session-section-body > .admin-walkin-section:first-child,
+.admin-session-section-body > .admin-add-member-section:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 
 .admin-walkin-header {
@@ -1735,7 +1784,7 @@ h1 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
-  margin-top: 18px;
+  margin-top: 0;
 }
 
 .waitlist-section h4 {
@@ -1771,6 +1820,10 @@ h1 {
   margin-top: 18px;
   padding: 18px;
   border-radius: 18px;
+}
+
+.admin-session-section-body > .session-finalize-box {
+  margin-top: 0;
 }
 
 .session-finalize-box h4 {
@@ -2135,6 +2188,7 @@ h1 {
   }
 
   .session-booking-status,
+  .session-booking-actions,
   .walkin-admin-edit {
     width: 100%;
   }
@@ -2225,6 +2279,7 @@ h1 {
   .change-login-id-actions,
   .reminder-actions,
   .session-booking-quick-actions,
+  .session-booking-actions,
   .waitlist-actions {
     display: grid;
     grid-template-columns: 1fr;
@@ -2239,6 +2294,7 @@ h1 {
   .admin-walkin-controls > *,
   .reminder-actions > *,
   .session-booking-quick-actions > *,
+  .session-booking-actions > *,
   .waitlist-actions > *,
   .session-booking-status > * {
     width: 100%;
