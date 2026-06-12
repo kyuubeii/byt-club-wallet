@@ -26,13 +26,6 @@
   box-sizing: border-box;
 }
 
-html,
-body,
-#root {
-  min-width: 0;
-  overflow-x: hidden;
-}
-
 html {
   background: var(--byt-bg);
 }
@@ -50,7 +43,6 @@ button,
 input,
 select {
   font-family: inherit;
-  min-width: 0;
 }
 
 button {
@@ -59,15 +51,6 @@ button {
     border-color 0.18s ease,
     background 0.18s ease,
     box-shadow 0.18s ease;
-}
-
-img {
-  max-width: 100%;
-  height: auto;
-}
-
-svg {
-  max-width: 100%;
 }
 
 button:disabled {
@@ -300,11 +283,9 @@ hr {
 .expense-summary,
 .my-booking-summary,
 .session-finalize-box {
-  min-width: 0;
   border: 1px solid rgba(148, 163, 184, 0.24);
   background: rgba(255, 255, 255, 0.96);
   box-shadow: var(--byt-shadow-soft);
-  overflow-wrap: anywhere;
 }
 
 .panel {
@@ -594,11 +575,6 @@ hr {
   height: 84px;
   margin: 0 auto;
   border-radius: 24px;
-}
-
-.login-card:not(.registration-card) h1,
-.login-card:not(.registration-card) .subtitle {
-  text-align: center;
 }
 
 .logo-box {
@@ -2101,7 +2077,6 @@ h1 {
   .compact-button {
     width: 100%;
     max-width: 100%;
-    white-space: normal;
   }
 
   .edit-member-heading,
