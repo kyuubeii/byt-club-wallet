@@ -2439,3 +2439,17 @@ h1 {
     border-radius: 16px;
   }
 }
+.payment-reminder-balance strong,
+.payment-reminder-card .negative,
+.payment-reminder-card .positive {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+}
+
+.payment-reminder-balance {
+  gap: 10px;
+}
+
+.payment-reminder-balance span {
+  min-width: 0;
+}
