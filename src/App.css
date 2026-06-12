@@ -1194,6 +1194,30 @@ h1 {
     linear-gradient(135deg, #07111f, #12243b);
 }
 
+.member-card.balance-health-critical {
+  background:
+    linear-gradient(135deg, rgba(239, 68, 68, 0.28), transparent 50%),
+    linear-gradient(135deg, #190b12, #2b1020 52%, #3d1420);
+}
+
+.member-card.balance-health-low {
+  background:
+    linear-gradient(135deg, rgba(245, 158, 11, 0.28), transparent 50%),
+    linear-gradient(135deg, #141007, #2a1a0b 52%, #3a230d);
+}
+
+.member-card.balance-health-good {
+  background:
+    linear-gradient(135deg, rgba(34, 197, 94, 0.22), transparent 50%),
+    linear-gradient(135deg, #07111f, #10243b 52%, #123528);
+}
+
+.member-card.balance-health-great {
+  background:
+    linear-gradient(135deg, rgba(45, 212, 191, 0.24), transparent 48%),
+    linear-gradient(135deg, #06111f, #10213d 52%, #143a35);
+}
+
 .member-card::after {
   content: "";
   position: absolute;
@@ -1205,7 +1229,34 @@ h1 {
   background: rgba(255, 255, 255, 0.08);
 }
 
+.member-card.balance-health-critical::after {
+  background: rgba(248, 113, 113, 0.22);
+}
+
+.member-card.balance-health-low::after {
+  background: rgba(251, 191, 36, 0.2);
+}
+
+.member-card.balance-health-good::after {
+  background: rgba(74, 222, 128, 0.18);
+}
+
+.member-card.balance-health-great::after {
+  background: rgba(94, 234, 212, 0.2);
+}
+
+.balance-card-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+}
+
 .member-card p {
+  position: relative;
+  z-index: 1;
   margin: 0;
   color: rgba(255, 255, 255, 0.74);
   font-size: 15px;
@@ -1213,10 +1264,38 @@ h1 {
 }
 
 .member-card h3 {
-  margin: 10px 0 12px;
+  position: relative;
+  z-index: 1;
+  margin: 18px auto 12px;
   color: #ffffff;
   font-size: clamp(36px, 7vw, 48px);
   line-height: 1;
+  text-align: center;
+}
+
+.member-card .topup-button {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: fit-content;
+  min-width: 150px;
+  margin: 22px auto 0;
+  background: rgba(255, 255, 255, 0.94);
+  color: #07111f;
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.22);
+}
+
+.member-card .topup-button:hover:not(:disabled) {
+  background: #ffffff;
+}
+
+.balance-health-message {
+  max-width: 280px;
+  margin: 0 auto !important;
+  color: rgba(255, 255, 255, 0.84) !important;
+  font-size: 17px !important;
+  font-weight: 900 !important;
+  text-align: center;
 }
 
 .status-badge {
@@ -1224,6 +1303,41 @@ h1 {
   border-color: rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.13);
   color: #ffffff;
+}
+
+.balance-health-badge {
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(10px);
+  white-space: nowrap;
+}
+
+.balance-health-critical .balance-health-badge {
+  background: rgba(248, 113, 113, 0.24);
+}
+
+.balance-health-low .balance-health-badge {
+  background: rgba(251, 191, 36, 0.24);
+}
+
+.balance-health-good .balance-health-badge {
+  background: rgba(74, 222, 128, 0.2);
+}
+
+.balance-health-great .balance-health-badge {
+  background: rgba(94, 234, 212, 0.22);
+}
+
+.whatsapp-prompt-panel .button-row {
+  display: grid;
+  justify-items: center;
+}
+
+.whatsapp-prompt-panel .button-row .action-button,
+.whatsapp-prompt-panel .button-row .secondary-button {
+  width: min(100%, 320px);
 }
 
 .bank-box {
@@ -2552,6 +2666,16 @@ h1 {
 
   .member-card {
     padding: 24px;
+  }
+
+  .balance-card-header {
+    display: grid;
+    gap: 10px;
+    justify-items: start;
+  }
+
+  .member-card .topup-button {
+    width: 100%;
   }
 
   .stats-grid,

@@ -180,8 +180,33 @@ function MemberPortal({
         (safeMemberTransactionPage - 1) * memberTransactionPageSize,
         safeMemberTransactionPage * memberTransactionPageSize
     );
+    const memberBalance = Number(memberData.balance || 0);
+    const balanceHealth =
+        memberBalance < 15
+            ? {
+                key: "critical",
+                label: "Critical",
+                message: "Reload before booking",
+            }
+            : memberBalance < 30
+                ? {
+                    key: "low",
+                    label: "Low",
+                    message: "Reload soon",
+                }
+                : memberBalance < 100
+                    ? {
+                        key: "good",
+                        label: "Good",
+                        message: "Ready to play",
+                    }
+                    : {
+                        key: "great",
+                        label: "Great",
+                        message: "Fully ready",
+                    };
     const belowMinimumBookingBalance =
-        Number(memberData.balance) < minimumBookingBalance;
+        memberBalance < minimumBookingBalance;
     const shouldShowWhatsappPrompt =
         showWhatsappPrompt &&
         (!String(memberData.whatsapp || "").trim() ||
@@ -465,30 +490,27 @@ function MemberPortal({
                     </div>
                 )}
 
-                <div className="member-card">
-                    <p>Current Balance</p>
+                <div className={`member-card balance-health-${balanceHealth.key}`}>
+                    <div className="balance-card-header">
+                        <p>Current Balance</p>
+                        <span className="status-badge balance-health-badge">
+                            {balanceHealth.label}
+                        </span>
+                    </div>
 
-                    <h3
-                        className={
-                            memberData.balance < 0 ? "negative-text" : "positive-text"
-                        }
-                    >
+                    <h3>
                         {formatMoney(memberData.balance)}
                     </h3>
 
-                    <span className="status-badge">
-                        {memberData.balance < 0
-                            ? "Need Reload"
-                            : memberData.balance < 30
-                                ? "Low Balance"
-                                : "Good"}
-                    </span>
+                    <p className="balance-health-message">
+                        {balanceHealth.message}
+                    </p>
 
                     <button
                         className="topup-button"
                         onClick={() => setShowTopUpBox(!showTopUpBox)}
                     >
-                        Need Top Up
+                        Reload
                     </button>
                 </div>
 
