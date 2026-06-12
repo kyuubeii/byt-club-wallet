@@ -1196,26 +1196,26 @@ h1 {
 
 .member-card.balance-health-critical {
   background:
-    linear-gradient(135deg, rgba(239, 68, 68, 0.28), transparent 50%),
-    linear-gradient(135deg, #190b12, #2b1020 52%, #3d1420);
+    linear-gradient(135deg, rgba(239, 68, 68, 0.34), transparent 50%),
+    linear-gradient(135deg, #1a0b12, #2b1020 52%, #431520);
 }
 
 .member-card.balance-health-low {
   background:
-    linear-gradient(135deg, rgba(245, 158, 11, 0.28), transparent 50%),
-    linear-gradient(135deg, #141007, #2a1a0b 52%, #3a230d);
+    linear-gradient(135deg, rgba(249, 115, 22, 0.34), transparent 50%),
+    linear-gradient(135deg, #141007, #2b1808 52%, #3b1f0a);
 }
 
 .member-card.balance-health-good {
   background:
-    linear-gradient(135deg, rgba(34, 197, 94, 0.22), transparent 50%),
-    linear-gradient(135deg, #07111f, #10243b 52%, #123528);
+    linear-gradient(135deg, rgba(74, 222, 128, 0.32), transparent 50%),
+    linear-gradient(135deg, #06151b, #0d2b26 52%, #116235);
 }
 
 .member-card.balance-health-great {
   background:
-    linear-gradient(135deg, rgba(45, 212, 191, 0.24), transparent 48%),
-    linear-gradient(135deg, #06111f, #10213d 52%, #143a35);
+    linear-gradient(135deg, rgba(16, 185, 129, 0.38), transparent 48%),
+    linear-gradient(135deg, #041612, #07322b 52%, #047857);
 }
 
 .member-card::after {
@@ -1230,19 +1230,19 @@ h1 {
 }
 
 .member-card.balance-health-critical::after {
-  background: rgba(248, 113, 113, 0.22);
+  background: rgba(248, 113, 113, 0.28);
 }
 
 .member-card.balance-health-low::after {
-  background: rgba(251, 191, 36, 0.2);
+  background: rgba(251, 146, 60, 0.28);
 }
 
 .member-card.balance-health-good::after {
-  background: rgba(74, 222, 128, 0.18);
+  background: rgba(134, 239, 172, 0.3);
 }
 
 .member-card.balance-health-great::after {
-  background: rgba(94, 234, 212, 0.2);
+  background: rgba(52, 211, 153, 0.34);
 }
 
 .balance-card-header {
@@ -1315,19 +1315,19 @@ h1 {
 }
 
 .balance-health-critical .balance-health-badge {
-  background: rgba(248, 113, 113, 0.24);
+  background: rgba(248, 113, 113, 0.28);
 }
 
 .balance-health-low .balance-health-badge {
-  background: rgba(251, 191, 36, 0.24);
+  background: rgba(251, 146, 60, 0.28);
 }
 
 .balance-health-good .balance-health-badge {
-  background: rgba(74, 222, 128, 0.2);
+  background: rgba(74, 222, 128, 0.28);
 }
 
 .balance-health-great .balance-health-badge {
-  background: rgba(94, 234, 212, 0.22);
+  background: rgba(16, 185, 129, 0.32);
 }
 
 .whatsapp-prompt-panel .button-row {
