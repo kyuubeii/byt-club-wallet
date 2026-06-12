@@ -2453,3 +2453,41 @@ h1 {
 .payment-reminder-balance span {
   min-width: 0;
 }
+
+/* -------------------- Payment reminder card header polish -------------------- */
+.payment-reminder-card-header {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  justify-items: center !important;
+  gap: 8px !important;
+  text-align: center !important;
+}
+
+.payment-reminder-card h3 {
+  max-width: 100%;
+  margin: 0 !important;
+  text-align: center;
+  line-height: 1.28;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.payment-reminder-card .reminder-type-badge {
+  justify-self: center !important;
+  width: fit-content;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.payment-reminder-card .whatsapp-number,
+.payment-reminder-card .whatsapp-number.muted {
+  margin: 2px 0 0;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.payment-reminder-balance {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+}
