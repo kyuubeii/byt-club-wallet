@@ -2315,3 +2315,25 @@ h1 {
     grid-template-columns: 1fr;
   }
 }
+
+/* -------------------- Login input vertical alignment fix -------------------- */
+.login-card:not(.registration-card) input,
+.login-card:not(.registration-card) .mantine-Input-input {
+  height: 52px;
+  min-height: 52px;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 52px;
+}
+
+.login-card:not(.registration-card) .mantine-PasswordInput-input {
+  padding-right: 52px;
+}
+
+.login-card:not(.registration-card) .mantine-Input-rightSection,
+.login-card:not(.registration-card) .mantine-PasswordInput-section {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
