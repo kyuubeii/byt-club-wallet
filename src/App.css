@@ -2391,3 +2391,51 @@ h1 {
     max-height: 360px !important;
   }
 }
+/* -------------------- Mobile member checkbox rows polish -------------------- */
+@media (max-width: 600px) {
+  .session-member-row,
+  .member-checkbox-row {
+    grid-template-columns: 28px minmax(0, 1fr) auto !important;
+    gap: 10px !important;
+    padding: 12px 10px !important;
+    align-items: center !important;
+  }
+
+  .session-member-row input,
+  .member-checkbox-row input {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    min-height: 18px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    justify-self: center !important;
+    accent-color: var(--byt-green);
+  }
+
+  .session-member-row span,
+  .member-checkbox-row span {
+    min-width: 0 !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
+  .session-member-row small,
+  .member-checkbox-row small,
+  .session-member-row .positive,
+  .session-member-row .negative,
+  .member-checkbox-row .positive,
+  .member-checkbox-row .negative {
+    justify-self: end !important;
+    text-align: right !important;
+    white-space: nowrap !important;
+    font-size: 12px !important;
+    font-weight: 850 !important;
+  }
+
+  .member-checkbox-list {
+    border-radius: 16px;
+  }
+}
