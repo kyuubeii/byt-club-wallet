@@ -2186,10 +2186,11 @@ h1 {
 
   .login-card:not(.registration-card) {
     padding: 18px;
+    margin: 12px auto max(28px, env(safe-area-inset-bottom));
   }
 
   .login-card:not(.registration-card).premium-auth-card > .mantine-Stack-root {
-    gap: 14px;
+    gap: 12px;
   }
 
   .login-card:not(.registration-card).premium-auth-card > .mantine-Stack-root > .mantine-Group-root {
@@ -2254,6 +2255,41 @@ h1 {
   .dashboard-page .transaction-panel > .empty-text {
     min-height: 92px;
     padding: 18px 14px;
+  }
+}
+
+/* -------------------- Login action buttons mobile fix -------------------- */
+.login-card:not(.registration-card) .register-link-button,
+.login-card:not(.registration-card) .walkin-inquiry-button {
+  min-height: 52px;
+  padding: 15px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+.login-card:not(.registration-card) .walkin-inquiry-button {
+  margin-bottom: 4px;
+}
+
+@media (max-width: 600px) {
+  .login-card:not(.registration-card) .register-link-button,
+  .login-card:not(.registration-card) .walkin-inquiry-button {
+    width: 100%;
+    min-height: 50px;
+    font-size: 14px;
+  }
+
+  .login-card:not(.registration-card) h1 {
+    font-size: clamp(30px, 9vw, 42px);
+    line-height: 1.08;
+  }
+
+  .login-card:not(.registration-card) .subtitle {
+    margin-bottom: 14px;
   }
 }
 
