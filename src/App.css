@@ -564,9 +564,22 @@ hr {
   width: min(100%, 860px);
 }
 
+.login-card:not(.registration-card).premium-auth-card > .mantine-Stack-root > .mantine-Group-root {
+  justify-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.login-card:not(.registration-card) .logo-box {
+  width: 84px;
+  height: 84px;
+  margin: 0 auto;
+  border-radius: 24px;
+}
+
 .logo-box {
-  width: 64px;
-  height: 64px;
+  width: 76px;
+  height: 76px;
   margin: 0;
   border: 1px solid rgba(50, 180, 68, 0.32);
   border-radius: 20px;
@@ -584,10 +597,15 @@ hr {
 
 .logo-box img,
 .topbar-logo img {
-  width: 70%;
-  height: 70%;
+  width: 86%;
+  height: 86%;
   object-fit: contain;
   display: block;
+}
+
+.topbar-logo img {
+  width: 70%;
+  height: 70%;
 }
 
 .topbar-logo {
@@ -622,6 +640,11 @@ h1 {
   font-weight: 950;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.login-card:not(.registration-card) .premium-badge,
+.premium-auth-card:not(.registration-card) .premium-badge {
+  display: none;
 }
 
 .auth-notice,
@@ -2034,9 +2057,12 @@ h1 {
 
   .member-tools,
   .add-member-grid,
-  .edit-member-grid,
-  .session-form-grid {
+  .edit-member-grid {
     grid-template-columns: 1fr;
+  }
+
+  .session-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .session-charge-grid,
@@ -2154,10 +2180,12 @@ h1 {
     border-radius: 22px;
   }
 
-  .premium-auth-card > .mantine-Stack-root > .mantine-Group-root {
+  .login-card:not(.registration-card).premium-auth-card > .mantine-Stack-root > .mantine-Group-root {
     display: grid;
     grid-template-columns: 1fr;
-    justify-items: start;
+    justify-items: center;
+    justify-content: center;
+    text-align: center;
   }
 
   .premium-auth-card .premium-badge {
@@ -2223,9 +2251,19 @@ h1 {
     width: 100%;
   }
 
-  .topbar-logo,
-  .logo-box {
+  .topbar-logo {
     width: 54px;
     height: 54px;
+  }
+
+  .login-card:not(.registration-card) .logo-box {
+    width: 76px;
+    height: 76px;
+  }
+}
+
+@media (max-width: 430px) {
+  .session-form-grid {
+    grid-template-columns: 1fr;
   }
 }
