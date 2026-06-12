@@ -96,6 +96,16 @@ function toSupabaseSessionBookingRow(booking) {
   };
 }
 
+export function toSupabaseSessionWalkinRow(walkin) {
+  return {
+    id: walkin.id,
+    session_id: walkin.sessionId,
+    name: walkin.name || "",
+    status: walkin.status || "confirmed",
+    created_at: walkin.createdAt || new Date().toLocaleString(),
+  };
+}
+
 function toSupabaseSessionUpdates(updates) {
   const supabaseUpdates = {};
 
@@ -197,6 +207,28 @@ function toSupabaseSessionBookingUpdates(updates) {
   return supabaseUpdates;
 }
 
+function toSupabaseSessionWalkinUpdates(updates) {
+  const supabaseUpdates = {};
+
+  if (Object.prototype.hasOwnProperty.call(updates, "sessionId")) {
+    supabaseUpdates.session_id = updates.sessionId;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "name")) {
+    supabaseUpdates.name = updates.name || "";
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "status")) {
+    supabaseUpdates.status = updates.status || "confirmed";
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "createdAt")) {
+    supabaseUpdates.created_at = nullable(updates.createdAt);
+  }
+
+  return supabaseUpdates;
+}
+
 function toSupabaseTransactionRow(transaction) {
   return {
     id: transaction.id,
@@ -244,15 +276,14 @@ export async function createActivityLog(log) {
     const { data, error } = await supabase
       .from("activity_logs")
       .insert(toSupabaseActivityLogRow(log))
-      .select()
-      .single();
+      .select();
 
     if (error) {
       console.error("Failed to create activity log:", getSupabaseErrorMessage(error));
       return null;
     }
 
-    return data;
+    return Array.isArray(data) ? data[0] || null : data;
   } catch (error) {
     console.error("Failed to create activity log:", getSupabaseErrorMessage(error));
     return null;
@@ -447,6 +478,23 @@ export async function fetchSessionBookingsFromSupabase() {
   }
 }
 
+export async function fetchSessionWalkinsFromSupabase() {
+  try {
+    const { data, error } = await supabase
+      .from("session_walkins")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw new Error(getSupabaseErrorMessage(error));
+    }
+
+    return data || [];
+  } catch (error) {
+    throw new Error(getSupabaseErrorMessage(error));
+  }
+}
+
 export async function fetchTransactionsFromSupabase() {
   try {
     const { data, error } = await supabase
@@ -561,6 +609,14 @@ export async function clearSupabaseReloadRequests() {
 export async function clearSupabaseSessionBookings() {
   try {
     return await clearTableByPositiveId("session_bookings");
+  } catch (error) {
+    throw new Error(getSupabaseErrorMessage(error));
+  }
+}
+
+export async function clearSupabaseSessionWalkins() {
+  try {
+    return await clearTableByPositiveId("session_walkins");
   } catch (error) {
     throw new Error(getSupabaseErrorMessage(error));
   }
@@ -793,6 +849,62 @@ export async function upsertSessionBookingToSupabase(booking) {
     const { data, error } = await supabase
       .from("session_bookings")
       .upsert(toSupabaseSessionBookingRow(booking), { onConflict: "id" })
+      .select();
+
+    if (error) {
+      throw new Error(getSupabaseErrorMessage(error));
+    }
+
+    return Array.isArray(data) ? data[0] || null : data;
+  } catch (error) {
+    throw new Error(getSupabaseErrorMessage(error));
+  }
+}
+
+export async function updateSessionBookingInSupabase(bookingId, updates) {
+  try {
+    const { data, error } = await supabase
+      .from("session_bookings")
+      .update(toSupabaseSessionBookingUpdates(updates))
+      .eq("id", bookingId)
+      .select();
+
+    if (error) {
+      throw new Error(getSupabaseErrorMessage(error));
+    }
+
+    return Array.isArray(data) ? data[0] || null : data;
+  } catch (error) {
+    throw new Error(getSupabaseErrorMessage(error));
+  }
+}
+
+export async function seedSessionWalkinsToSupabase(walkins) {
+  try {
+    const sessionWalkinRows = (walkins || []).map((walkin) =>
+      toSupabaseSessionWalkinRow(walkin)
+    );
+
+    const { data, error } = await supabase
+      .from("session_walkins")
+      .upsert(sessionWalkinRows, { onConflict: "id" })
+      .select();
+
+    if (error) {
+      throw new Error(getSupabaseErrorMessage(error));
+    }
+
+    return data || [];
+  } catch (error) {
+    throw new Error(getSupabaseErrorMessage(error));
+  }
+}
+
+export async function upsertSessionWalkinToSupabase(walkin) {
+  try {
+    const { data, error } = await supabase
+      .from("session_walkins")
+      .upsert(toSupabaseSessionWalkinRow(walkin), { onConflict: "id" })
       .select()
       .single();
 
@@ -806,12 +918,31 @@ export async function upsertSessionBookingToSupabase(booking) {
   }
 }
 
-export async function updateSessionBookingInSupabase(bookingId, updates) {
+export async function updateSessionWalkinInSupabase(walkinId, updates) {
   try {
     const { data, error } = await supabase
-      .from("session_bookings")
-      .update(toSupabaseSessionBookingUpdates(updates))
-      .eq("id", bookingId)
+      .from("session_walkins")
+      .update(toSupabaseSessionWalkinUpdates(updates))
+      .eq("id", walkinId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(getSupabaseErrorMessage(error));
+    }
+
+    return data;
+  } catch (error) {
+    throw new Error(getSupabaseErrorMessage(error));
+  }
+}
+
+export async function deleteSessionWalkinFromSupabase(walkinId) {
+  try {
+    const { data, error } = await supabase
+      .from("session_walkins")
+      .delete()
+      .eq("id", walkinId)
       .select()
       .single();
 

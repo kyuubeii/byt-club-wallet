@@ -1525,6 +1525,10 @@ h1 {
 
 .session-card-actions {
   margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
 }
 
 .session-booking-list {
@@ -1644,6 +1648,87 @@ h1 {
   flex-wrap: wrap;
   gap: 8px;
   margin: 12px 0;
+}
+
+.admin-walkin-section,
+.admin-add-member-section {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--byt-line);
+}
+
+.admin-walkin-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.admin-walkin-header h4,
+.admin-walkin-list-grid h4 {
+  margin: 0;
+  color: var(--byt-ink);
+}
+
+.admin-walkin-header p {
+  margin: 4px 0 0;
+  color: var(--byt-muted);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.admin-walkin-form,
+.admin-walkin-drafts,
+.admin-walkin-list-grid,
+.admin-add-member-controls {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-walkin-input-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.35fr) minmax(180px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.admin-walkin-input-row label,
+.admin-walkin-controls label,
+.admin-add-member-controls label {
+  margin: 0;
+}
+
+.admin-walkin-input-row input,
+.admin-walkin-controls select,
+.admin-add-member-controls select {
+  min-height: 44px;
+}
+
+.admin-add-member-controls {
+  grid-template-columns: minmax(180px, 1fr) minmax(140px, 0.45fr) auto;
+  align-items: end;
+}
+
+.admin-add-member-controls .action-button {
+  margin-top: 0;
+}
+
+.admin-walkin-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+}
+
+.admin-walkin-controls .action-button,
+.admin-walkin-controls .secondary-button {
+  margin-top: 0;
+}
+
+.admin-walkin-list-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 16px;
 }
 
 .waitlist-section {
@@ -2039,6 +2124,7 @@ h1 {
   }
 
   .balance-tools-grid,
+  .admin-walkin-list-grid,
   .waitlist-section {
     grid-template-columns: 1fr;
   }
@@ -2149,6 +2235,8 @@ h1 {
   .table-actions > *,
   .small-button-row > *,
   .change-login-id-actions > *,
+  .admin-add-member-controls > *,
+  .admin-walkin-controls > *,
   .reminder-actions > *,
   .session-booking-quick-actions > *,
   .waitlist-actions > *,
@@ -2158,6 +2246,8 @@ h1 {
 
   .walkin-input-row,
   .walkin-name-grid,
+  .admin-walkin-input-row,
+  .admin-add-member-controls,
   .walkin-admin-edit,
   .developer-tools-unlock-row {
     grid-template-columns: 1fr;

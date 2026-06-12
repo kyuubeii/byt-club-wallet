@@ -46,6 +46,8 @@ function MemberPortal({
     getSessionRemainingWalkInSlots,
     getSessionMemberWaitlist,
     getSessionWalkInWaitlist,
+    getSessionConfirmedIndependentWalkins,
+    getSessionWaitingIndependentWalkins,
     handleBookSession,
     handleCancelSessionBooking,
     handleMemberUpdateBookingWalkIns,
@@ -576,12 +578,34 @@ function MemberPortal({
                                     const memberWaitlistCount =
                                         getSessionMemberWaitlist(session.id).length;
                                     const walkInWaitlistCount =
-                                        getSessionWalkInWaitlist(session.id).length;
+                                        getSessionWalkInWaitlist(session.id).length +
+                                        getSessionWaitingIndependentWalkins(session.id).length;
                                     const confirmedBookings = (sessionBookings || []).filter(
                                         (booking) =>
                                             Number(booking.sessionId) === Number(session.id) &&
                                             isConfirmedBooking(booking)
                                     );
+                                    const confirmedWalkIns = confirmedBookings
+                                        .flatMap((booking) =>
+                                            (booking.walkInNames || [])
+                                                .slice(0, Number(booking.walkInCount || 0))
+                                                .map((name, index) => ({
+                                                    id: `${booking.id}-walkin-${index}`,
+                                                    name: String(name || "").trim(),
+                                                }))
+                                        )
+                                        .filter((walkin) => walkin.name !== "");
+                                    const confirmedIndependentWalkIns =
+                                        getSessionConfirmedIndependentWalkins(session.id).map(
+                                            (walkin) => ({
+                                                id: `independent-${walkin.id}`,
+                                                name: walkin.name,
+                                            })
+                                        );
+                                    const attendeeWalkIns = [
+                                        ...confirmedWalkIns,
+                                        ...confirmedIndependentWalkIns,
+                                    ];
                                     const memberWaitlist = (sessionBookings || []).filter(
                                         (booking) =>
                                             Number(booking.sessionId) === Number(session.id) &&
@@ -594,6 +618,8 @@ function MemberPortal({
                                             booking.waitlistType === "walkin" &&
                                             booking.waitlistStatus === "waiting"
                                     );
+                                    const independentWalkInWaitlist =
+                                        getSessionWaitingIndependentWalkins(session.id);
                                     const walkInLimit = Number(session.walkInLimit ?? 5);
                                     const walkInSelection = walkInSelections[session.id] || {
                                         bringWalkIn: false,
@@ -921,17 +947,6 @@ function MemberPortal({
                                                                             </span>
                                                                         </div>
 
-                                                                        {Number(booking.walkInCount || 0) > 0 && (
-                                                                            <div className="walkin-name-list">
-                                                                                <strong>
-                                                                                    Walk-in: {booking.walkInCount}
-                                                                                </strong>
-                                                                                <span>
-                                                                                    {(booking.walkInNames || []).join(", ")}
-                                                                                </span>
-                                                                            </div>
-                                                                        )}
-
                                                                         {Number(booking.lateCancelledWalkInCount || 0) > 0 && (
                                                                             <div className="walkin-name-list">
                                                                                 <strong>
@@ -943,6 +958,23 @@ function MemberPortal({
                                                                                 </span>
                                                                             </div>
                                                                         )}
+                                                                    </div>
+                                                                ))
+                                                            )}
+                                                        </div>
+
+                                                        <div className="attendee-section">
+                                                            <h5>Walk-ins</h5>
+                                                            {attendeeWalkIns.length === 0 ? (
+                                                                <p className="waitlist-muted-text">
+                                                                    No confirmed walk-ins.
+                                                                </p>
+                                                            ) : (
+                                                                attendeeWalkIns.map((walkin) => (
+                                                                    <div key={walkin.id} className="attendee-row">
+                                                                        <span className="attendee-name">
+                                                                            {walkin.name}
+                                                                        </span>
                                                                     </div>
                                                                 ))
                                                             )}
@@ -967,28 +999,41 @@ function MemberPortal({
 
                                                         <div className="attendee-section">
                                                             <h5>Walk-in Waiting List</h5>
-                                                            {walkInWaitlist.length === 0 ? (
+                                                            {walkInWaitlist.length === 0 &&
+                                                            independentWalkInWaitlist.length === 0 ? (
                                                                 <p className="waitlist-muted-text">
                                                                     No walk-in waitlist.
                                                                 </p>
                                                             ) : (
-                                                                walkInWaitlist.map((booking) => (
-                                                                    <div key={booking.id} className="attendee-row">
-                                                                        <div>
+                                                                <>
+                                                                    {walkInWaitlist.map((booking) => (
+                                                                        <div key={booking.id} className="attendee-row">
+                                                                            <div>
+                                                                                <span className="attendee-name">
+                                                                                    {getMemberName(booking.memberId)}
+                                                                                </span>
+                                                                                <span className="attendee-meta">
+                                                                                    Walk-in: {booking.walkInCount || 0}
+                                                                                </span>
+                                                                            </div>
+                                                                            <div className="walkin-name-list">
+                                                                                <span>
+                                                                                    {(booking.walkInNames || []).join(", ")}
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                    {independentWalkInWaitlist.map((walkin) => (
+                                                                        <div
+                                                                            key={`independent-waiting-${walkin.id}`}
+                                                                            className="attendee-row"
+                                                                        >
                                                                             <span className="attendee-name">
-                                                                                {getMemberName(booking.memberId)}
-                                                                            </span>
-                                                                            <span className="attendee-meta">
-                                                                                Walk-in: {booking.walkInCount || 0}
+                                                                                {walkin.name}
                                                                             </span>
                                                                         </div>
-                                                                        <div className="walkin-name-list">
-                                                                            <span>
-                                                                                {(booking.walkInNames || []).join(", ")}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                ))
+                                                                    ))}
+                                                                </>
                                                             )}
                                                         </div>
                                                     </div>

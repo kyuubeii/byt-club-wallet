@@ -310,6 +310,7 @@ const initialSessions = [
 ];
 
 const initialSessionBookings = [];
+const initialSessionWalkins = [];
 
 const bookingStatusOptions = [
   { value: "booked", label: "Booked" },
@@ -328,6 +329,7 @@ const STORAGE_KEYS = {
   transactions: "byt_transactions",
   sessions: "byt_sessions",
   sessionBookings: "byt_sessionBookings",
+  sessionWalkins: "byt_sessionWalkins",
 };
 
 function loadFromStorage(key, fallbackValue) {
@@ -523,6 +525,16 @@ function convertSupabaseSessionBookings(supabaseBookings) {
   }));
 }
 
+function convertSupabaseSessionWalkins(supabaseWalkins) {
+  return supabaseWalkins.map((walkin) => ({
+    id: walkin.id,
+    sessionId: walkin.session_id,
+    name: walkin.name || "",
+    status: walkin.status || "confirmed",
+    createdAt: walkin.created_at || "",
+  }));
+}
+
 function convertSupabaseTransactions(supabaseTransactions) {
   return supabaseTransactions.map((transaction) => ({
     id: transaction.id,
@@ -636,6 +648,9 @@ function App() {
   const [sessionBookings, setSessionBookings] = useState(() =>
     loadFromStorage(STORAGE_KEYS.sessionBookings, initialSessionBookings)
   );
+  const [sessionWalkins, setSessionWalkins] = useState(() =>
+    loadFromStorage(STORAGE_KEYS.sessionWalkins, initialSessionWalkins)
+  );
 
   const [newSessionDate, setNewSessionDate] = useState("");
   const [newSessionTime, setNewSessionTime] = useState("");
@@ -675,6 +690,10 @@ function App() {
   }, [sessionBookings]);
 
   useEffect(() => {
+    saveToStorage(STORAGE_KEYS.sessionWalkins, sessionWalkins);
+  }, [sessionWalkins]);
+
+  useEffect(() => {
     if (USE_SUPABASE_DATA) {
       loadAllDataFromSupabase();
     }
@@ -690,6 +709,7 @@ function App() {
         fetchUsersFromSupabase,
         fetchSessionsFromSupabase,
         fetchSessionBookingsFromSupabase,
+        fetchSessionWalkinsFromSupabase,
         fetchTransactionsFromSupabase,
         fetchReloadRequestsFromSupabase,
       } = await import("./services/supabaseServices.js");
@@ -699,6 +719,7 @@ function App() {
         supabaseUsers,
         supabaseSessions,
         supabaseBookings,
+        supabaseWalkins,
         supabaseTransactions,
         supabaseReloadRequests,
       ] = await Promise.all([
@@ -706,6 +727,7 @@ function App() {
         fetchUsersFromSupabase(),
         fetchSessionsFromSupabase(),
         fetchSessionBookingsFromSupabase(),
+        fetchSessionWalkinsFromSupabase(),
         fetchTransactionsFromSupabase(),
         fetchReloadRequestsFromSupabase(),
       ]);
@@ -714,6 +736,7 @@ function App() {
       setUsers(convertSupabaseUsers(supabaseUsers));
       setSessions(convertSupabaseSessions(supabaseSessions));
       setSessionBookings(convertSupabaseSessionBookings(supabaseBookings));
+      setSessionWalkins(convertSupabaseSessionWalkins(supabaseWalkins));
       setTransactions(convertSupabaseTransactions(supabaseTransactions));
       setReloadRequests(convertSupabaseReloadRequests(supabaseReloadRequests));
       handleLoadRecentActivityLogs(false);
@@ -1051,6 +1074,14 @@ function App() {
     await upsertSessionBookingToSupabase(booking);
   }
 
+  async function syncSessionWalkinToSupabase(walkin) {
+    const { upsertSessionWalkinToSupabase } = await import(
+      "./services/supabaseServices.js"
+    );
+
+    await upsertSessionWalkinToSupabase(walkin);
+  }
+
   async function syncSessionUpdateToSupabase(sessionId, updates) {
     const { updateSessionInSupabase } = await import(
       "./services/supabaseServices.js"
@@ -1065,6 +1096,14 @@ function App() {
     );
 
     await updateSessionBookingInSupabase(bookingId, updates);
+  }
+
+  async function syncSessionWalkinUpdateToSupabase(walkinId, updates) {
+    const { updateSessionWalkinInSupabase } = await import(
+      "./services/supabaseServices.js"
+    );
+
+    await updateSessionWalkinInSupabase(walkinId, updates);
   }
 
   async function syncReloadRequestToSupabase(request) {
@@ -1160,6 +1199,11 @@ function App() {
 
   function alertSupabaseBookingSyncFailed(error) {
     console.error("Supabase booking sync failed:", error);
+    alert(getFriendlyCloudSyncMessage(error));
+  }
+
+  function alertSupabaseWalkinSyncFailed(error) {
+    console.error("Supabase walk-in sync failed:", error);
     alert(getFriendlyCloudSyncMessage(error));
   }
 
@@ -2160,6 +2204,7 @@ function App() {
     const resetTransactions = initialTransactions;
     const resetSessions = initialSessions;
     const resetSessionBookings = initialSessionBookings;
+    const resetSessionWalkins = initialSessionWalkins;
 
     setUsers(resetUsers);
     setMembers(resetMembers);
@@ -2167,12 +2212,14 @@ function App() {
     setTransactions(resetTransactions);
     setSessions(resetSessions);
     setSessionBookings(resetSessionBookings);
+    setSessionWalkins(resetSessionWalkins);
     saveToStorage(STORAGE_KEYS.users, resetUsers);
     saveToStorage(STORAGE_KEYS.members, resetMembers);
     saveToStorage(STORAGE_KEYS.reloadRequests, resetReloadRequests);
     saveToStorage(STORAGE_KEYS.transactions, resetTransactions);
     saveToStorage(STORAGE_KEYS.sessions, resetSessions);
     saveToStorage(STORAGE_KEYS.sessionBookings, resetSessionBookings);
+    saveToStorage(STORAGE_KEYS.sessionWalkins, resetSessionWalkins);
     setSelectedExpenseMembers([]);
     setExpenseAmount("");
     setManualBalance("");
@@ -2226,6 +2273,7 @@ function App() {
     setReloadRequests([]);
     setSessions([]);
     setSessionBookings([]);
+    setSessionWalkins([]);
     setActivityLogs([]);
     saveToStorage(STORAGE_KEYS.members, resetMembers);
     saveToStorage(STORAGE_KEYS.users, resetUsers);
@@ -2233,6 +2281,7 @@ function App() {
     saveToStorage(STORAGE_KEYS.reloadRequests, []);
     saveToStorage(STORAGE_KEYS.sessions, []);
     saveToStorage(STORAGE_KEYS.sessionBookings, []);
+    saveToStorage(STORAGE_KEYS.sessionWalkins, []);
 
     try {
       const {
@@ -2241,12 +2290,14 @@ function App() {
         clearSupabaseTransactions,
         clearSupabaseReloadRequests,
         clearSupabaseSessionBookings,
+        clearSupabaseSessionWalkins,
         clearSupabaseActivityLogs,
         clearSupabaseSessions,
         seedMembersToSupabase,
         seedUsersToSupabase,
       } = await import("./services/supabaseServices.js");
 
+      await clearSupabaseSessionWalkins();
       await clearSupabaseSessionBookings();
       await clearSupabaseTransactions();
       await clearSupabaseReloadRequests();
@@ -2737,17 +2788,50 @@ function App() {
     return getSessionConfirmedBookings(sessionId).length;
   }
 
-  function getSessionWalkInCount(sessionId) {
+  function getSessionMemberAttachedWalkInCount(sessionId) {
     return getSessionConfirmedBookings(sessionId).reduce(
       (total, booking) => total + Number(booking.walkInCount || 0),
       0
     );
   }
 
+  function getSessionIndependentWalkins(sessionId) {
+    return sessionWalkins.filter(
+      (walkin) => Number(walkin.sessionId) === Number(sessionId)
+    );
+  }
+
+  function getSessionConfirmedIndependentWalkins(sessionId) {
+    return getSessionIndependentWalkins(sessionId).filter(
+      (walkin) => walkin.status === "confirmed"
+    );
+  }
+
+  function getSessionWaitingIndependentWalkins(sessionId) {
+    return getSessionIndependentWalkins(sessionId).filter(
+      (walkin) => walkin.status === "waiting"
+    );
+  }
+
+  function getSessionConfirmedIndependentWalkinCount(sessionId) {
+    return getSessionConfirmedIndependentWalkins(sessionId).length;
+  }
+
+  function getSessionAllConfirmedWalkInCount(sessionId) {
+    return (
+      getSessionMemberAttachedWalkInCount(sessionId) +
+      getSessionConfirmedIndependentWalkinCount(sessionId)
+    );
+  }
+
+  function getSessionWalkInCount(sessionId) {
+    return getSessionAllConfirmedWalkInCount(sessionId);
+  }
+
   function getSessionTotalParticipantCount(sessionId) {
     return (
       getSessionMemberBookingCount(sessionId) +
-      getSessionWalkInCount(sessionId)
+      getSessionAllConfirmedWalkInCount(sessionId)
     );
   }
 
@@ -2808,6 +2892,18 @@ function App() {
     const courtBookings = confirmedBookings.filter((booking) =>
       courtChargeStatuses.includes(booking.status)
     );
+    const courtBookingWalkInCount = courtBookings.reduce(
+      (total, booking) => total + Number(booking.walkInCount || 0),
+      0
+    );
+    const confirmedIndependentWalkInCount =
+      getSessionConfirmedIndependentWalkinCount(session.id);
+    const totalConfirmedWalkInCount =
+      getSessionAllConfirmedWalkInCount(session.id);
+    const courtDenominator =
+      courtBookings.length +
+      courtBookingWalkInCount +
+      confirmedIndependentWalkInCount;
 
     const attendedBookings = confirmedBookings.filter(
       (booking) => booking.status === "attended"
@@ -2818,7 +2914,7 @@ function App() {
     const otherFeeTotal = Number(session.otherFeeTotal || 0);
     const attendedFeeTotal = shuttlecockFeeTotal + otherFeeTotal;
     const courtFeePerPlayer =
-      courtBookings.length > 0 ? courtFeeTotal / courtBookings.length : 0;
+      courtDenominator > 0 ? courtFeeTotal / courtDenominator : 0;
     const attendedFeePerPlayer =
       attendedBookings.length > 0
         ? attendedFeeTotal / attendedBookings.length
@@ -2846,6 +2942,10 @@ function App() {
     return {
       courtBookings: courtBookings,
       attendedBookings: attendedBookings,
+      courtBookingWalkInCount: courtBookingWalkInCount,
+      confirmedIndependentWalkInCount: confirmedIndependentWalkInCount,
+      totalConfirmedWalkInCount: totalConfirmedWalkInCount,
+      courtDenominator: courtDenominator,
       courtFeeTotal: courtFeeTotal,
       shuttlecockFeeTotal: shuttlecockFeeTotal,
       otherFeeTotal: otherFeeTotal,
@@ -3092,6 +3192,100 @@ function App() {
     });
 
     alert("Booking successful");
+  }
+
+  async function handleAdminAddMemberToSession(sessionId, memberId, addMode) {
+    const session = sessions.find(
+      (session) => Number(session.id) === Number(sessionId)
+    );
+    const member = members.find(
+      (member) => Number(member.id) === Number(memberId)
+    );
+
+    if (!session) {
+      alert("Session not found");
+      return false;
+    }
+
+    if (session.chargeStatus === "charged") {
+      alert("Charged sessions cannot be changed.");
+      return false;
+    }
+
+    if (!member) {
+      alert("Please select a member.");
+      return false;
+    }
+
+    if (member.status !== "active") {
+      alert("Only active members can be added to a session.");
+      return false;
+    }
+
+    const alreadyHasBooking = sessionBookings.some(
+      (booking) =>
+        Number(booking.sessionId) === Number(sessionId) &&
+        Number(booking.memberId) === Number(memberId) &&
+        booking.status !== "cancelled" &&
+        booking.waitlistStatus !== "removed"
+    );
+
+    if (alreadyHasBooking) {
+      alert("This member already has a booking or waiting list request for this session.");
+      return false;
+    }
+
+    const isWaiting = addMode === "waiting";
+
+    if (!isWaiting && getSessionRemainingParticipantSlots(sessionId) < 1) {
+      alert("No remaining player slots for a confirmed member booking.");
+      return false;
+    }
+
+    const newBooking = {
+      id: Date.now(),
+      sessionId: session.id,
+      memberId: member.id,
+      status: "booked",
+      bookedAt: new Date().toLocaleString(),
+      cancelledAt: null,
+      statusUpdatedAt: null,
+      walkInCount: 0,
+      walkInNames: [],
+      lateCancelledWalkInCount: 0,
+      lateCancelledWalkInNames: [],
+      waitlistType: isWaiting ? "member" : null,
+      waitlistStatus: isWaiting ? "waiting" : null,
+    };
+
+    setSessionBookings((previousBookings) => [
+      newBooking,
+      ...previousBookings,
+    ]);
+
+    try {
+      await syncSessionBookingToSupabase(newBooking);
+    } catch (error) {
+      console.error("Admin add member cloud sync failed:", error);
+      alertSupabaseBookingSyncFailed(error);
+      return false;
+    }
+
+    logActivity({
+      action: isWaiting ? "admin_add_member_waitlist" : "admin_add_member_booking",
+      targetType: "session",
+      targetId: String(session.id),
+      description: `Admin added ${member.name} to ${
+        isWaiting ? "member waiting list" : "confirmed booking"
+      } for session ${session.date}`,
+    });
+
+    alert(
+      isWaiting
+        ? "Member added to waiting list."
+        : "Member added to session."
+    );
+    return true;
   }
 
   async function handleCancelSessionBooking(sessionId) {
@@ -3474,6 +3668,203 @@ function App() {
 
     alert("Walk-in guests updated successfully.");
     return true;
+  }
+
+  async function handleAddIndependentWalkins(sessionId, walkinNames, status) {
+    const session = sessions.find(
+      (session) => Number(session.id) === Number(sessionId)
+    );
+
+    if (!session) {
+      alert("Session not found");
+      return false;
+    }
+
+    const cleanedNames = (walkinNames || []).map((name) =>
+      String(name || "").trim()
+    );
+
+    if (cleanedNames.length === 0 || cleanedNames.some((name) => name === "")) {
+      alert("Please enter every walk-in name before adding.");
+      return false;
+    }
+
+    const nextStatus = status === "waiting" ? "waiting" : "confirmed";
+
+    if (nextStatus === "confirmed") {
+      const remainingTotalSlots = getSessionRemainingParticipantSlots(sessionId);
+      const remainingWalkInSlots = getSessionRemainingWalkInSlots(sessionId);
+
+      if (
+        cleanedNames.length > remainingTotalSlots ||
+        cleanedNames.length > remainingWalkInSlots
+      ) {
+        alert(
+          `Not enough space for ${cleanedNames.length} confirmed independent walk-in(s). Remaining player slots: ${remainingTotalSlots}. Remaining walk-in slots: ${remainingWalkInSlots}.`
+        );
+        return false;
+      }
+    }
+
+    const createdAt = new Date().toLocaleString();
+    const idBase = Date.now();
+    const newWalkins = cleanedNames.map((name, index) => ({
+      id: idBase + index,
+      sessionId: session.id,
+      name: name,
+      status: nextStatus,
+      createdAt: createdAt,
+    }));
+
+    setSessionWalkins((previousWalkins) => [
+      ...newWalkins,
+      ...previousWalkins,
+    ]);
+
+    try {
+      await Promise.all(
+        newWalkins.map((walkin) => syncSessionWalkinToSupabase(walkin))
+      );
+    } catch (error) {
+      alertSupabaseWalkinSyncFailed(error);
+      return false;
+    }
+
+    logActivity({
+      action: "add_independent_walkins",
+      targetType: "session",
+      targetId: String(session.id),
+      description: `Added ${newWalkins.length} independent ${nextStatus} walk-in(s) for ${session.date}: ${cleanedNames.join(", ")}`,
+    });
+
+    return true;
+  }
+
+  async function handlePromoteIndependentWalkin(walkinId) {
+    const walkin = sessionWalkins.find(
+      (walkin) => Number(walkin.id) === Number(walkinId)
+    );
+
+    if (!walkin) {
+      alert("Walk-in not found");
+      return;
+    }
+
+    const session = sessions.find(
+      (session) => Number(session.id) === Number(walkin.sessionId)
+    );
+
+    if (!session) {
+      alert("Session not found");
+      return;
+    }
+
+    if (
+      getSessionRemainingParticipantSlots(session.id) < 1 ||
+      getSessionRemainingWalkInSlots(session.id) < 1
+    ) {
+      alert("Not enough slots to promote this walk-in.");
+      return;
+    }
+
+    const updatedAt = new Date().toLocaleString();
+    const updatedWalkin = {
+      ...walkin,
+      status: "confirmed",
+      createdAt: walkin.createdAt || updatedAt,
+    };
+
+    setSessionWalkins((previousWalkins) =>
+      previousWalkins.map((item) =>
+        Number(item.id) === Number(walkinId) ? updatedWalkin : item
+      )
+    );
+
+    try {
+      await syncSessionWalkinUpdateToSupabase(walkinId, {
+        status: "confirmed",
+      });
+    } catch (error) {
+      alertSupabaseWalkinSyncFailed(error);
+      return;
+    }
+
+    logActivity({
+      action: "promote_independent_walkin",
+      targetType: "session",
+      targetId: String(session.id),
+      description: `Promoted independent walk-in ${walkin.name} for ${session.date}`,
+    });
+  }
+
+  async function handleCancelIndependentWalkin(walkinId) {
+    const walkin = sessionWalkins.find(
+      (walkin) => Number(walkin.id) === Number(walkinId)
+    );
+
+    if (!walkin) {
+      alert("Walk-in not found");
+      return;
+    }
+
+    setSessionWalkins((previousWalkins) =>
+      previousWalkins.map((item) =>
+        Number(item.id) === Number(walkinId)
+          ? { ...item, status: "cancelled" }
+          : item
+      )
+    );
+
+    try {
+      await syncSessionWalkinUpdateToSupabase(walkinId, {
+        status: "cancelled",
+      });
+    } catch (error) {
+      alertSupabaseWalkinSyncFailed(error);
+      return;
+    }
+
+    logActivity({
+      action: "cancel_independent_walkin",
+      targetType: "session",
+      targetId: String(walkin.sessionId),
+      description: `Cancelled independent walk-in ${walkin.name}`,
+    });
+  }
+
+  async function handleRemoveIndependentWalkin(walkinId) {
+    const walkin = sessionWalkins.find(
+      (walkin) => Number(walkin.id) === Number(walkinId)
+    );
+
+    if (!walkin) {
+      alert("Walk-in not found");
+      return;
+    }
+
+    setSessionWalkins((previousWalkins) =>
+      previousWalkins.map((item) =>
+        Number(item.id) === Number(walkinId)
+          ? { ...item, status: "removed" }
+          : item
+      )
+    );
+
+    try {
+      await syncSessionWalkinUpdateToSupabase(walkinId, {
+        status: "removed",
+      });
+    } catch (error) {
+      alertSupabaseWalkinSyncFailed(error);
+      return;
+    }
+
+    logActivity({
+      action: "remove_independent_walkin",
+      targetType: "session",
+      targetId: String(walkin.sessionId),
+      description: `Removed independent walk-in ${walkin.name}`,
+    });
   }
 
   async function handlePromoteWaitlistBooking(bookingId) {
@@ -4966,15 +5357,27 @@ function App() {
             getSessionMemberBookingCount={getSessionMemberBookingCount}
             getSessionMemberWaitlist={getSessionMemberWaitlist}
             getSessionChargeSummary={getSessionChargeSummary}
+            getSessionConfirmedIndependentWalkins={
+              getSessionConfirmedIndependentWalkins
+            }
+            getSessionIndependentWalkins={getSessionIndependentWalkins}
             getSessionRemainingParticipantSlots={getSessionRemainingParticipantSlots}
             getSessionTotalParticipantCount={getSessionTotalParticipantCount}
+            getSessionWaitingIndependentWalkins={
+              getSessionWaitingIndependentWalkins
+            }
             getSessionWalkInCount={getSessionWalkInCount}
             getSessionWalkInWaitlist={getSessionWalkInWaitlist}
+            handleAdminAddMemberToSession={handleAdminAddMemberToSession}
+            handleAddIndependentWalkins={handleAddIndependentWalkins}
+            handleCancelIndependentWalkin={handleCancelIndependentWalkin}
             handleCloseSession={handleCloseSession}
             handleCreateSession={handleCreateSession}
             handleFinalizeSessionCharge={handleFinalizeSessionCharge}
             handleOpenSession={handleOpenSession}
+            handlePromoteIndependentWalkin={handlePromoteIndependentWalkin}
             handlePromoteWaitlistBooking={handlePromoteWaitlistBooking}
+            handleRemoveIndependentWalkin={handleRemoveIndependentWalkin}
             handleRemoveWaitlistBooking={handleRemoveWaitlistBooking}
             handleBulkUpdateSessionBookingStatus={
               handleBulkUpdateSessionBookingStatus
@@ -5250,6 +5653,12 @@ function App() {
           getSessionRemainingWalkInSlots={getSessionRemainingWalkInSlots}
           getSessionMemberWaitlist={getSessionMemberWaitlist}
           getSessionWalkInWaitlist={getSessionWalkInWaitlist}
+          getSessionConfirmedIndependentWalkins={
+            getSessionConfirmedIndependentWalkins
+          }
+          getSessionWaitingIndependentWalkins={
+            getSessionWaitingIndependentWalkins
+          }
           handleBookSession={handleBookSession}
           handleCancelSessionBooking={handleCancelSessionBooking}
           handleMemberUpdateBookingWalkIns={handleMemberUpdateBookingWalkIns}

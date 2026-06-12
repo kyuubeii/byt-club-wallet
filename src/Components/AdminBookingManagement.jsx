@@ -8,15 +8,23 @@ function AdminBookingManagement({
   getSessionMemberBookingCount,
   getSessionMemberWaitlist,
   getSessionChargeSummary,
+  getSessionConfirmedIndependentWalkins,
+  getSessionIndependentWalkins,
   getSessionRemainingParticipantSlots,
   getSessionTotalParticipantCount,
+  getSessionWaitingIndependentWalkins,
   getSessionWalkInCount,
   getSessionWalkInWaitlist,
+  handleAdminAddMemberToSession,
+  handleAddIndependentWalkins,
+  handleCancelIndependentWalkin,
   handleCloseSession,
   handleCreateSession,
   handleFinalizeSessionCharge,
   handleOpenSession,
+  handlePromoteIndependentWalkin,
   handlePromoteWaitlistBooking,
+  handleRemoveIndependentWalkin,
   handleRemoveWaitlistBooking,
   handleBulkUpdateSessionBookingStatus,
   handleUpdateBookingStatus,
@@ -45,6 +53,11 @@ function AdminBookingManagement({
   const [showHistory, setShowHistory] = useState(false);
   const [bookingSearchBySession, setBookingSearchBySession] = useState({});
   const [sessionHistoryPage, setSessionHistoryPage] = useState(1);
+  const [walkinDraftsBySession, setWalkinDraftsBySession] = useState({});
+  const [walkinStatusBySession, setWalkinStatusBySession] = useState({});
+  const [adminMemberBySession, setAdminMemberBySession] = useState({});
+  const [adminMemberModeBySession, setAdminMemberModeBySession] = useState({});
+  const [attendeesBySession, setAttendeesBySession] = useState({});
 
   const activeSessions = sessions.filter(
     (session) => session.chargeStatus !== "charged"
@@ -66,18 +79,145 @@ function AdminBookingManagement({
     safeSessionHistoryPage * sessionHistoryPageSize
   );
 
+  function getWalkinDrafts(sessionId) {
+    return walkinDraftsBySession[sessionId] || [""];
+  }
+
+  function updateWalkinDraft(sessionId, index, value) {
+    setWalkinDraftsBySession((previousDrafts) => {
+      const currentDrafts = previousDrafts[sessionId] || [""];
+      const nextDrafts = currentDrafts.map((name, nameIndex) =>
+        nameIndex === index ? value : name
+      );
+
+      return {
+        ...previousDrafts,
+        [sessionId]: nextDrafts,
+      };
+    });
+  }
+
+  function addWalkinDraft(sessionId) {
+    setWalkinDraftsBySession((previousDrafts) => ({
+      ...previousDrafts,
+      [sessionId]: [...(previousDrafts[sessionId] || [""]), ""],
+    }));
+  }
+
+  function removeWalkinDraft(sessionId, index) {
+    setWalkinDraftsBySession((previousDrafts) => {
+      const currentDrafts = previousDrafts[sessionId] || [""];
+      const nextDrafts = currentDrafts.filter(
+        (_, nameIndex) => nameIndex !== index
+      );
+
+      return {
+        ...previousDrafts,
+        [sessionId]: nextDrafts.length > 0 ? nextDrafts : [""],
+      };
+    });
+  }
+
+  async function submitIndependentWalkins(sessionId) {
+    const names = getWalkinDrafts(sessionId);
+    const status = walkinStatusBySession[sessionId] || "confirmed";
+    const didAdd = await handleAddIndependentWalkins(sessionId, names, status);
+
+    if (didAdd) {
+      setWalkinDraftsBySession((previousDrafts) => ({
+        ...previousDrafts,
+        [sessionId]: [""],
+      }));
+    }
+  }
+
+  async function submitAdminMember(sessionId) {
+    const memberId = adminMemberBySession[sessionId] || "";
+    const addMode = adminMemberModeBySession[sessionId] || "confirmed";
+    const didAdd = await handleAdminAddMemberToSession(
+      sessionId,
+      memberId,
+      addMode
+    );
+
+    if (didAdd) {
+      setAdminMemberBySession((previousMembers) => ({
+        ...previousMembers,
+        [sessionId]: "",
+      }));
+      setAdminMemberModeBySession((previousModes) => ({
+        ...previousModes,
+        [sessionId]: "confirmed",
+      }));
+    }
+  }
+
+  function getMemberName(memberId) {
+    const member = members.find(
+      (member) => Number(member.id) === Number(memberId)
+    );
+
+    return member?.name || "Unknown Member";
+  }
+
+  function toggleAttendees(sessionId) {
+    setAttendeesBySession((previousSessions) => ({
+      ...previousSessions,
+      [sessionId]: !previousSessions[sessionId],
+    }));
+  }
+
   function renderSessionCard(session) {
     const confirmedBookings = getSessionConfirmedBookings(session.id);
     const allBookings = getSessionBookings(session.id);
     const chargeSummary = getSessionChargeSummary(session, allBookings);
     const isCharged = session.chargeStatus === "charged";
+    const canManageIndependentWalkins =
+      !isCharged && session.status === "open";
+    const canAdminAddMember = !isCharged;
+    const activeMembers = members.filter((member) => member.status === "active");
     const memberBookingCount = getSessionMemberBookingCount(session.id);
     const walkInCount = getSessionWalkInCount(session.id);
     const totalParticipantCount = getSessionTotalParticipantCount(session.id);
     const remainingParticipantSlots = getSessionRemainingParticipantSlots(session.id);
     const memberWaitlist = getSessionMemberWaitlist(session.id);
     const walkInWaitlist = getSessionWalkInWaitlist(session.id);
+    const independentWalkins = getSessionIndependentWalkins(session.id);
+    const confirmedIndependentWalkins =
+      getSessionConfirmedIndependentWalkins(session.id);
+    const waitingIndependentWalkins =
+      getSessionWaitingIndependentWalkins(session.id);
+    const cancelledIndependentWalkins = independentWalkins.filter(
+      (walkin) => walkin.status === "cancelled"
+    );
+    const visibleIndependentWalkins = [
+      ...confirmedIndependentWalkins,
+      ...cancelledIndependentWalkins,
+    ];
+    const confirmedMemberAttachedWalkins = confirmedBookings
+      .flatMap((booking) =>
+        (booking.walkInNames || [])
+          .slice(0, Number(booking.walkInCount || 0))
+          .map((name, index) => ({
+            id: `${booking.id}-walkin-${index}`,
+            name: String(name || "").trim(),
+          }))
+      )
+      .filter((walkin) => walkin.name !== "");
+    const attendeeWalkins = [
+      ...confirmedMemberAttachedWalkins,
+      ...confirmedIndependentWalkins.map((walkin) => ({
+        id: `independent-${walkin.id}`,
+        name: walkin.name,
+      })),
+    ];
     const walkInLimit = Number(session.walkInLimit ?? 5);
+    const independentWalkinDrafts = getWalkinDrafts(session.id);
+    const independentWalkinStatus =
+      walkinStatusBySession[session.id] || "confirmed";
+    const selectedAdminMemberId = adminMemberBySession[session.id] || "";
+    const adminMemberAddMode =
+      adminMemberModeBySession[session.id] || "confirmed";
     const bookingSearch = bookingSearchBySession[session.id] || "";
     const normalizedBookingSearch = bookingSearch.trim().toLowerCase();
     const bookingStatusCounts = bookingStatusOptions.reduce((counts, option) => {
@@ -116,6 +256,7 @@ function AdminBookingManagement({
     const hasNonCancelledBookings = confirmedBookings.some(
       (booking) => booking.status !== "cancelled" && booking.waitlistStatus !== "waiting"
     );
+    const isAttendeeExpanded = Boolean(attendeesBySession[session.id]);
 
     return (
       <div key={session.id} className="session-card">
@@ -136,7 +277,10 @@ function AdminBookingManagement({
             <span>Total Participants: {totalParticipantCount}/{session.maxPlayers}</span>
             <span>Remaining Slots: {remainingParticipantSlots}</span>
             <span>Member Waitlist: {memberWaitlist.length}</span>
-            <span>Walk-in Waitlist: {walkInWaitlist.length}</span>
+            <span>
+              Walk-in Waitlist:{" "}
+              {walkInWaitlist.length + waitingIndependentWalkins.length}
+            </span>
           </div>
           <p>
             Court Fee Total:{" "}
@@ -164,6 +308,14 @@ function AdminBookingManagement({
         </div>
 
         <div className="session-card-actions">
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={() => toggleAttendees(session.id)}
+          >
+            {isAttendeeExpanded ? "Hide Attendees" : "View Attendees"}
+          </button>
+
           {isCharged ? (
             <span className="positive">Charged and closed</span>
           ) : session.status === "open" ? (
@@ -182,6 +334,298 @@ function AdminBookingManagement({
             </button>
           )}
         </div>
+
+        {isAttendeeExpanded && (
+          <div className="attendee-panel admin-attendee-panel">
+            <h4>Attendees</h4>
+
+            <div className="attendee-section">
+              <h5>Confirmed Members</h5>
+              {confirmedBookings.length === 0 ? (
+                <p className="waitlist-muted-text">No confirmed attendees yet.</p>
+              ) : (
+                confirmedBookings.map((booking) => (
+                  <div key={booking.id} className="attendee-row">
+                    <div>
+                      <span className="attendee-name">
+                        {getMemberName(booking.memberId)}
+                      </span>
+                      <span className="attendee-meta">
+                        {String(booking.status || "booked").replace("_", " ")}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="attendee-section">
+              <h5>Walk-ins</h5>
+              {attendeeWalkins.length === 0 ? (
+                <p className="waitlist-muted-text">No confirmed walk-ins.</p>
+              ) : (
+                attendeeWalkins.map((walkin) => (
+                  <div key={walkin.id} className="attendee-row">
+                    <span className="attendee-name">{walkin.name}</span>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="attendee-section">
+              <h5>Member Waiting List</h5>
+              {memberWaitlist.length === 0 ? (
+                <p className="waitlist-muted-text">No member waitlist.</p>
+              ) : (
+                memberWaitlist.map((booking) => (
+                  <div key={booking.id} className="attendee-row">
+                    <span className="attendee-name">
+                      {getMemberName(booking.memberId)}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="attendee-section">
+              <h5>Walk-in Waiting List</h5>
+              {walkInWaitlist.length === 0 && waitingIndependentWalkins.length === 0 ? (
+                <p className="waitlist-muted-text">No walk-in waitlist.</p>
+              ) : (
+                <>
+                  {walkInWaitlist.map((booking) => (
+                    <div key={booking.id} className="attendee-row">
+                      <div>
+                        <span className="attendee-name">
+                          {getMemberName(booking.memberId)}
+                        </span>
+                        <span className="attendee-meta">
+                          Walk-in: {booking.walkInCount || 0}
+                        </span>
+                      </div>
+                      <div className="walkin-name-list">
+                        <span>{(booking.walkInNames || []).join(", ")}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {waitingIndependentWalkins.map((walkin) => (
+                    <div
+                      key={`independent-waiting-${walkin.id}`}
+                      className="attendee-row"
+                    >
+                      <span className="attendee-name">{walkin.name}</span>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {canManageIndependentWalkins && (
+          <div className="admin-walkin-section">
+            <div className="admin-walkin-header">
+              <div>
+                <h4>Admin Walk-ins</h4>
+                <p>Independent walk-ins are not attached to member accounts.</p>
+              </div>
+              <span className="waitlist-badge">
+                Confirmed {confirmedIndependentWalkins.length}
+              </span>
+            </div>
+
+            <div className="admin-walkin-form">
+              <div className="admin-walkin-drafts">
+                {independentWalkinDrafts.map((name, index) => (
+                  <div key={`${session.id}-walkin-draft-${index}`} className="admin-walkin-input-row">
+                    <label>Walk-in Name</label>
+                    <input
+                      type="text"
+                      placeholder="Walk-in name"
+                      value={name}
+                      onChange={(event) =>
+                        updateWalkinDraft(session.id, index, event.target.value)
+                      }
+                    />
+                    {independentWalkinDrafts.length > 1 && (
+                      <button
+                        className="small-reject-button"
+                        type="button"
+                        onClick={() => removeWalkinDraft(session.id, index)}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="admin-walkin-controls">
+                <div>
+                  <label>Status</label>
+                  <select
+                    value={independentWalkinStatus}
+                    onChange={(event) =>
+                      setWalkinStatusBySession((previousStatuses) => ({
+                        ...previousStatuses,
+                        [session.id]: event.target.value,
+                      }))
+                    }
+                  >
+                    <option value="confirmed">Confirmed</option>
+                    <option value="waiting">Waiting</option>
+                  </select>
+                </div>
+
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => addWalkinDraft(session.id)}
+                >
+                  Add another walk-in
+                </button>
+
+                <button
+                  className="action-button"
+                  type="button"
+                  onClick={() => submitIndependentWalkins(session.id)}
+                >
+                  Add Walk-in(s)
+                </button>
+              </div>
+            </div>
+
+            <div className="admin-walkin-list-grid">
+              <div>
+                <h4>Confirmed Independent Walk-ins</h4>
+                {visibleIndependentWalkins.length === 0 ? (
+                  <p className="empty-text">No confirmed independent walk-ins.</p>
+                ) : (
+                  visibleIndependentWalkins.map((walkin) => (
+                    <div key={walkin.id} className="waitlist-row">
+                      <div>
+                        <strong>{walkin.name}</strong>
+                        <small>{walkin.createdAt || "Independent walk-in"}</small>
+                      </div>
+                      <span className="waitlist-badge">
+                        {walkin.status}
+                      </span>
+                      <div className="waitlist-actions">
+                        {walkin.status === "confirmed" && (
+                          <button
+                            className="small-reject-button"
+                            type="button"
+                            onClick={() => handleCancelIndependentWalkin(walkin.id)}
+                          >
+                            Cancel
+                          </button>
+                        )}
+                        <button
+                          className="small-reject-button"
+                          type="button"
+                          onClick={() => handleRemoveIndependentWalkin(walkin.id)}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div>
+                <h4>Walk-in Waitlist</h4>
+                {waitingIndependentWalkins.length === 0 ? (
+                  <p className="empty-text">No independent walk-in waitlist.</p>
+                ) : (
+                  waitingIndependentWalkins.map((walkin) => (
+                    <div key={walkin.id} className="waitlist-row">
+                      <div>
+                        <strong>{walkin.name}</strong>
+                        <small>{walkin.createdAt || "Waiting request"}</small>
+                      </div>
+                      <span className="waitlist-badge">waiting</span>
+                      <div className="waitlist-actions">
+                        <button
+                          className="small-approve-button"
+                          type="button"
+                          onClick={() => handlePromoteIndependentWalkin(walkin.id)}
+                        >
+                          Promote
+                        </button>
+                        <button
+                          className="small-reject-button"
+                          type="button"
+                          onClick={() => handleRemoveIndependentWalkin(walkin.id)}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {canAdminAddMember && (
+          <div className="admin-add-member-section">
+            <div className="admin-walkin-header">
+              <div>
+                <h4>Admin Add Member</h4>
+                <p>Add an active member directly into this session.</p>
+              </div>
+            </div>
+
+            <div className="admin-add-member-controls">
+              <div>
+                <label>Member</label>
+                <select
+                  value={selectedAdminMemberId}
+                  onChange={(event) =>
+                    setAdminMemberBySession((previousMembers) => ({
+                      ...previousMembers,
+                      [session.id]: event.target.value,
+                    }))
+                  }
+                >
+                  <option value="">Select member</option>
+                  {activeMembers.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label>Status</label>
+                <select
+                  value={adminMemberAddMode}
+                  onChange={(event) =>
+                    setAdminMemberModeBySession((previousModes) => ({
+                      ...previousModes,
+                      [session.id]: event.target.value,
+                    }))
+                  }
+                >
+                  <option value="confirmed">Confirmed</option>
+                  <option value="waiting">Waitlist</option>
+                </select>
+              </div>
+
+              <button
+                className="action-button"
+                type="button"
+                disabled={activeMembers.length === 0}
+                onClick={() => submitAdminMember(session.id)}
+              >
+                Add Member
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="session-booking-list">
           <div className="session-booking-header">
@@ -508,8 +952,13 @@ function AdminBookingManagement({
 
           <div className="session-charge-summary-grid">
             <div>
-              <small>Court charged players</small>
-              <strong>{chargeSummary.courtBookings.length}</strong>
+              <small>Court denominator</small>
+              <strong>{chargeSummary.courtDenominator}</strong>
+            </div>
+
+            <div>
+              <small>Independent walk-ins</small>
+              <strong>{chargeSummary.confirmedIndependentWalkInCount}</strong>
             </div>
 
             <div>
