@@ -2666,10 +2666,11 @@ h1 {
   .login-card:not(.registration-card) {
     padding: 34px 18px 18px;
     margin: 12px auto max(28px, env(safe-area-inset-bottom));
+    transform: translateY(-16px);
   }
 
   .login-card:not(.registration-card).premium-auth-card > .mantine-Stack-root {
-    gap: 9px;
+    gap: 8px;
   }
 
   .login-card:not(.registration-card).premium-auth-card > .mantine-Stack-root > .mantine-Group-root {
