@@ -571,6 +571,7 @@ hr {
 .login-card:not(.registration-card).premium-auth-card > .mantine-Stack-root > .mantine-Group-root {
   justify-items: center;
   justify-content: center;
+  margin-bottom: 8px;
   text-align: center;
 }
 
