@@ -669,8 +669,12 @@ h1 {
   display: none;
 }
 
+.login-card:not(.registration-card) {
+  padding-top: 40px;
+}
+
 .login-card:not(.registration-card).premium-auth-card > .mantine-Stack-root {
-  gap: 20px;
+  gap: 12px;
 }
 
 .login-card:not(.registration-card) h1 {
@@ -2660,12 +2664,12 @@ h1 {
   }
 
   .login-card:not(.registration-card) {
-    padding: 18px;
+    padding: 28px 18px 18px;
     margin: 12px auto max(28px, env(safe-area-inset-bottom));
   }
 
   .login-card:not(.registration-card).premium-auth-card > .mantine-Stack-root {
-    gap: 8px;
+    gap: 10px;
   }
 
   .login-card:not(.registration-card).premium-auth-card > .mantine-Stack-root > .mantine-Group-root {
