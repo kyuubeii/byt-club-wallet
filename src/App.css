@@ -585,32 +585,50 @@ hr {
   width: 76px;
   height: 76px;
   margin: 0;
-  border: 1px solid rgba(50, 180, 68, 0.32);
+  border: 1px solid rgba(50, 180, 68, 0.26);
   border-radius: 20px;
-  background:
-    linear-gradient(145deg, rgba(50, 180, 68, 0.24), transparent 48%),
-    #07111f;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: #000000;
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 900;
   letter-spacing: 0.05em;
-  box-shadow: 0 18px 42px rgba(7, 17, 31, 0.24);
+  box-shadow: 0 18px 42px rgba(7, 17, 31, 0.26);
+}
+
+.logo-box::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(145deg, rgba(50, 180, 68, 0.08), transparent 42%);
+  pointer-events: none;
+}
+
+.logo-box img,
+.logo-box span {
+  position: relative;
+  z-index: 1;
 }
 
 .logo-box img,
 .topbar-logo img {
-  width: 70%;
-  height: 70%;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   display: block;
+  border-radius: inherit;
 }
 
 .login-card:not(.registration-card) .logo-box img {
-  width: 86%;
-  height: 86%;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
 }
 
 .topbar-logo {
@@ -649,6 +667,29 @@ h1 {
 
 .login-card:not(.registration-card) .premium-badge {
   display: none;
+}
+
+.login-card:not(.registration-card).premium-auth-card > .mantine-Stack-root {
+  gap: 20px;
+}
+
+.login-card:not(.registration-card) h1 {
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.login-card:not(.registration-card) .subtitle {
+  display: none;
+}
+
+.login-card:not(.registration-card) .form {
+  margin-top: 4px;
+}
+
+.login-card:not(.registration-card) label,
+.login-card:not(.registration-card) .mantine-InputWrapper-label {
+  margin-top: 8px;
+  margin-bottom: 7px;
 }
 
 .auth-notice,
@@ -2624,7 +2665,7 @@ h1 {
   }
 
   .login-card:not(.registration-card).premium-auth-card > .mantine-Stack-root {
-    gap: 12px;
+    gap: 8px;
   }
 
   .login-card:not(.registration-card).premium-auth-card > .mantine-Stack-root > .mantine-Group-root {
@@ -2734,7 +2775,7 @@ h1 {
   }
 
   .login-card:not(.registration-card) .subtitle {
-    margin-bottom: 14px;
+    display: none;
   }
 }
 
