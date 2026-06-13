@@ -5858,14 +5858,16 @@ function App() {
               <div className="registration-section">
                 <Title order={2}>Gift Choice</Title>
                 <Radio.Group value={registerGiftChoice} onChange={setRegisterGiftChoice}>
-                  {GIFT_CHOICES.map((giftChoice) => (
-                    <Radio
-                      className="registration-radio"
-                      key={giftChoice}
-                      value={giftChoice}
-                      label={giftChoice === "wristband" ? "Wristband" : "Headband"}
-                    />
-                  ))}
+                  <div className="registration-choice-grid">
+                    {GIFT_CHOICES.map((giftChoice) => (
+                      <Radio
+                        className="registration-radio"
+                        key={giftChoice}
+                        value={giftChoice}
+                        label={giftChoice === "wristband" ? "Wristband" : "Headband"}
+                      />
+                    ))}
+                  </div>
                 </Radio.Group>
               </div>
 
