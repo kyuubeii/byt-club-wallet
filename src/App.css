@@ -670,11 +670,11 @@ h1 {
 }
 
 .login-card:not(.registration-card) {
-  padding-top: 40px;
+  padding-top: 48px;
 }
 
 .login-card:not(.registration-card).premium-auth-card > .mantine-Stack-root {
-  gap: 12px;
+  gap: 10px;
 }
 
 .login-card:not(.registration-card) h1 {
@@ -2664,12 +2664,12 @@ h1 {
   }
 
   .login-card:not(.registration-card) {
-    padding: 28px 18px 18px;
+    padding: 34px 18px 18px;
     margin: 12px auto max(28px, env(safe-area-inset-bottom));
   }
 
   .login-card:not(.registration-card).premium-auth-card > .mantine-Stack-root {
-    gap: 10px;
+    gap: 9px;
   }
 
   .login-card:not(.registration-card).premium-auth-card > .mantine-Stack-root > .mantine-Group-root {
