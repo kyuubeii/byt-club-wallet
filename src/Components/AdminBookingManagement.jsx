@@ -1239,6 +1239,7 @@ function AdminBookingManagement({
         <div>
           <label>Cancel Cutoff</label>
           <input
+            className="session-time-input"
             type="time"
             value={newSessionCancelCutoff}
             onChange={(event) => setNewSessionCancelCutoff(event.target.value)}

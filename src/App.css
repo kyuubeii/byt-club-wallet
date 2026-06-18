@@ -854,10 +854,28 @@ h1 {
 }
 
 .registration-date-input,
-.session-date-input {
+.session-date-input,
+.session-time-input {
   min-height: 48px;
   appearance: none;
   -webkit-appearance: none;
+}
+
+.session-time-input {
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 52px;
+}
+
+.session-time-input::-webkit-date-and-time-value {
+  min-height: 0;
+  line-height: 1;
+}
+
+.session-time-input::-webkit-datetime-edit {
+  display: flex;
+  align-items: center;
+  min-height: 0;
 }
 
 .registration-bank-box {
@@ -1712,7 +1730,8 @@ h1 {
 
 .session-form-grid input,
 .session-form-grid select,
-.session-date-input {
+.session-date-input,
+.session-time-input {
   min-width: 0;
   height: 52px;
 }
