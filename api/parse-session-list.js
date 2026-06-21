@@ -176,6 +176,84 @@ Session list:
 ${text}`;
 }
 
+function buildGeminiRequestBody(text, mode) {
+  const baseBody = {
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: buildPrompt(text) }],
+      },
+    ],
+    generationConfig: {
+      temperature: 0,
+    },
+  };
+
+  if (mode === "responseFormat") {
+    return {
+      ...baseBody,
+      generationConfig: {
+        ...baseBody.generationConfig,
+        responseFormat: {
+          text: {
+            mimeType: "application/json",
+            schema: responseSchema,
+          },
+        },
+      },
+    };
+  }
+
+  if (mode === "responseSchema") {
+    return {
+      ...baseBody,
+      generationConfig: {
+        ...baseBody.generationConfig,
+        responseMimeType: "application/json",
+        responseSchema: responseSchema,
+      },
+    };
+  }
+
+  return {
+    ...baseBody,
+    generationConfig: {
+      ...baseBody.generationConfig,
+      responseMimeType: "application/json",
+    },
+  };
+}
+
+async function callGeminiParser(apiKey, text, mode) {
+  const geminiResponse = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
+      body: JSON.stringify(buildGeminiRequestBody(text, mode)),
+    }
+  );
+
+  if (!geminiResponse.ok) {
+    const errorPayload = await geminiResponse.json().catch(() => ({}));
+    const geminiError =
+      errorPayload?.error?.message || `Gemini returned ${geminiResponse.status}`;
+
+    return {
+      ok: false,
+      error: `${mode}: ${geminiError}`,
+    };
+  }
+
+  return {
+    ok: true,
+    payload: await geminiResponse.json(),
+  };
+}
+
 export default async function handler(request, response) {
   if (request.method !== "POST") {
     response.setHeader("Allow", "POST");
@@ -212,48 +290,30 @@ export default async function handler(request, response) {
   }
 
   try {
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: buildPrompt(text) }],
-            },
-          ],
-          generationConfig: {
-            temperature: 0,
-            responseFormat: {
-              text: {
-                mimeType: "application/json",
-                schema: responseSchema,
-              },
-            },
-          },
-        }),
+    const parserModes = ["responseFormat", "responseSchema", "jsonMode"];
+    const parserErrors = [];
+    let geminiPayload = null;
+
+    for (const mode of parserModes) {
+      const parserResult = await callGeminiParser(apiKey, text, mode);
+
+      if (parserResult.ok) {
+        geminiPayload = parserResult.payload;
+        break;
       }
-    );
 
-    if (!geminiResponse.ok) {
-      const errorPayload = await geminiResponse.json().catch(() => ({}));
-      const geminiError =
-        errorPayload?.error?.message || `Gemini returned ${geminiResponse.status}`;
+      parserErrors.push(parserResult.error);
+    }
 
-      console.error("Gemini parser request failed:", geminiError);
+    if (!geminiPayload) {
+      console.error("Gemini parser request failed:", parserErrors.join(" | "));
       sendJson(response, 502, {
         error: "Gemini request failed",
-        details: geminiError,
+        details: parserErrors[parserErrors.length - 1] || "No Gemini response",
       });
       return;
     }
 
-    const geminiPayload = await geminiResponse.json();
     const parsedText = extractGeminiText(geminiPayload);
     const parsedPayload = JSON.parse(parsedText);
 
