@@ -52,6 +52,20 @@ const MEMBER_PACKAGES = {
 };
 const GIFT_CHOICES = ["wristband", "headband"];
 const UNIFORM_SIZES = ["XS", "S", "M", "L", "XL", "2XL", "3XL"];
+const AI_IMPORT_EMPTY_SESSION_DRAFT = {
+  title: "",
+  venue: "",
+  date: "",
+  time: "",
+  courtCount: "",
+  courtNumbers: "",
+  walkInLimit: "5",
+  walkInFee: "",
+  maxPlayers: "",
+  courtFeeTotal: "",
+  cancelCutoff: "12:00",
+};
+const AI_IMPORT_MAX_TEXT_LENGTH = 12000;
 
 function withTimeout(promise, timeoutMs, timeoutMessage) {
   return Promise.race([
@@ -108,6 +122,73 @@ function getFriendlyErrorMessage(error) {
   }
 
   return message;
+}
+
+function normalizeAiImportName(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function toAiImportInputValue(value, fallbackValue = "") {
+  if (value === null || value === undefined || value === 0) {
+    return fallbackValue;
+  }
+
+  return String(value);
+}
+
+function createAiImportRowId(index, participant) {
+  return `${index}-${normalizeAiImportName(
+    participant.rawName || participant.memberName || "participant"
+  )}`;
+}
+
+function buildAiImportParticipantPreview(parsedParticipants, members) {
+  const activeMembers = members.filter((member) => member.status === "active");
+
+  return (parsedParticipants || []).map((participant, index) => {
+    const memberName = String(participant.memberName || "").trim();
+    const normalizedMemberName = normalizeAiImportName(memberName);
+    const exactMatches = activeMembers.filter(
+      (member) => normalizeAiImportName(member.name) === normalizedMemberName
+    );
+    const candidates =
+      exactMatches.length > 0
+        ? exactMatches
+        : activeMembers.filter((member) => {
+            const normalizedActiveMemberName = normalizeAiImportName(member.name);
+
+            return (
+              normalizedMemberName !== "" &&
+              (normalizedActiveMemberName.includes(normalizedMemberName) ||
+                normalizedMemberName.includes(normalizedActiveMemberName))
+            );
+          });
+    const matchStatus =
+      candidates.length === 1
+        ? "matched"
+        : candidates.length > 1
+          ? "ambiguous"
+          : "unmatched";
+
+    return {
+      id: createAiImportRowId(index, participant),
+      rawName: String(participant.rawName || memberName).trim(),
+      memberName: memberName,
+      walkInCount: Math.max(0, Number(participant.walkInCount || 0)),
+      walkInNames: Array.isArray(participant.walkInNames)
+        ? participant.walkInNames.map((name) => String(name || "").trim()).filter(Boolean)
+        : [],
+      matchStatus,
+      matchedMemberId: candidates.length === 1 ? String(candidates[0].id) : "",
+      candidates: candidates.map((member) => ({
+        id: member.id,
+        name: member.name,
+      })),
+    };
+  });
 }
 
 function getFriendlyCloudSyncMessage(error) {
@@ -620,6 +701,7 @@ function App() {
   const [showMembersSection, setShowMembersSection] = useState(false);
   const [showBalanceToolsSection, setShowBalanceToolsSection] = useState(false);
   const [showBookingSection, setShowBookingSection] = useState(true);
+  const [showSmartToolsSection, setShowSmartToolsSection] = useState(false);
   const [showTransactionsSection, setShowTransactionsSection] = useState(false);
   const [showActivitySection, setShowActivitySection] = useState(false);
   const [showPaymentReminderSection, setShowPaymentReminderSection] =
@@ -674,6 +756,15 @@ function App() {
   const [newSessionCancelCutoff, setNewSessionCancelCutoff] = useState("12:00");
   const [newSessionWalkInLimit, setNewSessionWalkInLimit] = useState("5");
   const [walkInSelections, setWalkInSelections] = useState({});
+  const [aiImportText, setAiImportText] = useState("");
+  const [aiImportIsParsing, setAiImportIsParsing] = useState(false);
+  const [aiImportError, setAiImportError] = useState("");
+  const [aiImportPreview, setAiImportPreview] = useState(null);
+  const [aiImportResolutions, setAiImportResolutions] = useState({});
+  const [aiImportSessionDraft, setAiImportSessionDraft] = useState(
+    AI_IMPORT_EMPTY_SESSION_DRAFT
+  );
+  const [aiImportIsConfirming, setAiImportIsConfirming] = useState(false);
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
@@ -2812,6 +2903,295 @@ function App() {
     return now >= cutoffDateTime;
   }
 
+  function getAiImportActiveMembers() {
+    return members.filter((member) => member.status === "active");
+  }
+
+  function getAiImportResolvedMemberId(row) {
+    return String(aiImportResolutions[row.id] || row.matchedMemberId || "");
+  }
+
+  function getAiImportResolvedRows() {
+    if (!aiImportPreview) {
+      return [];
+    }
+
+    return aiImportPreview.participants
+      .map((row) => ({
+        ...row,
+        resolvedMemberId: getAiImportResolvedMemberId(row),
+      }))
+      .filter((row) => row.resolvedMemberId !== "");
+  }
+
+  function getAiImportConfirmIssues() {
+    if (!aiImportPreview) {
+      return ["Parse a session list first."];
+    }
+
+    const issues = [];
+    const maxPlayers = Number(aiImportSessionDraft.maxPlayers || 0);
+    const courtFeeTotal = Number(aiImportSessionDraft.courtFeeTotal || 0);
+    const courtCount = Number(aiImportSessionDraft.courtCount || 0);
+    const walkInLimit = Number(aiImportSessionDraft.walkInLimit || 0);
+    const resolvedRows = getAiImportResolvedRows();
+    const resolvedMemberIds = resolvedRows.map((row) => row.resolvedMemberId);
+    const duplicateMemberIds = resolvedMemberIds.filter(
+      (memberId, index) => resolvedMemberIds.indexOf(memberId) !== index
+    );
+    const memberAttachedWalkInCount = resolvedRows.reduce(
+      (total, row) => total + Number(row.walkInCount || 0),
+      0
+    );
+    const confirmedIndependentWalkInCount =
+      aiImportPreview.independentWalkins.filter(
+        (walkin) => walkin.status === "confirmed"
+      ).length;
+    const totalParticipantCount =
+      resolvedRows.length +
+      memberAttachedWalkInCount +
+      confirmedIndependentWalkInCount;
+    const totalWalkInCount =
+      memberAttachedWalkInCount + confirmedIndependentWalkInCount;
+
+    if (!aiImportSessionDraft.date) {
+      issues.push("Session date is required.");
+    }
+
+    if (!aiImportSessionDraft.time.trim()) {
+      issues.push("Session time is required.");
+    }
+
+    if (!aiImportSessionDraft.venue.trim()) {
+      issues.push("Venue is required.");
+    }
+
+    if (courtCount <= 0) {
+      issues.push("Court count must be greater than 0.");
+    }
+
+    if (maxPlayers <= 0) {
+      issues.push("Max players must be greater than 0.");
+    }
+
+    if (courtFeeTotal <= 0) {
+      issues.push("Court fee total must be greater than 0.");
+    }
+
+    if (walkInLimit < 0) {
+      issues.push("Walk-in limit cannot be negative.");
+    }
+
+    if (walkInLimit > maxPlayers && maxPlayers > 0) {
+      issues.push("Walk-in limit cannot exceed max players.");
+    }
+
+    if (duplicateMemberIds.length > 0) {
+      issues.push("Duplicate resolved members must be skipped or resolved.");
+    }
+
+    if (totalParticipantCount > maxPlayers && maxPlayers > 0) {
+      issues.push("Resolved participants exceed max players.");
+    }
+
+    if (totalWalkInCount > walkInLimit) {
+      issues.push("Resolved walk-ins exceed walk-in limit.");
+    }
+
+    if (
+      resolvedRows.length === 0 &&
+      aiImportPreview.independentWalkins.length === 0
+    ) {
+      issues.push("Resolve at least one member or independent walk-in.");
+    }
+
+    return issues;
+  }
+
+  function handleAiImportSessionDraftChange(field, value) {
+    setAiImportSessionDraft((previousDraft) => ({
+      ...previousDraft,
+      [field]: value,
+    }));
+  }
+
+  function handleAiImportResolutionChange(rowId, memberId) {
+    setAiImportResolutions((previousResolutions) => ({
+      ...previousResolutions,
+      [rowId]: memberId,
+    }));
+  }
+
+  async function handleParseAiSessionList() {
+    const text = aiImportText.trim();
+
+    if (!text) {
+      setAiImportError("Please paste a session list first.");
+      return;
+    }
+
+    if (text.length > AI_IMPORT_MAX_TEXT_LENGTH) {
+      setAiImportError("Session list is too long.");
+      return;
+    }
+
+    setAiImportIsParsing(true);
+    setAiImportError("");
+
+    try {
+      const response = await fetch("/api/parse-session-list", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text }),
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to parse session list.");
+      }
+
+      const participants = buildAiImportParticipantPreview(
+        payload.participants || [],
+        members
+      );
+      const sessionDraft = payload.sessionDraft || {};
+
+      setAiImportPreview({
+        sessionDraft,
+        participants,
+        independentWalkins: Array.isArray(payload.independentWalkins)
+          ? payload.independentWalkins
+          : [],
+        warnings: Array.isArray(payload.warnings) ? payload.warnings : [],
+      });
+      setAiImportSessionDraft({
+        title: sessionDraft.title || "",
+        venue: sessionDraft.venue || "",
+        date: sessionDraft.date || "",
+        time: sessionDraft.time || "",
+        courtCount: toAiImportInputValue(sessionDraft.courtCount),
+        courtNumbers: sessionDraft.courtNumbers || "",
+        walkInLimit: toAiImportInputValue(sessionDraft.walkInLimit, "5"),
+        walkInFee: toAiImportInputValue(sessionDraft.walkInFee),
+        maxPlayers: "",
+        courtFeeTotal: "",
+        cancelCutoff: "12:00",
+      });
+      setAiImportResolutions({});
+    } catch (error) {
+      console.error("AI import parse failed:", error);
+      setAiImportError(getFriendlyErrorMessage(error));
+      setAiImportPreview(null);
+      setAiImportResolutions({});
+    } finally {
+      setAiImportIsParsing(false);
+    }
+  }
+
+  async function handleConfirmAiSessionImport() {
+    const issues = getAiImportConfirmIssues();
+
+    if (issues.length > 0) {
+      alert(issues[0]);
+      return;
+    }
+
+    if (aiImportIsConfirming) {
+      return;
+    }
+
+    setAiImportIsConfirming(true);
+
+    try {
+      const resolvedRows = getAiImportResolvedRows();
+      const importedAt = new Date().toLocaleString();
+      const idBase = Date.now();
+      const newSession = {
+        id: idBase,
+        date: aiImportSessionDraft.date,
+        time: aiImportSessionDraft.time.trim(),
+        venue: aiImportSessionDraft.venue.trim(),
+        courtCount: Number(aiImportSessionDraft.courtCount || 0),
+        maxPlayers: Number(aiImportSessionDraft.maxPlayers || 0),
+        walkInLimit: Number(aiImportSessionDraft.walkInLimit || 0),
+        courtFeeTotal: Number(aiImportSessionDraft.courtFeeTotal || 0),
+        cancelCutoff: normalizeCutoffTime(
+          aiImportSessionDraft.cancelCutoff || "12:00"
+        ),
+        status: "open",
+        chargeStatus: "not_charged",
+        shuttlecockUsed: 0,
+        shuttlecockRate: 11,
+        otherFeeTotal: 0,
+        importTitle: aiImportSessionDraft.title.trim(),
+        courtNumbers: aiImportSessionDraft.courtNumbers.trim(),
+        walkInFee: Number(aiImportSessionDraft.walkInFee || 0),
+      };
+      const newBookings = resolvedRows.map((row, index) => ({
+        id: idBase + index + 1,
+        sessionId: newSession.id,
+        memberId: Number(row.resolvedMemberId),
+        status: "booked",
+        bookedAt: importedAt,
+        cancelledAt: null,
+        statusUpdatedAt: null,
+        walkInCount: Number(row.walkInCount || 0),
+        walkInNames: row.walkInNames || [],
+        lateCancelledWalkInCount: 0,
+        lateCancelledWalkInNames: [],
+        waitlistType: null,
+        waitlistStatus: null,
+      }));
+      const newWalkins = (aiImportPreview.independentWalkins || []).map(
+        (walkin, index) => ({
+          id: idBase + 1000 + index,
+          sessionId: newSession.id,
+          name: String(walkin.name || "").trim(),
+          status: walkin.status === "waiting" ? "waiting" : "confirmed",
+          createdAt: importedAt,
+        })
+      );
+
+      setSessions((previousSessions) => [newSession, ...previousSessions]);
+      setSessionBookings((previousBookings) => [
+        ...newBookings,
+        ...previousBookings,
+      ]);
+      setSessionWalkins((previousWalkins) => [
+        ...newWalkins,
+        ...previousWalkins,
+      ]);
+
+      try {
+        await Promise.all([
+          syncSessionToSupabase(newSession),
+          ...newBookings.map((booking) => syncSessionBookingToSupabase(booking)),
+          ...newWalkins.map((walkin) => syncSessionWalkinToSupabase(walkin)),
+        ]);
+      } catch (error) {
+        alertSupabaseBookingSyncFailed(error);
+        return;
+      }
+
+      logActivity({
+        action: "ai_import_session",
+        targetType: "session",
+        targetId: String(newSession.id),
+        description: `Imported session ${newSession.date} from AI parser with ${newBookings.length} member booking(s) and ${newWalkins.length} independent walk-in(s)`,
+      });
+
+      setAiImportText("");
+      setAiImportPreview(null);
+      setAiImportResolutions({});
+      setAiImportSessionDraft(AI_IMPORT_EMPTY_SESSION_DRAFT);
+      alert("AI session import completed.");
+    } finally {
+      setAiImportIsConfirming(false);
+    }
+  }
+
   function getSessionBookings(sessionId) {
     return sessionBookings.filter(
       (booking) => Number(booking.sessionId) === Number(sessionId)
@@ -4697,6 +5077,13 @@ function App() {
             </button>
 
             <button
+              className={`dashboard-section-toggle ${showSmartToolsSection ? "active" : ""}`}
+              onClick={() => setShowSmartToolsSection(!showSmartToolsSection)}
+            >
+              Smart Tools
+            </button>
+
+            <button
               className={`dashboard-section-toggle ${showAnalyticsSection ? "active" : ""}`}
               onClick={() => setShowAnalyticsSection(!showAnalyticsSection)}
             >
@@ -4743,6 +5130,456 @@ function App() {
               Developer
             </button>
           </div>
+
+          {showSmartToolsSection && (
+            <section className="collapsible-section">
+              <div className="collapsible-section-header">
+                <div>
+                  <h2>Smart Tools</h2>
+                  <p>Parse WhatsApp session lists into a safe import preview.</p>
+                </div>
+              </div>
+
+              <div className="panel ai-import-panel">
+                <div className="ai-import-header">
+                  <div>
+                    <span className="admin-session-eyebrow">Gemini Parser</span>
+                    <h2>AI Import Session List</h2>
+                    <p>
+                      Paste a WhatsApp-style list. Gemini only parses text;
+                      nothing is created until you confirm the preview.
+                    </p>
+                  </div>
+                </div>
+
+                <label>WhatsApp Session List</label>
+                <textarea
+                  className="ai-import-textarea"
+                  value={aiImportText}
+                  maxLength={AI_IMPORT_MAX_TEXT_LENGTH}
+                  placeholder="Paste session list here..."
+                  onChange={(event) => setAiImportText(event.target.value)}
+                />
+                <div className="ai-import-toolbar">
+                  <span>
+                    {aiImportText.length}/{AI_IMPORT_MAX_TEXT_LENGTH}
+                  </span>
+                  <button
+                    className="action-button compact-button"
+                    disabled={aiImportIsParsing || aiImportText.trim() === ""}
+                    onClick={handleParseAiSessionList}
+                  >
+                    {aiImportIsParsing ? "Parsing..." : "Parse with Gemini"}
+                  </button>
+                </div>
+
+                {aiImportError && (
+                  <p className="ai-import-error">{aiImportError}</p>
+                )}
+
+                {aiImportPreview && (
+                  <div className="ai-import-preview">
+                    <div className="ai-import-preview-section">
+                      <div className="ai-import-section-heading">
+                        <h3>Session Details</h3>
+                        <span>Required before import</span>
+                      </div>
+
+                      <div className="ai-import-session-grid">
+                        <div>
+                          <label>Title / Note</label>
+                          <input
+                            type="text"
+                            value={aiImportSessionDraft.title}
+                            onChange={(event) =>
+                              handleAiImportSessionDraftChange(
+                                "title",
+                                event.target.value
+                              )
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label>Venue</label>
+                          <input
+                            type="text"
+                            value={aiImportSessionDraft.venue}
+                            onChange={(event) =>
+                              handleAiImportSessionDraftChange(
+                                "venue",
+                                event.target.value
+                              )
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label>Date</label>
+                          <input
+                            type="date"
+                            value={aiImportSessionDraft.date}
+                            onChange={(event) =>
+                              handleAiImportSessionDraftChange(
+                                "date",
+                                event.target.value
+                              )
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label>Time</label>
+                          <input
+                            type="text"
+                            value={aiImportSessionDraft.time}
+                            onChange={(event) =>
+                              handleAiImportSessionDraftChange(
+                                "time",
+                                event.target.value
+                              )
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label>Court Count</label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={aiImportSessionDraft.courtCount}
+                            onChange={(event) =>
+                              handleAiImportSessionDraftChange(
+                                "courtCount",
+                                event.target.value
+                              )
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label>Court Numbers / Note</label>
+                          <input
+                            type="text"
+                            value={aiImportSessionDraft.courtNumbers}
+                            onChange={(event) =>
+                              handleAiImportSessionDraftChange(
+                                "courtNumbers",
+                                event.target.value
+                              )
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label>Walk-in Limit</label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={aiImportSessionDraft.walkInLimit}
+                            onChange={(event) =>
+                              handleAiImportSessionDraftChange(
+                                "walkInLimit",
+                                event.target.value
+                              )
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label>Walk-in Fee</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={aiImportSessionDraft.walkInFee}
+                            onChange={(event) =>
+                              handleAiImportSessionDraftChange(
+                                "walkInFee",
+                                event.target.value
+                              )
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label>Max Players</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={aiImportSessionDraft.maxPlayers}
+                            onChange={(event) =>
+                              handleAiImportSessionDraftChange(
+                                "maxPlayers",
+                                event.target.value
+                              )
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label>Court Fee Total</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={aiImportSessionDraft.courtFeeTotal}
+                            onChange={(event) =>
+                              handleAiImportSessionDraftChange(
+                                "courtFeeTotal",
+                                event.target.value
+                              )
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label>Cancel Cutoff</label>
+                          <input
+                            type="text"
+                            value={aiImportSessionDraft.cancelCutoff}
+                            onChange={(event) =>
+                              handleAiImportSessionDraftChange(
+                                "cancelCutoff",
+                                event.target.value
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="ai-import-preview-section">
+                      <div className="ai-import-section-heading">
+                        <h3>Matched Members</h3>
+                        <span>
+                          {
+                            aiImportPreview.participants.filter(
+                              (row) => row.matchStatus === "matched"
+                            ).length
+                          }{" "}
+                          matched
+                        </span>
+                      </div>
+                      <div className="ai-import-name-list">
+                        {aiImportPreview.participants
+                          .filter((row) => row.matchStatus === "matched")
+                          .map((row) => (
+                            <div key={row.id} className="ai-import-name-row">
+                              <div>
+                                <strong>{row.memberName}</strong>
+                                <small>{row.rawName}</small>
+                              </div>
+                              <select
+                                value={getAiImportResolvedMemberId(row)}
+                                onChange={(event) =>
+                                  handleAiImportResolutionChange(
+                                    row.id,
+                                    event.target.value
+                                  )
+                                }
+                              >
+                                <option value="">Skip this row</option>
+                                {getAiImportActiveMembers().map((member) => (
+                                  <option key={member.id} value={member.id}>
+                                    {member.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+
+                    <div className="ai-import-preview-grid">
+                      <div className="ai-import-preview-section">
+                        <div className="ai-import-section-heading">
+                          <h3>Ambiguous Names</h3>
+                          <span>
+                            {
+                              aiImportPreview.participants.filter(
+                                (row) => row.matchStatus === "ambiguous"
+                              ).length
+                            }
+                          </span>
+                        </div>
+                        <div className="ai-import-name-list">
+                          {aiImportPreview.participants
+                            .filter((row) => row.matchStatus === "ambiguous")
+                            .map((row) => (
+                              <div key={row.id} className="ai-import-name-row">
+                                <div>
+                                  <strong>{row.memberName}</strong>
+                                  <small>
+                                    Candidates:{" "}
+                                    {row.candidates
+                                      .map((candidate) => candidate.name)
+                                      .join(", ")}
+                                  </small>
+                                </div>
+                                <select
+                                  value={getAiImportResolvedMemberId(row)}
+                                  onChange={(event) =>
+                                    handleAiImportResolutionChange(
+                                      row.id,
+                                      event.target.value
+                                    )
+                                  }
+                                >
+                                  <option value="">Skip this row</option>
+                                  {getAiImportActiveMembers().map((member) => (
+                                    <option key={member.id} value={member.id}>
+                                      {member.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+
+                      <div className="ai-import-preview-section">
+                        <div className="ai-import-section-heading">
+                          <h3>Unmatched Names</h3>
+                          <span>
+                            {
+                              aiImportPreview.participants.filter(
+                                (row) => row.matchStatus === "unmatched"
+                              ).length
+                            }
+                          </span>
+                        </div>
+                        <div className="ai-import-name-list">
+                          {aiImportPreview.participants
+                            .filter((row) => row.matchStatus === "unmatched")
+                            .map((row) => (
+                              <div key={row.id} className="ai-import-name-row">
+                                <div>
+                                  <strong>{row.memberName || row.rawName}</strong>
+                                  <small>No confident active member match</small>
+                                </div>
+                                <select
+                                  value={getAiImportResolvedMemberId(row)}
+                                  onChange={(event) =>
+                                    handleAiImportResolutionChange(
+                                      row.id,
+                                      event.target.value
+                                    )
+                                  }
+                                >
+                                  <option value="">Skip this row</option>
+                                  {getAiImportActiveMembers().map((member) => (
+                                    <option key={member.id} value={member.id}>
+                                      {member.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="ai-import-preview-grid">
+                      <div className="ai-import-preview-section">
+                        <div className="ai-import-section-heading">
+                          <h3>Member-attached Walk-ins</h3>
+                          <span>
+                            {
+                              aiImportPreview.participants.filter(
+                                (row) => Number(row.walkInCount || 0) > 0
+                              ).length
+                            }
+                          </span>
+                        </div>
+                        {aiImportPreview.participants.filter(
+                          (row) => Number(row.walkInCount || 0) > 0
+                        ).length === 0 ? (
+                          <p className="empty-text">No member-attached walk-ins.</p>
+                        ) : (
+                          <div className="ai-import-chip-list">
+                            {aiImportPreview.participants
+                              .filter((row) => Number(row.walkInCount || 0) > 0)
+                              .map((row) => (
+                                <span key={`walkin-${row.id}`}>
+                                  {row.memberName}: {row.walkInCount} walk-in
+                                  {row.walkInNames.length > 0
+                                    ? ` (${row.walkInNames.join(", ")})`
+                                    : ""}
+                                </span>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="ai-import-preview-section">
+                        <div className="ai-import-section-heading">
+                          <h3>Independent Walk-ins</h3>
+                          <span>{aiImportPreview.independentWalkins.length}</span>
+                        </div>
+                        {aiImportPreview.independentWalkins.length === 0 ? (
+                          <p className="empty-text">No independent walk-ins.</p>
+                        ) : (
+                          <div className="ai-import-chip-list">
+                            {aiImportPreview.independentWalkins.map(
+                              (walkin, index) => (
+                                <span key={`${walkin.name}-${index}`}>
+                                  {walkin.name} · {walkin.status}
+                                </span>
+                              )
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="ai-import-preview-section">
+                      <div className="ai-import-section-heading">
+                        <h3>Warnings</h3>
+                        <span>
+                          {
+                            [
+                              ...(aiImportPreview.warnings || []),
+                              ...getAiImportConfirmIssues(),
+                            ].filter(Boolean).length
+                          }
+                        </span>
+                      </div>
+                      {[
+                        ...(aiImportPreview.warnings || []),
+                        ...getAiImportConfirmIssues(),
+                      ].filter(Boolean).length === 0 ? (
+                        <p className="empty-text">No warnings.</p>
+                      ) : (
+                        <ul className="ai-import-warning-list">
+                          {[
+                            ...(aiImportPreview.warnings || []),
+                            ...getAiImportConfirmIssues(),
+                          ]
+                            .filter(Boolean)
+                            .map((warning, index) => (
+                              <li key={`${warning}-${index}`}>{warning}</li>
+                            ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    <div className="ai-import-confirm-bar">
+                      <div>
+                        <strong>
+                          {getAiImportResolvedRows().length} member booking(s)
+                        </strong>
+                        <span>
+                          Unresolved names will be skipped. No wallet charge will
+                          be created.
+                        </span>
+                      </div>
+                      <button
+                        className="action-button compact-button"
+                        disabled={
+                          aiImportIsConfirming ||
+                          getAiImportConfirmIssues().length > 0
+                        }
+                        onClick={handleConfirmAiSessionImport}
+                      >
+                        {aiImportIsConfirming ? "Importing..." : "Confirm Import"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
 
           {showAnalyticsSection && (
             <section className="collapsible-section">
