@@ -1,6 +1,7 @@
 /* global Buffer, process */
 
 const MAX_TEXT_LENGTH = 12000;
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 const responseSchema = {
   type: "object",
@@ -212,11 +213,12 @@ export default async function handler(request, response) {
 
   try {
     const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
         },
         body: JSON.stringify({
           contents: [
@@ -227,15 +229,27 @@ export default async function handler(request, response) {
           ],
           generationConfig: {
             temperature: 0,
-            responseMimeType: "application/json",
-            responseSchema: responseSchema,
+            responseFormat: {
+              text: {
+                mimeType: "application/json",
+                schema: responseSchema,
+              },
+            },
           },
         }),
       }
     );
 
     if (!geminiResponse.ok) {
-      sendJson(response, 502, { error: "Unable to parse session list" });
+      const errorPayload = await geminiResponse.json().catch(() => ({}));
+      const geminiError =
+        errorPayload?.error?.message || `Gemini returned ${geminiResponse.status}`;
+
+      console.error("Gemini parser request failed:", geminiError);
+      sendJson(response, 502, {
+        error: "Gemini request failed",
+        details: geminiError,
+      });
       return;
     }
 
@@ -246,6 +260,9 @@ export default async function handler(request, response) {
     sendJson(response, 200, normalizeParsedPayload(parsedPayload));
   } catch (error) {
     console.error("Gemini session parser failed:", error?.message || error);
-    sendJson(response, 502, { error: "Unable to parse session list" });
+    sendJson(response, 502, {
+      error: "Unable to parse session list",
+      details: error?.message || "Unknown parser error",
+    });
   }
 }

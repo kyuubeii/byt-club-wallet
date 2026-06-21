@@ -3049,7 +3049,11 @@ function App() {
       const payload = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to parse session list.");
+        const parserError = payload.details
+          ? `${payload.error || "Unable to parse session list"}: ${payload.details}`
+          : payload.error || "Unable to parse session list.";
+
+        throw new Error(parserError);
       }
 
       const participants = buildAiImportParticipantPreview(
