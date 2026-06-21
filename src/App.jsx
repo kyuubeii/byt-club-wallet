@@ -2975,7 +2975,7 @@ function App() {
     }
 
     if (courtFeeTotal <= 0) {
-      issues.push("Court fee total must be greater than 0.");
+      issues.push("Enter court fee total before import.");
     }
 
     if (walkInLimit < 0) {
@@ -3056,18 +3056,34 @@ function App() {
         throw new Error(parserError);
       }
 
+      const parsedMemberCandidates = Array.isArray(payload.memberCandidates)
+        ? payload.memberCandidates
+        : Array.isArray(payload.participants)
+          ? payload.participants
+          : [];
+      const parsedWalkins = Array.isArray(payload.walkins)
+        ? payload.walkins
+        : Array.isArray(payload.independentWalkins)
+          ? payload.independentWalkins
+          : [];
       const participants = buildAiImportParticipantPreview(
-        payload.participants || [],
+        parsedMemberCandidates,
         members
       );
       const sessionDraft = payload.sessionDraft || {};
+      const confirmedWalkinCount = parsedWalkins.filter(
+        (walkin) => walkin.status !== "waiting"
+      ).length;
+      const fallbackMaxPlayers = participants.reduce(
+        (total, participant) =>
+          total + 1 + Number(participant.walkInCount || 0),
+        confirmedWalkinCount
+      );
 
       setAiImportPreview({
         sessionDraft,
         participants,
-        independentWalkins: Array.isArray(payload.independentWalkins)
-          ? payload.independentWalkins
-          : [],
+        independentWalkins: parsedWalkins,
         warnings: Array.isArray(payload.warnings) ? payload.warnings : [],
       });
       setAiImportSessionDraft({
@@ -3079,7 +3095,10 @@ function App() {
         courtNumbers: sessionDraft.courtNumbers || "",
         walkInLimit: toAiImportInputValue(sessionDraft.walkInLimit, "5"),
         walkInFee: toAiImportInputValue(sessionDraft.walkInFee),
-        maxPlayers: "",
+        maxPlayers: toAiImportInputValue(
+          sessionDraft.maxPlayers,
+          fallbackMaxPlayers > 0 ? String(fallbackMaxPlayers) : ""
+        ),
         courtFeeTotal: "",
         cancelCutoff: "12:00",
       });
@@ -5477,7 +5496,7 @@ function App() {
                     <div className="ai-import-preview-grid">
                       <div className="ai-import-preview-section">
                         <div className="ai-import-section-heading">
-                          <h3>Member-attached Walk-ins</h3>
+                          <h3>Member-attached Guests</h3>
                           <span>
                             {
                               aiImportPreview.participants.filter(
@@ -5489,7 +5508,7 @@ function App() {
                         {aiImportPreview.participants.filter(
                           (row) => Number(row.walkInCount || 0) > 0
                         ).length === 0 ? (
-                          <p className="empty-text">No member-attached walk-ins.</p>
+                          <p className="empty-text">No member-attached guests.</p>
                         ) : (
                           <div className="ai-import-chip-list">
                             {aiImportPreview.participants
@@ -5508,17 +5527,18 @@ function App() {
 
                       <div className="ai-import-preview-section">
                         <div className="ai-import-section-heading">
-                          <h3>Independent Walk-ins</h3>
+                          <h3>Walk-in Rows</h3>
                           <span>{aiImportPreview.independentWalkins.length}</span>
                         </div>
                         {aiImportPreview.independentWalkins.length === 0 ? (
-                          <p className="empty-text">No independent walk-ins.</p>
+                          <p className="empty-text">No walk-in rows.</p>
                         ) : (
                           <div className="ai-import-chip-list">
                             {aiImportPreview.independentWalkins.map(
                               (walkin, index) => (
                                 <span key={`${walkin.name}-${index}`}>
                                   {walkin.name} · {walkin.status}
+                                  {walkin.source ? ` · ${walkin.source}` : ""}
                                 </span>
                               )
                             )}
