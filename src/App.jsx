@@ -428,6 +428,14 @@ function safeParseDate(dateValue) {
   return parsedDate;
 }
 
+function getDateInputValue(date = new Date()) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
 function downloadCsv(filename, csvContent) {
   const blob = new Blob([csvContent], {
     type: "text/csv;charset=utf-8;",
@@ -594,6 +602,9 @@ function App() {
   const [manualBalance, setManualBalance] = useState("");
   const [expenseAmount, setExpenseAmount] = useState("");
   const [selectedExpenseMembers, setSelectedExpenseMembers] = useState([]);
+  const [weeklyReportDate, setWeeklyReportDate] = useState(() =>
+    getDateInputValue()
+  );
   const [memberSearch, setMemberSearch] = useState("");
   const [memberFilter, setMemberFilter] = useState("all");
   const [transactionSearch, setTransactionSearch] = useState("");
@@ -2356,6 +2367,31 @@ function App() {
 
     downloadCsv("byt-transactions.csv", csvHeader + csvRows);
   }
+
+  async function handleExportWeeklyReportPdf() {
+    if (!weeklyReportDate) {
+      alert("Please select a report date");
+      return;
+    }
+
+    try {
+      const { exportWeeklyReportPdf } = await import(
+        "./utils/exportWeeklyReportPdf.js"
+      );
+
+      await exportWeeklyReportPdf({
+        members,
+        transactions,
+        reportDate: weeklyReportDate,
+        logoUrl: "/byt-logo.jpeg",
+        qrUrl: "/duitnow-qr.png",
+      });
+    } catch (error) {
+      console.error("Failed to export weekly report PDF:", error);
+      alert(`Failed to export weekly report PDF: ${getFriendlyErrorMessage(error)}`);
+    }
+  }
+
   function handleExportMembers() {
     if (members.length === 0) {
       alert("No members to export");
@@ -5395,7 +5431,7 @@ function App() {
                     </button>
                   </div>
 
-                  <div className="panel">
+                  <div className="panel weekly-expense-panel">
                     <h2>Weekly Expense</h2>
 
                     <label>Total Expense</label>
@@ -5445,6 +5481,24 @@ function App() {
                     <button className="action-button" onClick={handleChargeExpense}>
                       Charge Expense
                     </button>
+
+                    <div className="weekly-report-export">
+                      <label>Report Date</label>
+                      <input
+                        type="date"
+                        value={weeklyReportDate}
+                        onChange={(event) =>
+                          setWeeklyReportDate(event.target.value)
+                        }
+                      />
+
+                      <button
+                        className="secondary-button"
+                        onClick={handleExportWeeklyReportPdf}
+                      >
+                        Export Weekly Report PDF
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

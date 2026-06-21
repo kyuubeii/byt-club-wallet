@@ -1167,6 +1167,16 @@ h1 {
   margin-top: 0;
 }
 
+.weekly-report-export {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(148, 163, 184, 0.28);
+}
+
+.weekly-report-export .secondary-button {
+  width: 100%;
+}
+
 .developer-tools-grid {
   display: flex;
   flex-wrap: wrap;
