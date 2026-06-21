@@ -3053,3 +3053,1390 @@ h1 {
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
 }
+
+/* -------------------- Micro-interaction polish -------------------- */
+.panel,
+.member-card,
+.stat-card,
+.session-card,
+.member-session-card,
+.summary-card,
+.analytics-card,
+.payment-reminder-card,
+.admin-workflow-card,
+.admin-overview-stat,
+.dashboard-section-toggle,
+.session-booking-row,
+.waitlist-row,
+.attendee-panel,
+.my-booking-summary,
+.walkin-option,
+.walkin-edit-panel {
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.action-button:active:not(:disabled),
+.secondary-button:active:not(:disabled),
+.topup-button:active:not(:disabled),
+.approve-button:active:not(:disabled),
+.danger-button:active:not(:disabled),
+.small-approve-button:active:not(:disabled),
+.small-reject-button:active:not(:disabled),
+.dashboard-section-toggle:active,
+.stat-card:active,
+.analytics-card:active,
+.payment-reminder-card:active,
+.member-session-card:active,
+.session-card:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+.dashboard-section-toggle:focus-visible,
+.member-menu-dropdown button:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.28);
+  outline-offset: 3px;
+}
+
+.member-table-scroll thead th,
+.session-booking-scroll thead th,
+.session-member-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  box-shadow: 0 1px 0 rgba(203, 213, 225, 0.78);
+}
+
+.member-table-scroll tbody tr,
+.premium-table tbody tr,
+.session-member-row,
+.member-checkbox-row {
+  transition:
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.member-table-scroll tbody tr:hover,
+.premium-table tbody tr:hover {
+  background: rgba(239, 246, 255, 0.82);
+}
+
+.dashboard-page .panel > .empty-text,
+.dashboard-page .member-session-panel > .empty-text,
+.dashboard-page .reload-request-panel > .empty-text,
+.dashboard-page .transaction-panel > .empty-text {
+  border-style: solid;
+  background:
+    linear-gradient(135deg, rgba(239, 246, 255, 0.72), rgba(255, 255, 255, 0.9)),
+    #f8fafc;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.dashboard-section-toggle:hover,
+.stat-card:hover,
+.analytics-card:hover,
+.payment-reminder-card:hover,
+.admin-overview-stat:hover {
+  transform: translateY(-2px);
+  border-color: rgba(37, 99, 235, 0.24);
+  box-shadow: 0 18px 42px rgba(7, 17, 31, 0.11);
+}
+
+.dashboard-section-toggle.active {
+  box-shadow:
+    0 14px 30px rgba(7, 17, 31, 0.16),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.member-balance-card {
+  animation: byt-soft-enter 220ms ease both;
+}
+
+.member-balance-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 24px 58px rgba(7, 17, 31, 0.18);
+}
+
+.member-card .topup-button:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+}
+
+.member-menu-button {
+  min-height: 44px;
+  margin-top: 0;
+}
+
+.member-menu-dropdown {
+  transform-origin: top right;
+  animation: byt-menu-enter 180ms ease both;
+}
+
+.member-menu-dropdown button {
+  min-height: 44px;
+}
+
+.member-menu-dropdown button:active {
+  transform: scale(0.98);
+}
+
+.proof-selected-feedback {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(50, 180, 68, 0.24);
+  border-radius: 12px;
+  background: rgba(220, 252, 231, 0.7);
+  color: #166534;
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.proof-selected-feedback strong {
+  color: #14532d;
+}
+
+.member-session-card {
+  animation: byt-soft-enter 220ms ease both;
+}
+
+.member-session-card.is-low-slots {
+  border-color: rgba(245, 158, 11, 0.42);
+}
+
+.member-session-card.is-full-session {
+  border-color: rgba(239, 68, 68, 0.36);
+  background:
+    linear-gradient(135deg, rgba(254, 226, 226, 0.46), transparent 42%),
+    #ffffff;
+}
+
+.capacity-summary-item {
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.capacity-summary-item.is-low {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.capacity-summary-item.is-low .capacity-summary-value {
+  color: #c2410c;
+}
+
+.capacity-summary-item.is-full .capacity-summary-value {
+  color: #991b1b;
+}
+
+.attendee-panel,
+.my-booking-summary,
+.walkin-option,
+.walkin-edit-panel {
+  animation: byt-section-enter 190ms ease both;
+}
+
+.admin-session-section {
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
+}
+
+.admin-session-section.is-open {
+  box-shadow: 0 16px 36px rgba(37, 99, 235, 0.08);
+}
+
+.admin-session-section-toggle {
+  min-height: 54px;
+}
+
+.admin-session-section-toggle:active {
+  transform: none;
+}
+
+.admin-session-section-body {
+  animation: byt-section-enter 190ms ease both;
+}
+
+.admin-workflow-card:hover {
+  border-color: rgba(37, 99, 235, 0.18);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+.session-booking-row,
+.waitlist-row {
+  overflow-wrap: anywhere;
+}
+
+.session-booking-row:hover,
+.waitlist-row:hover {
+  transform: translateY(-1px);
+  border-color: rgba(50, 180, 68, 0.32);
+  background: #f8fafc;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.session-card.is-recently-updated,
+.session-booking-row.is-recently-updated,
+.waitlist-row.is-recently-updated {
+  animation: byt-row-flash 1400ms ease both;
+}
+
+.small-reject-button {
+  border: 1px solid rgba(220, 38, 38, 0.18);
+}
+
+.small-reject-button:hover:not(:disabled) {
+  border-color: rgba(220, 38, 38, 0.32);
+  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.12);
+}
+
+.small-approve-button:hover:not(:disabled),
+.approve-button:hover:not(:disabled) {
+  box-shadow: 0 8px 18px rgba(22, 101, 52, 0.12);
+}
+
+.weekly-report-export .secondary-button:disabled {
+  background: #e2e8f0;
+  color: #64748b;
+  box-shadow: none;
+}
+
+.reload-request-panel .approve-button,
+.reload-request-panel .danger-button,
+.pending-member-approvals-panel .approve-button,
+.pending-member-approvals-panel .danger-button {
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.reload-request-panel .approve-button:hover:not(:disabled),
+.pending-member-approvals-panel .approve-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.reload-request-panel .danger-button:hover:not(:disabled),
+.pending-member-approvals-panel .danger-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(220, 38, 38, 0.12);
+}
+
+@keyframes byt-soft-enter {
+  from {
+    opacity: 0;
+    transform: translateY(3px) scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes byt-menu-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-3px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes byt-section-enter {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes byt-row-flash {
+  0% {
+    border-color: rgba(50, 180, 68, 0.72);
+    background: rgba(220, 252, 231, 0.88);
+    box-shadow: 0 0 0 3px rgba(50, 180, 68, 0.12);
+  }
+
+  100% {
+    border-color: var(--byt-line);
+  }
+}
+
+@media (max-width: 700px) {
+  .member-menu-dropdown {
+    width: min(240px, calc(100vw - 36px));
+  }
+
+  .session-booking-row,
+  .waitlist-row,
+  .admin-walkin-input-row,
+  .admin-add-member-controls {
+    min-width: 0;
+  }
+
+  .session-booking-actions,
+  .waitlist-actions {
+    justify-content: stretch;
+  }
+
+  .session-booking-actions button,
+  .waitlist-actions button,
+  .admin-walkin-controls .action-button,
+  .admin-walkin-controls .secondary-button {
+    min-height: 42px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .action-button:active:not(:disabled),
+  .secondary-button:active:not(:disabled),
+  .topup-button:active:not(:disabled),
+  .approve-button:active:not(:disabled),
+  .danger-button:active:not(:disabled),
+  .small-approve-button:active:not(:disabled),
+  .small-reject-button:active:not(:disabled),
+  .dashboard-section-toggle:active,
+  .stat-card:hover,
+  .analytics-card:hover,
+  .payment-reminder-card:hover,
+  .member-balance-card:hover,
+  .member-session-card:hover,
+  .session-card:hover,
+  .session-booking-row:hover,
+  .waitlist-row:hover {
+    transform: none !important;
+  }
+}
+
+/* -------------------- Phase 2 member portal polish -------------------- */
+.member-panel-heading {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.member-panel-heading h2 {
+  margin: 0;
+}
+
+.member-panel-heading p {
+  margin: 0;
+  color: var(--byt-muted);
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.balance-health-meter {
+  position: relative;
+  z-index: 1;
+  width: min(280px, 100%);
+  height: 8px;
+  margin: 18px auto 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
+.balance-health-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.28);
+}
+
+.balance-health-meter-critical span {
+  width: 22%;
+}
+
+.balance-health-meter-low span {
+  width: 42%;
+}
+
+.balance-health-meter-good span {
+  width: 70%;
+}
+
+.balance-health-meter-great span {
+  width: 100%;
+}
+
+.member-card .topup-button {
+  min-height: 48px;
+  padding-inline: 22px;
+  font-size: 15px;
+}
+
+.member-card .topup-button:hover:not(:disabled) {
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.26);
+}
+
+.topup-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.topup-panel .member-panel-heading {
+  margin-bottom: 0;
+}
+
+.reload-payment-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.72fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.reload-bank-card,
+.reload-qr-card,
+.reload-upload-card {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.reload-bank-card {
+  display: grid;
+  align-content: center;
+  gap: 8px;
+}
+
+.reload-bank-card p {
+  margin: 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.reload-qr-card {
+  min-height: 100%;
+  margin-bottom: 0;
+}
+
+.reload-upload-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.reload-upload-card label {
+  margin: 6px 0 0;
+}
+
+.reload-submit-button {
+  margin-top: 8px;
+}
+
+.proof-selected-feedback {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.proof-selected-feedback::before {
+  content: "";
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: #16a34a;
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.12);
+}
+
+.member-session-card {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.member-session-main {
+  min-width: 0;
+}
+
+.member-session-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.member-session-title-block {
+  min-width: 0;
+}
+
+.member-session-eyebrow {
+  display: inline-flex;
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.member-session-card h3 {
+  margin-top: 4px;
+  font-size: clamp(22px, 3vw, 28px);
+}
+
+.member-session-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+  margin-top: 6px !important;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
+.member-session-meta span {
+  min-width: 0;
+}
+
+.member-session-meta span + span::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 10px;
+  border-radius: 999px;
+  background: #94a3b8;
+  vertical-align: middle;
+}
+
+.member-session-state {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 950;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.member-session-state.is-low-slots {
+  border-color: #fed7aa;
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.member-session-state.is-full-session {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.member-session-card:has(.my-booking-summary) {
+  border-color: rgba(50, 180, 68, 0.36);
+}
+
+.session-capacity-summary {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 18px 0;
+}
+
+.capacity-summary-item {
+  min-height: 78px;
+}
+
+.capacity-summary-label,
+.capacity-summary-value {
+  overflow-wrap: anywhere;
+}
+
+.capacity-summary-wide {
+  grid-column: auto;
+}
+
+.member-session-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.member-session-detail-grid > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.member-session-detail-grid span {
+  display: block;
+  color: var(--byt-muted);
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.member-session-detail-grid strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--byt-ink);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.my-booking-summary {
+  border-color: rgba(50, 180, 68, 0.24);
+  background:
+    linear-gradient(135deg, rgba(220, 252, 231, 0.66), rgba(255, 255, 255, 0.96)),
+    #ffffff;
+}
+
+.my-booking-summary-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.my-booking-summary-header > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.my-booking-summary-header strong {
+  color: var(--byt-ink);
+  overflow-wrap: anywhere;
+}
+
+.member-booking-status-chip {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 12px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.my-booking-detail {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(50, 180, 68, 0.18);
+}
+
+.my-booking-detail span,
+.my-booking-detail small {
+  color: var(--byt-muted);
+  font-size: 13px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.my-booking-detail strong {
+  color: var(--byt-ink);
+  font-size: 18px;
+}
+
+.my-booking-detail.is-warning {
+  border-top-color: #fed7aa;
+}
+
+.walkin-option {
+  border-color: rgba(37, 99, 235, 0.16);
+  background:
+    linear-gradient(135deg, rgba(239, 246, 255, 0.78), rgba(255, 255, 255, 0.94)),
+    #ffffff;
+}
+
+.walkin-option-copy {
+  display: grid;
+  gap: 3px;
+  margin-bottom: 12px;
+}
+
+.walkin-option-copy strong {
+  color: var(--byt-ink);
+  font-size: 15px;
+}
+
+.walkin-option-copy span {
+  color: var(--byt-muted);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.session-state-note {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 850;
+  line-height: 1.45;
+}
+
+.session-state-note.is-full {
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #991b1b;
+}
+
+.booking-warning-soft {
+  border-color: #fed7aa;
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.member-session-actions {
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: stretch;
+}
+
+.member-session-actions button {
+  min-height: 48px;
+}
+
+.member-session-primary-action {
+  order: 2;
+}
+
+.member-session-secondary-action {
+  order: 1;
+}
+
+.member-session-cancel-action {
+  border-color: rgba(220, 38, 38, 0.18);
+  background: #fff7f7;
+  color: #991b1b;
+}
+
+.member-session-cancel-action:hover:not(:disabled) {
+  border-color: rgba(220, 38, 38, 0.32);
+  background: #fee2e2;
+}
+
+.attendee-panel {
+  border-color: rgba(37, 99, 235, 0.16);
+  background:
+    linear-gradient(135deg, rgba(239, 246, 255, 0.72), rgba(255, 255, 255, 0.96)),
+    #ffffff;
+}
+
+.attendee-panel-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.attendee-panel-header span {
+  color: var(--byt-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.member-attendee-section {
+  padding: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.member-attendee-section h5 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.member-attendee-section h5::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #2563eb;
+}
+
+.member-attendee-section .attendee-row {
+  padding: 10px 0;
+}
+
+.member-history-panel {
+  overflow: hidden;
+}
+
+.member-history-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.member-history-table-wrap table {
+  min-width: 620px;
+}
+
+.member-history-table-wrap th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.member-history-table-wrap td,
+.member-history-table-wrap th {
+  white-space: nowrap;
+}
+
+.member-transaction-history-panel .member-history-table-wrap td:nth-child(2) {
+  min-width: 220px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .reload-payment-grid,
+  .member-session-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .session-capacity-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .member-topbar {
+    top: 8px;
+  }
+
+  .member-topbar + .dashboard-content {
+    padding-top: 34px;
+  }
+
+  .member-menu {
+    justify-self: end;
+  }
+
+  .member-session-header,
+  .my-booking-summary-header,
+  .attendee-panel-header {
+    display: grid;
+    justify-content: stretch;
+  }
+
+  .member-session-state,
+  .member-booking-status-chip {
+    width: 100%;
+  }
+
+  .member-session-meta {
+    display: grid;
+    gap: 4px;
+  }
+
+  .member-session-meta span + span::before {
+    display: none;
+  }
+
+  .member-session-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .member-session-primary-action,
+  .member-session-secondary-action {
+    order: initial;
+  }
+}
+
+@media (max-width: 600px) {
+  .topup-panel,
+  .member-session-card {
+    gap: 14px;
+  }
+
+  .member-session-card {
+    padding: 17px;
+  }
+
+  .reload-upload-card,
+  .my-booking-summary,
+  .walkin-option,
+  .walkin-edit-panel,
+  .attendee-panel {
+    padding: 14px;
+  }
+
+  .capacity-summary-item {
+    min-height: 72px;
+    padding: 11px;
+  }
+
+  .capacity-summary-value {
+    font-size: 17px;
+  }
+
+  .member-history-table-wrap table {
+    min-width: 560px;
+  }
+}
+
+/* -------------------- Phase 3 admin workflow polish -------------------- */
+.session-booking-panel {
+  overflow: hidden;
+}
+
+.admin-session-overview {
+  border-color: rgba(37, 99, 235, 0.18);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+}
+
+.admin-session-title-block h3 {
+  font-size: clamp(24px, 3.4vw, 34px);
+}
+
+.admin-session-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+  overflow-wrap: anywhere;
+}
+
+.admin-session-meta span {
+  min-width: 0;
+}
+
+.admin-session-meta span + span::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 10px;
+  border-radius: 999px;
+  background: #94a3b8;
+  vertical-align: middle;
+}
+
+.admin-status-chip.is-capacity-available {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.admin-status-chip.is-capacity-low {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.admin-status-chip.is-capacity-full {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.admin-overview-stats {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.admin-overview-stat {
+  min-height: 96px;
+}
+
+.admin-session-section-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-session-section-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  min-height: 26px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.admin-session-section.is-open .admin-session-section-badge {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.admin-add-people-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-workflow-card {
+  background:
+    linear-gradient(135deg, rgba(248, 250, 252, 0.96), rgba(255, 255, 255, 0.98)),
+    #ffffff;
+}
+
+.admin-walkin-header h4,
+.admin-add-member-section h4,
+.waitlist-column-header h4,
+.session-booking-header h4,
+.finalize-review-header h4 {
+  letter-spacing: 0;
+}
+
+.admin-walkin-controls,
+.admin-add-member-controls {
+  padding-top: 4px;
+}
+
+.admin-walkin-controls > div,
+.admin-add-member-controls > div,
+.session-charge-grid > div {
+  min-width: 0;
+}
+
+.admin-walkin-controls select,
+.admin-add-member-controls select,
+.session-status-select,
+.walkin-admin-edit input,
+.session-charge-grid input {
+  border-color: rgba(148, 163, 184, 0.34);
+}
+
+.admin-walkin-controls .action-button,
+.admin-add-member-controls .action-button {
+  min-height: 48px;
+  box-shadow: 0 12px 26px rgba(7, 17, 31, 0.18);
+}
+
+.admin-walkin-list-grid h4 {
+  margin-bottom: 10px;
+}
+
+.admin-attendee-panel {
+  border-color: rgba(37, 99, 235, 0.16);
+}
+
+.session-booking-header {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.session-booking-header p {
+  margin: 4px 0 0;
+  color: var(--byt-muted);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.session-booking-summary span {
+  background: #ffffff;
+}
+
+.session-booking-tools {
+  grid-template-columns: minmax(220px, 1fr) auto;
+  align-items: center;
+}
+
+.session-booking-quick-actions {
+  justify-content: flex-end;
+}
+
+.session-booking-row {
+  grid-template-columns: minmax(210px, 1.1fr) minmax(170px, 0.6fr) minmax(260px, 0.95fr) auto;
+  border-color: rgba(148, 163, 184, 0.28);
+}
+
+.session-booking-member span {
+  font-size: 15px;
+}
+
+.session-booking-member small {
+  overflow-wrap: anywhere;
+}
+
+.booking-status-pill {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.session-booking-row.booking-status-attended .booking-status-pill {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.session-booking-row.booking-status-no_show .booking-status-pill,
+.session-booking-row.booking-status-cancelled .booking-status-pill,
+.session-booking-row.booking-status-late_cancel .booking-status-pill {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.walkin-admin-edit {
+  padding: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.walkin-admin-edit-heading {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 2px;
+}
+
+.walkin-admin-edit-heading strong {
+  color: var(--byt-ink);
+  font-size: 13px;
+}
+
+.walkin-admin-edit-heading small {
+  color: var(--byt-muted);
+  font-size: 12px;
+}
+
+.session-booking-actions .small-reject-button {
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+.waitlist-column-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.waitlist-column-header h4 {
+  margin: 0;
+}
+
+.waitlist-column-header span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 30px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.waitlist-row {
+  border-color: rgba(148, 163, 184, 0.26);
+}
+
+.waitlist-row strong {
+  overflow-wrap: anywhere;
+}
+
+.waitlist-actions .small-approve-button,
+.waitlist-actions .small-reject-button {
+  min-height: 38px;
+}
+
+.finalize-review-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.finalize-review-header h4 {
+  margin: 0;
+}
+
+.finalize-review-header p {
+  margin: 4px 0 0;
+  color: var(--byt-muted);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.finalize-state-chip {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #c2410c;
+  font-size: 12px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.finalize-state-chip.is-charged {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.session-finalize-box .session-charge-grid {
+  padding: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.session-finalize-box .session-charge-summary-grid > div {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: #ffffff;
+}
+
+.finalize-warning-note {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #fed7aa;
+  border-radius: 14px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.45;
+}
+
+.session-finalize-box .action-button {
+  min-height: 50px;
+}
+
+.admin-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.admin-table-scroll table {
+  min-width: 760px;
+}
+
+.admin-table-scroll th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.pending-reload-table-wrap td,
+.pending-reload-table-wrap th {
+  white-space: nowrap;
+}
+
+.reload-request-panel h2 {
+  margin-bottom: 16px;
+}
+
+.weekly-report-export {
+  border-radius: 16px;
+  background: #f8fafc;
+  padding: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+@media (max-width: 1000px) {
+  .session-booking-tools,
+  .session-booking-row {
+    grid-template-columns: 1fr;
+  }
+
+  .session-booking-quick-actions,
+  .session-booking-actions {
+    justify-content: stretch;
+  }
+
+  .session-booking-status {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(160px, 0.8fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .admin-session-meta {
+    display: grid;
+    gap: 4px;
+  }
+
+  .admin-session-meta span + span::before {
+    display: none;
+  }
+
+  .admin-session-status-stack,
+  .admin-session-section-title-row,
+  .finalize-review-header,
+  .waitlist-column-header {
+    display: grid;
+    justify-content: stretch;
+  }
+
+  .admin-status-chip,
+  .finalize-state-chip,
+  .waitlist-column-header span {
+    width: 100%;
+  }
+
+  .admin-overview-stat {
+    min-height: auto;
+  }
+
+  .admin-walkin-controls,
+  .admin-add-member-controls,
+  .session-booking-status,
+  .session-charge-grid,
+  .session-charge-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-table-scroll table {
+    min-width: 680px;
+  }
+}

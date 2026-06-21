@@ -62,6 +62,7 @@ function MemberPortal({
     const [expandedAttendeeSessions, setExpandedAttendeeSessions] = useState({});
     const [editingWalkInSessionId, setEditingWalkInSessionId] = useState(null);
     const [walkInEditValues, setWalkInEditValues] = useState({});
+    const [paymentProofFileName, setPaymentProofFileName] = useState("");
 
     const memberData = members.find(
         (member) => Number(member.id) === Number(currentUser.memberId)
@@ -93,7 +94,7 @@ function MemberPortal({
 
                     <div className="member-menu">
                         <button
-                            className="secondary-button"
+                            className="secondary-button member-menu-button"
                             onClick={() => setShowMemberMenu(!showMemberMenu)}
                         >
                             Menu
@@ -302,7 +303,7 @@ function MemberPortal({
 
                 <div className="member-menu">
                     <button
-                        className="secondary-button"
+                        className="secondary-button member-menu-button"
                         onClick={() => setShowMemberMenu(!showMemberMenu)}
                     >
                         Menu
@@ -490,7 +491,7 @@ function MemberPortal({
                     </div>
                 )}
 
-                <div className={`member-card balance-health-${balanceHealth.key}`}>
+                <div className={`member-card member-balance-card balance-health-${balanceHealth.key}`}>
                     <div className="balance-card-header">
                         <p>Current Balance</p>
                         <span className="status-badge balance-health-badge">
@@ -506,6 +507,13 @@ function MemberPortal({
                         {balanceHealth.message}
                     </p>
 
+                    <div
+                        className={`balance-health-meter balance-health-meter-${balanceHealth.key}`}
+                        aria-hidden="true"
+                    >
+                        <span />
+                    </div>
+
                     <button
                         className="topup-button"
                         onClick={() => setShowTopUpBox(!showTopUpBox)}
@@ -516,56 +524,73 @@ function MemberPortal({
 
                 {showTopUpBox && (
                     <div className="panel topup-panel">
-                        <h2>Reload Payment Details</h2>
-
-                        <div className="bank-box">
-                            <p>
-                                <strong>Bank Name:</strong> United Overseas Bank
-                            </p>
-                            <p>
-                                <strong>Account Name:</strong> B.Y.T. Enterprise
-                            </p>
-                            <p>
-                                <strong>Account Number:</strong> 2383066532
-                            </p>
-                            <p>
-                                <strong>Reference:</strong> Your Name
-                            </p>
+                        <div className="member-panel-heading">
+                            <h2>Reload Payment Details</h2>
+                            <p>Scan, transfer, then upload your payment proof.</p>
                         </div>
 
-                        <div className="qr-box qr-image-box">
-                            <img
-                                src="/duitnow-qr.png"
-                                alt="DuitNow QR Code"
-                                className="duitnow-qr-image"
+                        <div className="reload-payment-grid">
+                            <div className="bank-box reload-bank-card">
+                                <p>
+                                    <strong>Bank Name:</strong> United Overseas Bank
+                                </p>
+                                <p>
+                                    <strong>Account Name:</strong> B.Y.T. Enterprise
+                                </p>
+                                <p>
+                                    <strong>Account Number:</strong> 2383066532
+                                </p>
+                                <p>
+                                    <strong>Reference:</strong> Your Name
+                                </p>
+                            </div>
+
+                            <div className="qr-box qr-image-box reload-qr-card">
+                                <img
+                                    src="/duitnow-qr.png"
+                                    alt="DuitNow QR Code"
+                                    className="duitnow-qr-image"
+                                />
+                                <span>Scan to reload</span>
+                            </div>
+                        </div>
+
+                        <div className="reload-upload-card">
+                            <label>Top Up Amount</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                inputMode="decimal"
+                                placeholder="Example: 100"
+                                value={topUpAmount}
+                                onChange={(event) => setTopUpAmount(event.target.value)}
                             />
-                            <span>Scan to reload</span>
+
+                            <label>Upload Payment Screenshot</label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(event) => {
+                                    const file = event.target.files[0] || null;
+                                    setPaymentScreenshot(file);
+                                    setPaymentProofFileName(file?.name || "");
+                                }}
+                            />
+
+                            {paymentProofFileName && (
+                                <p className="proof-selected-feedback">
+                                    Proof selected: <strong>{paymentProofFileName}</strong>
+                                </p>
+                            )}
+
+                            <button
+                                className="action-button reload-submit-button"
+                                disabled={isSubmittingReloadRequest}
+                                onClick={handleSubmitReloadRequest}
+                            >
+                                {isSubmittingReloadRequest ? "Submitting..." : "Submit Reload Proof"}
+                            </button>
                         </div>
-
-                        <label>Top Up Amount</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            inputMode="decimal"
-                            placeholder="Example: 100"
-                            value={topUpAmount}
-                            onChange={(event) => setTopUpAmount(event.target.value)}
-                        />
-
-                        <label>Upload Payment Screenshot</label>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(event) => setPaymentScreenshot(event.target.files[0])}
-                        />
-
-                        <button
-                            className="action-button"
-                            disabled={isSubmittingReloadRequest}
-                            onClick={handleSubmitReloadRequest}
-                        >
-                            {isSubmittingReloadRequest ? "Submitting..." : "Submit Reload Proof"}
-                        </button>
                     </div>
                 )}
 
@@ -658,6 +683,22 @@ function MemberPortal({
                                     );
 
                                     const isFull = remainingParticipantSlots <= 0;
+                                    const sessionCapacityClass = isFull
+                                        ? "is-full-session"
+                                        : remainingParticipantSlots <= 3
+                                            ? "is-low-slots"
+                                            : "is-open-session";
+                                    const sessionStatusLabel = myBooking
+                                        ? "Your Booking"
+                                        : isFull
+                                            ? "Full / Waitlist"
+                                            : remainingParticipantSlots <= 3
+                                                ? "Low Slots"
+                                                : "Open";
+                                    const myBookingStatusLabel =
+                                        myBooking?.waitlistStatus === "waiting"
+                                            ? "WAITING LIST"
+                                            : myBooking?.status?.toUpperCase();
                                     const isAttendeeExpanded =
                                         Boolean(expandedAttendeeSessions[session.id]);
                                     const isMyConfirmedBooking =
@@ -678,16 +719,29 @@ function MemberPortal({
                                             : session.courtFeeTotal;
 
                                     return (
-                                        <div key={session.id} className="member-session-card">
-                                            <div>
-                                                <h3>{session.date}</h3>
-                                                <p>
-                                                    {session.time} · {session.venue}
-                                                </p>
+                                        <div
+                                            key={session.id}
+                                            className={`member-session-card ${sessionCapacityClass}`}
+                                        >
+                                            <div className="member-session-main">
+                                                <div className="member-session-header">
+                                                    <div className="member-session-title-block">
+                                                        <span className="member-session-eyebrow">Session</span>
+                                                        <h3>{session.date}</h3>
+                                                        <p className="member-session-meta">
+                                                            <span>{session.time}</span>
+                                                            <span>{session.venue}</span>
+                                                        </p>
+                                                    </div>
+
+                                                    <span className={`member-session-state ${sessionCapacityClass}`}>
+                                                        {sessionStatusLabel}
+                                                    </span>
+                                                </div>
 
                                                 <div className="session-capacity-summary">
                                                     <div className="capacity-summary-item">
-                                                        <span className="capacity-summary-label">Members</span>
+                                                        <span className="capacity-summary-label">Booked</span>
                                                         <strong className="capacity-summary-value">
                                                             {memberBookingCount}
                                                         </strong>
@@ -709,7 +763,11 @@ function MemberPortal({
 
                                                     <div
                                                         className={`capacity-summary-item ${
-                                                            remainingParticipantSlots <= 0 ? "is-full" : ""
+                                                            remainingParticipantSlots <= 0
+                                                                ? "is-full"
+                                                                : remainingParticipantSlots <= 3
+                                                                    ? "is-low"
+                                                                    : ""
                                                         }`}
                                                     >
                                                         <span className="capacity-summary-label">Remaining</span>
@@ -728,63 +786,71 @@ function MemberPortal({
                                                     </div>
                                                 </div>
 
-                                                <p>
-                                                    Court Fee Total:{" "}
-                                                    <strong>{formatMoney(session.courtFeeTotal)}</strong>
-                                                </p>
+                                                <div className="member-session-detail-grid">
+                                                    <div>
+                                                        <span>Court Fee Total</span>
+                                                        <strong>{formatMoney(session.courtFeeTotal)}</strong>
+                                                    </div>
 
-                                                <p>
-                                                    Estimated Court Fee:{" "}
-                                                    <strong>{formatMoney(estimatedCourtFee)}</strong>
-                                                </p>
+                                                    <div>
+                                                        <span>Estimated Court Fee</span>
+                                                        <strong>{formatMoney(estimatedCourtFee)}</strong>
+                                                    </div>
 
-                                                <p>
-                                                    Cancel Cutoff: <strong>{session.cancelCutoff}</strong>
-                                                </p>
+                                                    <div>
+                                                        <span>Cancel Cutoff</span>
+                                                        <strong>{session.cancelCutoff}</strong>
+                                                    </div>
+                                                </div>
 
                                                 {myBooking && (
                                                     <div className="my-booking-summary">
-                                                        <p>
-                                                            Your Status:{" "}
-                                                            <span className="positive">
-                                                                {myBooking.waitlistStatus === "waiting"
-                                                                    ? "WAITING LIST"
-                                                                    : myBooking.status.toUpperCase()}
+                                                        <div className="my-booking-summary-header">
+                                                            <div>
+                                                                <span className="member-session-eyebrow">Your Booking</span>
+                                                                <strong>{session.date}</strong>
+                                                            </div>
+
+                                                            <span className="member-booking-status-chip">
+                                                                {myBookingStatusLabel}
                                                             </span>
-                                                        </p>
+                                                        </div>
 
                                                         {isMyConfirmedBooking &&
                                                             Number(myBooking.walkInCount || 0) > 0 && (
-                                                                <p>
-                                                                    Your Walk-ins:{" "}
+                                                                <div className="my-booking-detail">
+                                                                    <span>Your Walk-ins</span>
                                                                     <strong>{myBooking.walkInCount}</strong>
-                                                                    <br />
-                                                                    <span className="attendee-meta">
+                                                                    <small>
                                                                         Names:{" "}
                                                                         {(myBooking.walkInNames || []).join(", ")}
-                                                                    </span>
-                                                                </p>
+                                                                    </small>
+                                                                </div>
                                                             )}
 
                                                         {isMyConfirmedBooking &&
                                                             Number(myBooking.lateCancelledWalkInCount || 0) > 0 && (
-                                                                <p>
-                                                                    Late cancelled walk-in:{" "}
+                                                                <div className="my-booking-detail is-warning">
+                                                                    <span>Late cancelled walk-in</span>
                                                                     <strong>
                                                                         {myBooking.lateCancelledWalkInCount}
                                                                     </strong>
-                                                                    <br />
-                                                                    <span className="attendee-meta">
+                                                                    <small>
                                                                         Names:{" "}
                                                                         {(myBooking.lateCancelledWalkInNames || []).join(", ")}
-                                                                    </span>
-                                                                </p>
+                                                                    </small>
+                                                                </div>
                                                             )}
                                                     </div>
                                                 )}
 
                                                 {!myBooking && (
                                                     <div className="walkin-option">
+                                                        <div className="walkin-option-copy">
+                                                            <strong>Add guest</strong>
+                                                            <span>Bring a walk-in guest with your booking.</span>
+                                                        </div>
+
                                                         <label className="checkbox-label">
                                                             <input
                                                                 type="checkbox"
@@ -846,7 +912,9 @@ function MemberPortal({
                                                 )}
 
                                                 {!myBooking && isFull && (
-                                                    <p className="negative">This session is full.</p>
+                                                    <p className="session-state-note is-full">
+                                                        This session is full. You can join the waitlist.
+                                                    </p>
                                                 )}
 
                                                 {!myBooking && belowMinimumBookingBalance && (
@@ -858,7 +926,7 @@ function MemberPortal({
                                                 )}
 
                                                 {myBooking && pastCutoff && (
-                                                    <p className="negative">
+                                                    <p className="booking-warning booking-warning-soft">
                                                         Cancel cutoff passed. Court fee may still be charged.
                                                     </p>
                                                 )}
@@ -949,9 +1017,14 @@ function MemberPortal({
 
                                                 {isAttendeeExpanded && (
                                                     <div className="attendee-panel">
-                                                        <h4>Attendees</h4>
+                                                        <div className="attendee-panel-header">
+                                                            <h4>Attendees</h4>
+                                                            <span>
+                                                                {confirmedBookings.length + attendeeWalkIns.length} confirmed
+                                                            </span>
+                                                        </div>
 
-                                                        <div className="attendee-section">
+                                                        <div className="attendee-section member-attendee-section">
                                                             <h5>Confirmed Members</h5>
                                                             {confirmedBookings.length === 0 ? (
                                                                 <p className="waitlist-muted-text">
@@ -985,7 +1058,7 @@ function MemberPortal({
                                                             )}
                                                         </div>
 
-                                                        <div className="attendee-section">
+                                                        <div className="attendee-section member-attendee-section">
                                                             <h5>Walk-ins</h5>
                                                             {attendeeWalkIns.length === 0 ? (
                                                                 <p className="waitlist-muted-text">
@@ -1002,7 +1075,7 @@ function MemberPortal({
                                                             )}
                                                         </div>
 
-                                                        <div className="attendee-section">
+                                                        <div className="attendee-section member-attendee-section">
                                                             <h5>Member Waiting List</h5>
                                                             {memberWaitlist.length === 0 ? (
                                                                 <p className="waitlist-muted-text">
@@ -1019,7 +1092,7 @@ function MemberPortal({
                                                             )}
                                                         </div>
 
-                                                        <div className="attendee-section">
+                                                        <div className="attendee-section member-attendee-section">
                                                             <h5>Walk-in Waiting List</h5>
                                                             {walkInWaitlist.length === 0 &&
                                                             independentWalkInWaitlist.length === 0 ? (
@@ -1064,7 +1137,7 @@ function MemberPortal({
 
                                             <div className="member-session-actions">
                                                 <button
-                                                    className="secondary-button"
+                                                    className="secondary-button member-session-secondary-action"
                                                     onClick={() => toggleAttendeeSession(session.id)}
                                                 >
                                                     {isAttendeeExpanded
@@ -1074,7 +1147,7 @@ function MemberPortal({
 
                                                 {!myBooking ? (
                                                     <button
-                                                        className="action-button"
+                                                        className="action-button member-session-primary-action"
                                                         disabled={belowMinimumBookingBalance}
                                                         onClick={() => handleBookSession(session.id)}
                                                     >
@@ -1088,7 +1161,7 @@ function MemberPortal({
                                                     <>
                                                         {isMyConfirmedBooking && (
                                                             <button
-                                                                className="secondary-button"
+                                                                className="secondary-button member-session-secondary-action"
                                                                 onClick={() => startWalkInEdit(myBooking)}
                                                             >
                                                                 {Number(myBooking.walkInCount || 0) > 0
@@ -1098,7 +1171,7 @@ function MemberPortal({
                                                         )}
 
                                                         <button
-                                                            className="secondary-button"
+                                                            className="secondary-button member-session-cancel-action"
                                                             onClick={() => handleCancelSessionBooking(session.id)}
                                                         >
                                                             Cancel Booking
@@ -1113,45 +1186,50 @@ function MemberPortal({
                     )}
                 </div>
 
-                <div className="panel">
-                    <h2>My Reload Requests</h2>
+                <div className="panel member-history-panel member-reload-history-panel">
+                    <div className="member-panel-heading">
+                        <h2>My Reload Requests</h2>
+                        <p>Track your submitted reload proofs.</p>
+                    </div>
 
                     {myReloadRequests.length === 0 ? (
                         <p className="empty-text">No reload request submitted yet.</p>
                     ) : (
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Amount</th>
-                                    <th>Screenshot</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                {paginatedReloadRequests.map((request) => (
-                                    <tr key={request.id}>
-                                        <td>{request.date}</td>
-                                        <td className="positive">{formatMoney(request.amount)}</td>
-                                        <td>
-                                            <a
-                                                href={request.screenshotUrl}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                            >
-                                                <img
-                                                    src={request.screenshotUrl}
-                                                    alt="Payment Screenshot"
-                                                    className="payment-preview"
-                                                />
-                                            </a>
-                                        </td>
-                                        <td>{request.status}</td>
+                        <div className="member-history-table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Amount</th>
+                                        <th>Screenshot</th>
+                                        <th>Status</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+
+                                <tbody>
+                                    {paginatedReloadRequests.map((request) => (
+                                        <tr key={request.id}>
+                                            <td>{request.date}</td>
+                                            <td className="positive">{formatMoney(request.amount)}</td>
+                                            <td>
+                                                <a
+                                                    href={request.screenshotUrl}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+                                                    <img
+                                                        src={request.screenshotUrl}
+                                                        alt="Payment Screenshot"
+                                                        className="payment-preview"
+                                                    />
+                                                </a>
+                                            </td>
+                                            <td>{request.status}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
 
                     {sortedReloadRequests.length > memberReloadPageSize && (
@@ -1177,37 +1255,42 @@ function MemberPortal({
                     )}
                 </div>
 
-                <div className="panel">
-                    <h2>My Recent Transactions</h2>
+                <div className="panel member-history-panel member-transaction-history-panel">
+                    <div className="member-panel-heading">
+                        <h2>My Recent Transactions</h2>
+                        <p>Recent wallet movement from reloads and session charges.</p>
+                    </div>
 
                     {sortedTransactions.length === 0 ? (
                         <p className="empty-text">No recent transaction yet.</p>
                     ) : (
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Description</th>
-                                    <th>Amount</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                {paginatedTransactions.map((transaction) => (
-                                    <tr key={transaction.id}>
-                                        <td>{transaction.date}</td>
-                                        <td>{transaction.description}</td>
-                                        <td
-                                            className={
-                                                transaction.amount < 0 ? "negative" : "positive"
-                                            }
-                                        >
-                                            {formatMoney(transaction.amount)}
-                                        </td>
+                        <div className="member-history-table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Description</th>
+                                        <th>Amount</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+
+                                <tbody>
+                                    {paginatedTransactions.map((transaction) => (
+                                        <tr key={transaction.id}>
+                                            <td>{transaction.date}</td>
+                                            <td>{transaction.description}</td>
+                                            <td
+                                                className={
+                                                    transaction.amount < 0 ? "negative" : "positive"
+                                                }
+                                            >
+                                                {formatMoney(transaction.amount)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
 
                     {sortedTransactions.length > memberTransactionPageSize && (

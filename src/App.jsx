@@ -605,6 +605,8 @@ function App() {
   const [weeklyReportDate, setWeeklyReportDate] = useState(() =>
     getDateInputValue()
   );
+  const [isExportingWeeklyReportPdf, setIsExportingWeeklyReportPdf] =
+    useState(false);
   const [memberSearch, setMemberSearch] = useState("");
   const [memberFilter, setMemberFilter] = useState("all");
   const [transactionSearch, setTransactionSearch] = useState("");
@@ -2374,6 +2376,12 @@ function App() {
       return;
     }
 
+    if (isExportingWeeklyReportPdf) {
+      return;
+    }
+
+    setIsExportingWeeklyReportPdf(true);
+
     try {
       const { exportWeeklyReportPdf } = await import(
         "./utils/exportWeeklyReportPdf.js"
@@ -2389,6 +2397,8 @@ function App() {
     } catch (error) {
       console.error("Failed to export weekly report PDF:", error);
       alert(`Failed to export weekly report PDF: ${getFriendlyErrorMessage(error)}`);
+    } finally {
+      setIsExportingWeeklyReportPdf(false);
     }
   }
 
@@ -5494,9 +5504,12 @@ function App() {
 
                       <button
                         className="secondary-button"
+                        disabled={isExportingWeeklyReportPdf}
                         onClick={handleExportWeeklyReportPdf}
                       >
-                        Export Weekly Report PDF
+                        {isExportingWeeklyReportPdf
+                          ? "Exporting..."
+                          : "Export Weekly Report PDF"}
                       </button>
                     </div>
                   </div>
@@ -5680,59 +5693,61 @@ function App() {
             {pendingRequests.length === 0 ? (
               <p className="empty-text">No reload request yet.</p>
             ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Member</th>
-                    <th>Amount</th>
-                    <th>Screenshot</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {paginatedPendingRequests.map((request) => (
-                    <tr key={request.id}>
-                      <td>{request.date}</td>
-                      <td>{request.memberName}</td>
-                      <td className="positive">{formatMoney(request.amount)}</td>
-                      <td>
-                        <a href={request.screenshotUrl} target="_blank" rel="noreferrer">
-                          <img
-                            src={request.screenshotUrl}
-                            alt="Payment Screenshot"
-                            className="payment-preview"
-                          />
-                        </a>
-                      </td>
-                      <td>{request.status}</td>
-                      <td>
-                        {request.status === "Pending" ? (
-                          <div className="table-actions">
-                            <button
-                              className="small-approve-button"
-                              onClick={() => handleApproveReload(request)}
-                            >
-                              Approve
-                            </button>
-
-                            <button
-                              className="small-reject-button"
-                              onClick={() => handleRejectReload(request.id)}
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        ) : (
-                          "-"
-                        )}
-                      </td>
+              <div className="admin-table-scroll pending-reload-table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Member</th>
+                      <th>Amount</th>
+                      <th>Screenshot</th>
+                      <th>Status</th>
+                      <th>Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+
+                  <tbody>
+                    {paginatedPendingRequests.map((request) => (
+                      <tr key={request.id}>
+                        <td>{request.date}</td>
+                        <td>{request.memberName}</td>
+                        <td className="positive">{formatMoney(request.amount)}</td>
+                        <td>
+                          <a href={request.screenshotUrl} target="_blank" rel="noreferrer">
+                            <img
+                              src={request.screenshotUrl}
+                              alt="Payment Screenshot"
+                              className="payment-preview"
+                            />
+                          </a>
+                        </td>
+                        <td>{request.status}</td>
+                        <td>
+                          {request.status === "Pending" ? (
+                            <div className="table-actions">
+                              <button
+                                className="small-approve-button"
+                                onClick={() => handleApproveReload(request)}
+                              >
+                                Approve
+                              </button>
+
+                              <button
+                                className="small-reject-button"
+                                onClick={() => handleRejectReload(request.id)}
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
 
             {pendingRequests.length > adminPendingReloadPageSize && (

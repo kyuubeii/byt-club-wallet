@@ -61,6 +61,8 @@ function AdminBookingManagement({
   const [attendeesBySession, setAttendeesBySession] = useState({});
   const [openSectionsBySession, setOpenSectionsBySession] = useState({});
   const [bookingWalkInDrafts, setBookingWalkInDrafts] = useState({});
+  const [recentlyUpdatedRowId, setRecentlyUpdatedRowId] = useState("");
+  const [recentlyUpdatedSessionId, setRecentlyUpdatedSessionId] = useState("");
 
   const activeSessions = sessions.filter(
     (session) => session.chargeStatus !== "charged"
@@ -121,12 +123,58 @@ function AdminBookingManagement({
     });
   }
 
+  function markRecentlyUpdatedRow(rowId) {
+    setRecentlyUpdatedRowId(rowId);
+
+    if (typeof window !== "undefined") {
+      window.setTimeout(() => {
+        setRecentlyUpdatedRowId((currentRowId) =>
+          currentRowId === rowId ? "" : currentRowId
+        );
+      }, 1400);
+    }
+  }
+
+  function markRecentlyUpdatedSession(sessionId) {
+    const sessionMarker = String(sessionId);
+    setRecentlyUpdatedSessionId(sessionMarker);
+
+    if (typeof window !== "undefined") {
+      window.setTimeout(() => {
+        setRecentlyUpdatedSessionId((currentSessionId) =>
+          currentSessionId === sessionMarker ? "" : currentSessionId
+        );
+      }, 1400);
+    }
+  }
+
+  async function runWithRowHighlight(rowId, action) {
+    const result = await action();
+
+    if (result !== false) {
+      markRecentlyUpdatedRow(rowId);
+    }
+
+    return result;
+  }
+
+  async function runWithSessionHighlight(sessionId, action) {
+    const result = await action();
+
+    if (result !== false) {
+      markRecentlyUpdatedSession(sessionId);
+    }
+
+    return result;
+  }
+
   async function submitIndependentWalkins(sessionId) {
     const names = getWalkinDrafts(sessionId);
     const status = walkinStatusBySession[sessionId] || "confirmed";
     const didAdd = await handleAddIndependentWalkins(sessionId, names, status);
 
     if (didAdd) {
+      markRecentlyUpdatedSession(sessionId);
       setWalkinDraftsBySession((previousDrafts) => ({
         ...previousDrafts,
         [sessionId]: [""],
@@ -144,6 +192,7 @@ function AdminBookingManagement({
     );
 
     if (didAdd) {
+      markRecentlyUpdatedSession(sessionId);
       setAdminMemberBySession((previousMembers) => ({
         ...previousMembers,
         [sessionId]: "",
@@ -183,7 +232,14 @@ function AdminBookingManagement({
     }));
   }
 
-  function renderSessionSection(session, sectionName, label, detail, children) {
+  function renderSessionSection(
+    session,
+    sectionName,
+    label,
+    detail,
+    children,
+    badgeLabel = ""
+  ) {
     const isOpen = isSessionSectionOpen(session.id, sectionName);
 
     return (
@@ -195,7 +251,14 @@ function AdminBookingManagement({
           onClick={() => toggleSessionSection(session.id, sectionName)}
         >
           <span className="admin-session-section-toggle-copy">
-            <span>{label}</span>
+            <span className="admin-session-section-title-row">
+              <span>{label}</span>
+              {badgeLabel && (
+                <span className="admin-session-section-badge">
+                  {badgeLabel}
+                </span>
+              )}
+            </span>
             {detail && <small>{detail}</small>}
           </span>
           <span className="admin-section-toggle-state">
@@ -328,16 +391,41 @@ function AdminBookingManagement({
       (booking) => booking.status !== "cancelled" && booking.waitlistStatus !== "waiting"
     );
     const isAttendeeExpanded = Boolean(attendeesBySession[session.id]);
+    const waitingTotal =
+      memberWaitlist.length + walkInWaitlist.length + waitingIndependentWalkins.length;
+    const capacityState =
+      remainingParticipantSlots <= 0
+        ? {
+            label: "Full",
+            className: "is-capacity-full",
+          }
+        : remainingParticipantSlots <= 3
+          ? {
+              label: "Low slots",
+              className: "is-capacity-low",
+            }
+          : {
+              label: "Available",
+              className: "is-capacity-available",
+            };
 
     return (
-      <div key={session.id} className="session-card">
+      <div
+        key={session.id}
+        className={`session-card ${
+          recentlyUpdatedSessionId === String(session.id)
+            ? "is-recently-updated"
+            : ""
+        }`}
+      >
         <div className="admin-session-overview">
           <div className="admin-session-overview-header">
             <div className="admin-session-title-block">
               <span className="admin-session-eyebrow">Session Overview</span>
               <h3>{session.date}</h3>
-              <p>
-                {session.time} · {session.venue}
+              <p className="admin-session-meta">
+                <span>{session.time}</span>
+                <span>{session.venue}</span>
               </p>
             </div>
 
@@ -358,6 +446,9 @@ function AdminBookingManagement({
                   .replace("_", " ")
                   .toUpperCase()}
               </span>
+              <span className={`admin-status-chip ${capacityState.className}`}>
+                {capacityState.label}
+              </span>
             </div>
           </div>
 
@@ -365,13 +456,13 @@ function AdminBookingManagement({
             {renderOverviewStat("Members", memberBookingCount)}
             {renderOverviewStat("Walk-ins", `${walkInCount}/${walkInLimit}`)}
             {renderOverviewStat(
-              "Participants",
-              `${totalParticipantCount}/${session.maxPlayers}`,
-              `${remainingParticipantSlots} slots left`
+              "Remaining",
+              remainingParticipantSlots,
+              `${totalParticipantCount}/${session.maxPlayers} participants`
             )}
             {renderOverviewStat(
               "Waitlist",
-              memberWaitlist.length + walkInWaitlist.length + waitingIndependentWalkins.length,
+              waitingTotal,
               `${memberWaitlist.length} member · ${
                 walkInWaitlist.length + waitingIndependentWalkins.length
               } walk-in`
@@ -395,14 +486,22 @@ function AdminBookingManagement({
             ) : session.status === "open" ? (
               <button
                 className="secondary-button"
-                onClick={() => handleCloseSession(session.id)}
+                onClick={() =>
+                  runWithSessionHighlight(session.id, () =>
+                    handleCloseSession(session.id)
+                  )
+                }
               >
                 Close Booking
               </button>
             ) : (
               <button
                 className="secondary-button"
-                onClick={() => handleOpenSession(session.id)}
+                onClick={() =>
+                  runWithSessionHighlight(session.id, () =>
+                    handleOpenSession(session.id)
+                  )
+                }
               >
                 Open Booking
               </button>
@@ -504,7 +603,7 @@ function AdminBookingManagement({
             "Add People",
             "Add members and independent walk-ins",
             (
-            <>
+            <div className="admin-add-people-grid">
         {canManageIndependentWalkins && (
           <div className="admin-walkin-section admin-workflow-card">
             <div className="admin-walkin-header">
@@ -585,7 +684,14 @@ function AdminBookingManagement({
                   <p className="empty-text">No confirmed independent walk-ins.</p>
                 ) : (
                   visibleIndependentWalkins.map((walkin) => (
-                    <div key={walkin.id} className="waitlist-row">
+                    <div
+                      key={walkin.id}
+                      className={`waitlist-row ${
+                        recentlyUpdatedRowId === `walkin-${walkin.id}`
+                          ? "is-recently-updated"
+                          : ""
+                      }`}
+                    >
                       <div>
                         <strong>{walkin.name}</strong>
                         <small>{walkin.createdAt || "Independent walk-in"}</small>
@@ -598,7 +704,11 @@ function AdminBookingManagement({
                           <button
                             className="small-reject-button"
                             type="button"
-                            onClick={() => handleCancelIndependentWalkin(walkin.id)}
+                            onClick={() =>
+                              runWithRowHighlight(`walkin-${walkin.id}`, () =>
+                                handleCancelIndependentWalkin(walkin.id)
+                              )
+                            }
                           >
                             Cancel
                           </button>
@@ -606,7 +716,11 @@ function AdminBookingManagement({
                         <button
                           className="small-reject-button"
                           type="button"
-                          onClick={() => handleRemoveIndependentWalkin(walkin.id)}
+                          onClick={() =>
+                            runWithSessionHighlight(session.id, () =>
+                              handleRemoveIndependentWalkin(walkin.id)
+                            )
+                          }
                         >
                           Remove
                         </button>
@@ -676,8 +790,9 @@ function AdminBookingManagement({
             </div>
           </div>
         )}
-            </>
-            )
+            </div>
+            ),
+            "Add"
           )}
 
         {renderSessionSection(
@@ -690,7 +805,10 @@ function AdminBookingManagement({
           (
         <div className="session-booking-list">
           <div className="session-booking-header">
-            <h4>Booked Members</h4>
+            <div>
+              <h4>Booked Members</h4>
+              <p>Update attendance, walk-ins, and member status from here.</p>
+            </div>
             <div className="session-booking-summary">
               {bookingStatusOptions.map((option) => (
                 <span key={option.value}>
@@ -722,9 +840,11 @@ function AdminBookingManagement({
                     className="secondary-button"
                     disabled={isCharged || !hasBookedBookings}
                     onClick={() =>
-                      handleBulkUpdateSessionBookingStatus(
-                        session.id,
-                        "mark_booked_attended"
+                      runWithSessionHighlight(session.id, () =>
+                        handleBulkUpdateSessionBookingStatus(
+                          session.id,
+                          "mark_booked_attended"
+                        )
                       )
                     }
                   >
@@ -734,9 +854,11 @@ function AdminBookingManagement({
                     className="secondary-button"
                     disabled={isCharged || !hasNonCancelledBookings}
                     onClick={() =>
-                      handleBulkUpdateSessionBookingStatus(
-                        session.id,
-                        "reset_non_cancelled_booked"
+                      runWithSessionHighlight(session.id, () =>
+                        handleBulkUpdateSessionBookingStatus(
+                          session.id,
+                          "reset_non_cancelled_booked"
+                        )
                       )
                     }
                   >
@@ -760,7 +882,14 @@ function AdminBookingManagement({
 	                    const walkInDraft = getBookingWalkInDraft(booking);
 
 	                    return (
-	                      <div key={booking.id} className="session-booking-row">
+	                      <div
+                          key={booking.id}
+                          className={`session-booking-row booking-status-${booking.status} ${
+                            recentlyUpdatedRowId === `booking-${booking.id}`
+                              ? "is-recently-updated"
+                              : ""
+                          }`}
+                        >
                         <div className="session-booking-member">
                           <span>{member ? member.name : "Unknown Member"}</span>
                           <small>
@@ -796,9 +925,11 @@ function AdminBookingManagement({
                             value={booking.status}
                             disabled={isCharged}
                             onChange={(event) =>
-                              handleUpdateBookingStatus(
-                                booking.id,
-                                event.target.value
+                              runWithRowHighlight(`booking-${booking.id}`, () =>
+                                handleUpdateBookingStatus(
+                                  booking.id,
+                                  event.target.value
+                                )
                               )
                             }
                           >
@@ -811,6 +942,10 @@ function AdminBookingManagement({
                         </div>
 
 	                        <div className="walkin-admin-edit">
+                            <div className="walkin-admin-edit-heading">
+                              <strong>Walk-ins</strong>
+                              <small>Member-attached guests</small>
+                            </div>
 	                          <label>Walk-in Count</label>
 	                          <input
 	                            type="number"
@@ -840,10 +975,12 @@ function AdminBookingManagement({
 	                            type="button"
 	                            disabled={isCharged}
 	                            onClick={() =>
-	                              handleUpdateBookingWalkIns(
-	                                booking.id,
-	                                walkInDraft.count,
-	                                walkInDraft.namesText
+	                              runWithRowHighlight(`booking-${booking.id}`, () =>
+	                                handleUpdateBookingWalkIns(
+	                                  booking.id,
+	                                  walkInDraft.count,
+	                                  walkInDraft.namesText
+	                                )
 	                              )
 	                            }
 	                          >
@@ -857,9 +994,11 @@ function AdminBookingManagement({
 	                            type="button"
 	                            disabled={isCharged}
 	                            onClick={() =>
-	                              handleAdminRemoveMemberFromSession(
-	                                session.id,
-	                                booking.id
+	                              runWithSessionHighlight(session.id, () =>
+	                                handleAdminRemoveMemberFromSession(
+	                                  session.id,
+	                                  booking.id
+	                                )
 	                              )
 	                            }
 	                          >
@@ -874,7 +1013,8 @@ function AdminBookingManagement({
             </>
           )}
         </div>
-          )
+          ),
+          String(confirmedBookings.length)
         )}
 
         {renderSessionSection(
@@ -887,7 +1027,10 @@ function AdminBookingManagement({
           (
         <div className="waitlist-section">
           <div className="waitlist-column admin-workflow-card">
-            <h4>Member Waiting List</h4>
+            <div className="waitlist-column-header">
+              <h4>Member Waiting List</h4>
+              <span>{memberWaitlist.length}</span>
+            </div>
             {memberWaitlist.length === 0 ? (
               <p className="empty-text">No member waiting list.</p>
             ) : (
@@ -897,7 +1040,14 @@ function AdminBookingManagement({
                 );
 
                 return (
-                  <div key={booking.id} className="waitlist-row">
+                  <div
+                    key={booking.id}
+                    className={`waitlist-row ${
+                      recentlyUpdatedRowId === `waitlist-${booking.id}`
+                        ? "is-recently-updated"
+                        : ""
+                    }`}
+                  >
                     <div>
                       <strong>{member?.name || "Unknown Member"}</strong>
                       <small>{booking.bookedAt || "Waiting request"}</small>
@@ -907,14 +1057,22 @@ function AdminBookingManagement({
                       <button
                         className="small-approve-button"
                         disabled={isCharged}
-                        onClick={() => handlePromoteWaitlistBooking(booking.id)}
+                        onClick={() =>
+                          runWithSessionHighlight(session.id, () =>
+                            handlePromoteWaitlistBooking(booking.id)
+                          )
+                        }
                       >
                         Promote
                       </button>
                       <button
                         className="small-reject-button"
                         disabled={isCharged}
-                        onClick={() => handleRemoveWaitlistBooking(booking.id)}
+                        onClick={() =>
+                          runWithSessionHighlight(session.id, () =>
+                            handleRemoveWaitlistBooking(booking.id)
+                          )
+                        }
                       >
                         Remove
                       </button>
@@ -926,7 +1084,10 @@ function AdminBookingManagement({
           </div>
 
           <div className="waitlist-column admin-workflow-card">
-            <h4>Walk-in Waiting List</h4>
+            <div className="waitlist-column-header">
+              <h4>Walk-in Waiting List</h4>
+              <span>{walkInWaitlist.length + waitingIndependentWalkins.length}</span>
+            </div>
             {walkInWaitlist.length === 0 && waitingIndependentWalkins.length === 0 ? (
               <p className="empty-text">No walk-in waiting list.</p>
             ) : (
@@ -937,7 +1098,14 @@ function AdminBookingManagement({
                   );
 
                   return (
-                    <div key={booking.id} className="waitlist-row">
+                    <div
+                      key={booking.id}
+                      className={`waitlist-row ${
+                        recentlyUpdatedRowId === `waitlist-${booking.id}`
+                          ? "is-recently-updated"
+                          : ""
+                      }`}
+                    >
                       <div>
                         <strong>{member?.name || "Unknown Member"}</strong>
                         <small>{booking.bookedAt || "Waiting request"}</small>
@@ -953,14 +1121,22 @@ function AdminBookingManagement({
                         <button
                           className="small-approve-button"
                           disabled={isCharged}
-                          onClick={() => handlePromoteWaitlistBooking(booking.id)}
+                          onClick={() =>
+                            runWithSessionHighlight(session.id, () =>
+                              handlePromoteWaitlistBooking(booking.id)
+                            )
+                          }
                         >
                           Promote
                         </button>
                         <button
                           className="small-reject-button"
                           disabled={isCharged}
-                          onClick={() => handleRemoveWaitlistBooking(booking.id)}
+                          onClick={() =>
+                            runWithSessionHighlight(session.id, () =>
+                              handleRemoveWaitlistBooking(booking.id)
+                            )
+                          }
                         >
                           Remove
                         </button>
@@ -969,7 +1145,14 @@ function AdminBookingManagement({
                   );
                 })}
                 {waitingIndependentWalkins.map((walkin) => (
-                  <div key={walkin.id} className="waitlist-row">
+                  <div
+                    key={walkin.id}
+                    className={`waitlist-row ${
+                      recentlyUpdatedRowId === `independent-waitlist-${walkin.id}`
+                        ? "is-recently-updated"
+                        : ""
+                    }`}
+                  >
                     <div>
                       <strong>{walkin.name}</strong>
                       <small>{walkin.createdAt || "Waiting request"}</small>
@@ -980,7 +1163,11 @@ function AdminBookingManagement({
                         className="small-approve-button"
                         type="button"
                         disabled={isCharged}
-                        onClick={() => handlePromoteIndependentWalkin(walkin.id)}
+                        onClick={() =>
+                          runWithSessionHighlight(session.id, () =>
+                            handlePromoteIndependentWalkin(walkin.id)
+                          )
+                        }
                       >
                         Promote
                       </button>
@@ -988,7 +1175,11 @@ function AdminBookingManagement({
                         className="small-reject-button"
                         type="button"
                         disabled={isCharged}
-                        onClick={() => handleRemoveIndependentWalkin(walkin.id)}
+                        onClick={() =>
+                          runWithSessionHighlight(session.id, () =>
+                            handleRemoveIndependentWalkin(walkin.id)
+                          )
+                        }
                       >
                         Remove
                       </button>
@@ -999,7 +1190,8 @@ function AdminBookingManagement({
             )}
           </div>
         </div>
-          )
+          ),
+          String(waitingTotal)
         )}
 
         {renderSessionSection(
@@ -1013,7 +1205,15 @@ function AdminBookingManagement({
               } to charge`,
           (
         <div className="session-finalize-box admin-workflow-card">
-          <h4>Finalize Charge</h4>
+          <div className="finalize-review-header">
+            <div>
+              <h4>Finalize Charge</h4>
+              <p>Review fees and participant counts before charging wallets.</p>
+            </div>
+            <span className={isCharged ? "finalize-state-chip is-charged" : "finalize-state-chip"}>
+              {isCharged ? "Charged" : "Final Review"}
+            </span>
+          </div>
 
           <div className="session-charge-grid">
             <div>
@@ -1137,6 +1337,12 @@ function AdminBookingManagement({
             <p className="positive">Finalized {session.chargedAt}</p>
           )}
 
+          {!isCharged && (
+            <p className="finalize-warning-note">
+              Finalize only after attendance and walk-ins are correct.
+            </p>
+          )}
+
           <button
             className="action-button"
             disabled={isCharged || allBookings.length === 0}
@@ -1145,7 +1351,8 @@ function AdminBookingManagement({
             {isCharged ? "Session Charged" : "Finalize Session Charge"}
           </button>
         </div>
-          )
+          ),
+          isCharged ? "Charged" : "Review"
         )}
       </div>
     );
