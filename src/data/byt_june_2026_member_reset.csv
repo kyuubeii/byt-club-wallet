@@ -1,24 +1,24 @@
 member_no,name,balance_cf,default_login_id,default_password,status
 1,Isaac Leong,100.15,member1,123456,active
-2,Aaron Jong,3.91,member2,123456,active
+2,Aaron Jong,119.01,member2,123456,active
 3,Ernest Moa,46.50,member3,123456,active
 4,Elvin Wong,97.81,member4,123456,active
 5,Leon Chang,7.79,member5,123456,active
-6,Lim Puoy Teck,28.53,member6,123456,active
-7,Ray Lee,1.61,member7,123456,active
+6,Lim Puoy Teck,43.63,member6,123456,active
+7,Ray Lee,16.71,member7,123456,active
 8,Bong Chin Shin,60.82,member8,123456,active
-9,Lee Song,26.80,member9,123456,active
-10,Bong Boon Kang,52.53,member10,123456,active
+9,Lee Song,41.90,member9,123456,active
+10,Bong Boon Kang,67.63,member10,123456,active
 11,Jordan Lai Vui Kien,79.57,member11,123456,active
-12,Oscar Kho Zhen Hui,36.72,member12,123456,active
-13,Lee Yung Yi,165.42,member13,123456,active
-14,Lau Buong Yan,225.75,member14,123456,active
+12,Oscar Kho Zhen Hui,51.82,member12,123456,active
+13,Lee Yung Yi,180.52,member13,123456,active
+14,Lau Buong Yan,240.85,member14,123456,active
 15,Ivan Tan,33.32,member15,123456,active
 16,Kelvin Lo Wei Ping,60.30,member16,123456,active
 17,Sim Shy Wei,28.43,member17,123456,active
 18,Clarence Lai,47.30,member18,123456,active
-19,Edward Ling,1.06,member19,123456,active
-20,Ngu Jun Yi,92.76,member20,123456,active
+19,Edward Ling,31.26,member19,123456,active
+20,Ngu Jun Yi,107.86,member20,123456,active
 21,Hock Sheng,23.27,member21,123456,active
 22,Veronica Kho,0.00,member22,123456,active
 23,Bong Cheng Hui,46.30,member23,123456,active
@@ -39,7 +39,7 @@ member_no,name,balance_cf,default_login_id,default_password,status
 38,Sze Wee Kiat,4.71,member38,123456,active
 39,Siaw Tze Chong (Zhang),100.30,member39,123456,active
 40,Kenny Sng,-1.92,member40,123456,active
-41,Dexter Too Zi Hao,280.85,member41,123456,active
+41,Dexter Too Zi Hao,295.95,member41,123456,active
 42,Kelvin Lo Chih Leong,126.39,member42,123456,active
 43,Billy Lee Jing Zhen,51.00,member43,123456,active
 44,Jacky Tan Ik Tyng,45.40,member44,123456,active
@@ -53,11 +53,11 @@ member_no,name,balance_cf,default_login_id,default_password,status
 52,Andrew Lu,127.29,member52,123456,active
 53,Elmond Lim,16.89,member53,123456,active
 54,David wong,3.50,member54,123456,active
-55,Lawrence Chang,53.00,member55,123456,active
+55,Lawrence Chang,83.20,member55,123456,active
 56,Brandon Thian,41.33,member56,123456,active
 58,Lesily,19.77,member58,123456,active
 59,Sim Wen Biau,16.45,member59,123456,active
-60,Axpez Toh,-47.58,member60,123456,active
+60,Axpez Toh,-32.48,member60,123456,active
 61,Stephanie Tan,6.67,member61,123456,active
 62,Ace,6.10,member62,123456,active
 63,Joe Thong,7.40,member63,123456,active
@@ -72,9 +72,9 @@ member_no,name,balance_cf,default_login_id,default_password,status
 72,Clement Wong,93.73,member72,123456,active
 73,Martin Chieng,12.70,member73,123456,active
 74,Marcus Chin,47.50,member74,123456,active
-75,Jaco Phang,112.76,member75,123456,active
+75,Jaco Phang,127.86,member75,123456,active
 76,Reuben Ryan Then,47.30,member76,123456,active
-77,YC chai,15.19,member77,123456,active
+77,YC chai,30.29,member77,123456,active
 78,Esther Jong,0.00,member78,123456,active
 79,Vernon Chai,85.56,member79,123456,active
 80,Qiang,-2.30,member80,123456,active
@@ -83,7 +83,7 @@ member_no,name,balance_cf,default_login_id,default_password,status
 83,Alex Yong,1.72,member83,123456,active
 84,Sebastian Chris Goh,-8.88,member84,123456,active
 85,Alex Tan Jun Hao,10.02,member85,123456,active
-86,You En,40.70,member86,123456,active
+86,You En,55.80,member86,123456,active
 87,Sean Kho,72.10,member87,123456,active
 88,Alex Chui,-15.09,member88,123456,active
 89,David Long,64.70,member89,123456,active
@@ -94,12 +94,12 @@ member_no,name,balance_cf,default_login_id,default_password,status
 94,Renee Li,30.19,member94,123456,active
 95,Rick,6.59,member95,123456,active
 96,Wilson,63.09,member96,123456,active
-97,Jackson kong,128.04,member97,123456,active
+97,Jackson kong,143.14,member97,123456,active
 98,Samson,13.11,member98,123456,active
-99,Gordon,92.38,member99,123456,active
+99,Gordon,107.48,member99,123456,active
 100,Mervyn,24.06,member100,123456,active
 101,Jacky,55.89,member101,123456,active
-102,Brandon Choo,10.00,member102,123456,active
+102,Brandon Choo,25.10,member102,123456,active
 103,Ricky,9.79,member103,123456,active
 104,MingH MH,48.44,member104,123456,active
 105,Sam,56.40,member105,123456,active

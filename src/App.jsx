@@ -386,6 +386,7 @@ const initialSessions = [
     chargeStatus: "not_charged",
     shuttlecockUsed: 0,
     shuttlecockRate: 11,
+    walkInFee: 0,
     otherFeeTotal: 0,
   },
 ];
@@ -3341,6 +3342,16 @@ function App() {
     return Number(session.shuttlecockUsed || 0) * Number(session.shuttlecockRate || 0);
   }
 
+  function roundUpToOneDecimal(amount) {
+    const numberValue = Number(amount || 0);
+
+    if (numberValue <= 0) {
+      return 0;
+    }
+
+    return Math.ceil((numberValue - Number.EPSILON) * 10) / 10;
+  }
+
   function getSessionChargeSummary(session, bookings) {
     const confirmedBookings = bookings.filter((booking) =>
       isConfirmedSessionBooking(booking)
@@ -3357,47 +3368,49 @@ function App() {
       getSessionConfirmedIndependentWalkinCount(session.id);
     const totalConfirmedWalkInCount =
       getSessionAllConfirmedWalkInCount(session.id);
-    const courtDenominator =
-      courtBookings.length +
-      courtBookingWalkInCount +
-      confirmedIndependentWalkInCount;
 
     const attendedBookings = confirmedBookings.filter(
       (booking) => booking.status === "attended"
     );
+    const attendedBookingWalkInCount = attendedBookings.reduce(
+      (total, booking) => total + Number(booking.walkInCount || 0),
+      0
+    );
+    const courtDenominator =
+      courtBookings.length +
+      attendedBookingWalkInCount +
+      confirmedIndependentWalkInCount;
+    const totalAttendance = courtDenominator;
     const confirmedMemberAttachedWalkInCount = confirmedBookings.reduce(
       (total, booking) => total + Number(booking.walkInCount || 0),
       0
     );
-    const shuttlecockDenominator =
-      attendedBookings.length +
-      confirmedMemberAttachedWalkInCount +
-      confirmedIndependentWalkInCount;
 
     const courtFeeTotal = Number(session.courtFeeTotal || 0);
     const shuttlecockFeeTotal = getSessionShuttlecockFee(session);
-    const otherFeeTotal = Number(session.otherFeeTotal || 0);
-    const attendedFeeTotal = shuttlecockFeeTotal + otherFeeTotal;
-    const courtFeePerPlayer =
-      courtDenominator > 0 ? courtFeeTotal / courtDenominator : 0;
+    const courtAndShuttleFeeTotal = courtFeeTotal + shuttlecockFeeTotal;
+    const managementFeePerMember = Number(session.otherFeeTotal || 0);
+    const walkInFeePerWalkIn = Number(session.walkInFee || 0);
+    const baseExpensePerPax =
+      totalAttendance > 0
+        ? roundUpToOneDecimal(courtAndShuttleFeeTotal / totalAttendance)
+        : 0;
+    const expensesPerPax = baseExpensePerPax + managementFeePerMember;
+    const otherFeeTotal = managementFeePerMember;
+    const attendedFeeTotal = expensesPerPax;
+    const courtFeePerPlayer = baseExpensePerPax;
     const shuttlecockFeePerPlayer =
-      shuttlecockDenominator > 0
-        ? shuttlecockFeeTotal / shuttlecockDenominator
+      totalAttendance > 0
+        ? shuttlecockFeeTotal / totalAttendance
         : 0;
-    const otherFeePerAttendedPlayer =
-      attendedBookings.length > 0
-        ? otherFeeTotal / attendedBookings.length
-        : 0;
-    const attendedFeePerPlayer =
-      shuttlecockFeePerPlayer + otherFeePerAttendedPlayer;
+    const otherFeePerAttendedPlayer = managementFeePerMember;
+    const attendedFeePerPlayer = expensesPerPax;
 
     const chargeRows = confirmedBookings
       .map((booking) => {
-        const courtAmount = courtChargeStatuses.includes(booking.status)
-          ? courtFeePerPlayer
-          : 0;
-        const attendedAmount =
-          booking.status === "attended" ? attendedFeePerPlayer : 0;
+        const isChargeable = courtChargeStatuses.includes(booking.status);
+        const courtAmount = isChargeable ? baseExpensePerPax : 0;
+        const attendedAmount = isChargeable ? managementFeePerMember : 0;
 
         return {
           bookingId: booking.id,
@@ -3405,28 +3418,51 @@ function App() {
           bookingStatus: booking.status,
           courtAmount: courtAmount,
           attendedAmount: attendedAmount,
-          amount: courtAmount + attendedAmount,
+          baseAmount: courtAmount,
+          managementAmount: attendedAmount,
+          amount: isChargeable ? expensesPerPax : 0,
         };
       })
       .filter((charge) => charge.amount > 0);
+    const totalMemberChargeAmount = Number(
+      chargeRows
+        .reduce((total, charge) => total + Number(charge.amount.toFixed(2)), 0)
+        .toFixed(2)
+    );
+    const totalWalkInChargeAmount = Number(
+      (totalConfirmedWalkInCount * walkInFeePerWalkIn).toFixed(2)
+    );
+    const totalCollectionAmount = Number(
+      (totalMemberChargeAmount + totalWalkInChargeAmount).toFixed(2)
+    );
 
     return {
       courtBookings: courtBookings,
       attendedBookings: attendedBookings,
       courtBookingWalkInCount: courtBookingWalkInCount,
+      attendedBookingWalkInCount: attendedBookingWalkInCount,
       confirmedMemberAttachedWalkInCount: confirmedMemberAttachedWalkInCount,
       confirmedIndependentWalkInCount: confirmedIndependentWalkInCount,
       totalConfirmedWalkInCount: totalConfirmedWalkInCount,
+      totalAttendance: totalAttendance,
       courtDenominator: courtDenominator,
-      shuttlecockDenominator: shuttlecockDenominator,
+      shuttlecockDenominator: totalAttendance,
       courtFeeTotal: courtFeeTotal,
       shuttlecockFeeTotal: shuttlecockFeeTotal,
+      courtAndShuttleFeeTotal: courtAndShuttleFeeTotal,
       otherFeeTotal: otherFeeTotal,
       attendedFeeTotal: attendedFeeTotal,
       shuttlecockFeePerPlayer: shuttlecockFeePerPlayer,
       otherFeePerAttendedPlayer: otherFeePerAttendedPlayer,
+      baseExpensePerPax: baseExpensePerPax,
+      walkInFeePerWalkIn: walkInFeePerWalkIn,
+      totalWalkInChargeAmount: totalWalkInChargeAmount,
+      totalCollectionAmount: totalCollectionAmount,
+      managementFeePerMember: managementFeePerMember,
+      expensesPerPax: expensesPerPax,
       courtFeePerPlayer: courtFeePerPlayer,
       attendedFeePerPlayer: attendedFeePerPlayer,
+      totalMemberChargeAmount: totalMemberChargeAmount,
       chargeRows: chargeRows,
     };
   }
@@ -3485,12 +3521,13 @@ function App() {
       walkInLimit: walkInLimit,
       courtFeeTotal: Number(newSessionCourtFeeTotal),
       cancelCutoff: normalizeCutoffTime(newSessionCancelCutoff || "12:00"),
-      status: "open",
-      chargeStatus: "not_charged",
-      shuttlecockUsed: 0,
-      shuttlecockRate: 11,
-      otherFeeTotal: 0,
-    };
+        status: "open",
+        chargeStatus: "not_charged",
+        shuttlecockUsed: 0,
+        shuttlecockRate: 11,
+        walkInFee: 0,
+        otherFeeTotal: 0,
+      };
 
     setSessions((previousSessions) => [newSession, ...previousSessions]);
 
@@ -4632,6 +4669,11 @@ function App() {
       }
     }
 
+    if (field === "walkInFee" && Number(value || 0) < 0) {
+      alert("Walk-in fee cannot be negative.");
+      return;
+    }
+
     setSessions((previousSessions) =>
       previousSessions.map((session) => {
         if (Number(session.id) === Number(sessionId)) {
@@ -4644,6 +4686,10 @@ function App() {
         return session;
       })
     );
+
+    if (field === "walkInFee") {
+      return;
+    }
 
     try {
       await syncSessionUpdateToSupabase(sessionId, {
@@ -4676,10 +4722,10 @@ function App() {
     }
 
     if (
-      chargeSummary.attendedFeeTotal > 0 &&
-      chargeSummary.attendedBookings.length === 0
+      chargeSummary.courtAndShuttleFeeTotal > 0 &&
+      chargeSummary.totalAttendance === 0
     ) {
-      alert("Please mark at least one player as attended before charging shuttlecock or other fees.");
+      alert("Please add at least one chargeable participant before charging court or shuttlecock fees.");
       return;
     }
 

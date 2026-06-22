@@ -58,6 +58,7 @@ function AdminBookingManagement({
   const [walkinStatusBySession, setWalkinStatusBySession] = useState({});
   const [adminMemberBySession, setAdminMemberBySession] = useState({});
   const [adminMemberModeBySession, setAdminMemberModeBySession] = useState({});
+  const [adminMemberSearchBySession, setAdminMemberSearchBySession] = useState({});
   const [attendeesBySession, setAttendeesBySession] = useState({});
   const [openSectionsBySession, setOpenSectionsBySession] = useState({});
   const [bookingWalkInDrafts, setBookingWalkInDrafts] = useState({});
@@ -200,6 +201,10 @@ function AdminBookingManagement({
       setAdminMemberModeBySession((previousModes) => ({
         ...previousModes,
         [sessionId]: "confirmed",
+      }));
+      setAdminMemberSearchBySession((previousSearches) => ({
+        ...previousSearches,
+        [sessionId]: "",
       }));
     }
   }
@@ -352,6 +357,32 @@ function AdminBookingManagement({
     const selectedAdminMemberId = adminMemberBySession[session.id] || "";
     const adminMemberAddMode =
       adminMemberModeBySession[session.id] || "confirmed";
+    const adminMemberSearch = adminMemberSearchBySession[session.id] || "";
+    const normalizedAdminMemberSearch = adminMemberSearch.trim().toLowerCase();
+    const selectedAdminMember = activeMembers.find(
+      (member) => Number(member.id) === Number(selectedAdminMemberId)
+    );
+    const matchedAdminMembers = normalizedAdminMemberSearch
+      ? activeMembers
+          .filter((member) => {
+            const user = users.find(
+              (user) => Number(user.memberId) === Number(member.id)
+            );
+            const searchableText = [
+              member.name,
+              member.email,
+              user?.name,
+              user?.email,
+              user?.id,
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase();
+
+            return searchableText.includes(normalizedAdminMemberSearch);
+          })
+          .slice(0, 8)
+      : [];
     const bookingSearch = bookingSearchBySession[session.id] || "";
     const normalizedBookingSearch = bookingSearch.trim().toLowerCase();
     const bookingStatusCounts = bookingStatusOptions.reduce((counts, option) => {
@@ -596,203 +627,250 @@ function AdminBookingManagement({
           </div>
         )}
 
-        {(canManageIndependentWalkins || canAdminAddMember) &&
+        {canAdminAddMember &&
           renderSessionSection(
             session,
-            "addPeople",
-            "Add People",
-            "Add members and independent walk-ins",
+            "addMember",
+            "Admin Add Member",
+            "Search active members and add them directly",
             (
-            <div className="admin-add-people-grid">
-        {canManageIndependentWalkins && (
-          <div className="admin-walkin-section admin-workflow-card">
-            <div className="admin-walkin-header">
-              <div>
-                <h4>Admin Walk-ins</h4>
-                <p>Independent walk-ins are not attached to member accounts.</p>
-              </div>
-              <span className="waitlist-badge">
-                Confirmed {confirmedIndependentWalkins.length}
-              </span>
-            </div>
-
-            <div className="admin-walkin-form">
-              <div className="admin-walkin-drafts">
-                {independentWalkinDrafts.map((name, index) => (
-                  <div key={`${session.id}-walkin-draft-${index}`} className="admin-walkin-input-row">
-                    <label>Walk-in Name</label>
-                    <input
-                      type="text"
-                      placeholder="Walk-in name"
-                      value={name}
-                      onChange={(event) =>
-                        updateWalkinDraft(session.id, index, event.target.value)
-                      }
-                    />
-                    {independentWalkinDrafts.length > 1 && (
-                      <button
-                        className="small-reject-button"
-                        type="button"
-                        onClick={() => removeWalkinDraft(session.id, index)}
-                      >
-                        Remove
-                      </button>
-                    )}
+              <div className="admin-add-member-section admin-workflow-card">
+                <div className="admin-walkin-header">
+                  <div>
+                    <h4>Admin Add Member</h4>
+                    <p>Add an active member directly into this session.</p>
                   </div>
-                ))}
-              </div>
-
-              <div className="admin-walkin-controls">
-                <div>
-                  <label>Status</label>
-                  <select
-                    value={independentWalkinStatus}
-                    onChange={(event) =>
-                      setWalkinStatusBySession((previousStatuses) => ({
-                        ...previousStatuses,
-                        [session.id]: event.target.value,
-                      }))
-                    }
-                  >
-                    <option value="confirmed">Confirmed</option>
-                    <option value="waiting">Waiting</option>
-                  </select>
                 </div>
 
-                <button
-                  className="secondary-button"
-                  type="button"
-                  onClick={() => addWalkinDraft(session.id)}
-                >
-                  Add another walk-in
-                </button>
+                <div className="admin-add-member-controls">
+                  <div className="admin-member-search-panel">
+                    <label>Member</label>
+                    <input
+                      type="search"
+                      placeholder="Type member name..."
+                      value={adminMemberSearch}
+                      onChange={(event) => {
+                        const nextSearch = event.target.value;
 
-                <button
-                  className="action-button"
-                  type="button"
-                  onClick={() => submitIndependentWalkins(session.id)}
-                >
-                  Add Walk-in(s)
-                </button>
-              </div>
-            </div>
+                        setAdminMemberSearchBySession((previousSearches) => ({
+                          ...previousSearches,
+                          [session.id]: nextSearch,
+                        }));
+                        setAdminMemberBySession((previousMembers) => ({
+                          ...previousMembers,
+                          [session.id]: "",
+                        }));
+                      }}
+                    />
+                  </div>
 
-            <div className="admin-walkin-list-grid">
-              <div>
-                <h4>Confirmed Independent Walk-ins</h4>
-                {visibleIndependentWalkins.length === 0 ? (
-                  <p className="empty-text">No confirmed independent walk-ins.</p>
-                ) : (
-                  visibleIndependentWalkins.map((walkin) => (
-                    <div
-                      key={walkin.id}
-                      className={`waitlist-row ${
-                        recentlyUpdatedRowId === `walkin-${walkin.id}`
-                          ? "is-recently-updated"
-                          : ""
-                      }`}
+                  <div>
+                    <label>Status</label>
+                    <select
+                      value={adminMemberAddMode}
+                      onChange={(event) =>
+                        setAdminMemberModeBySession((previousModes) => ({
+                          ...previousModes,
+                          [session.id]: event.target.value,
+                        }))
+                      }
                     >
-                      <div>
-                        <strong>{walkin.name}</strong>
-                        <small>{walkin.createdAt || "Independent walk-in"}</small>
-                      </div>
-                      <span className="waitlist-badge">
-                        {walkin.status}
-                      </span>
-                      <div className="waitlist-actions">
-                        {walkin.status === "confirmed" && (
+                      <option value="confirmed">Confirmed</option>
+                      <option value="waiting">Waitlist</option>
+                    </select>
+                  </div>
+
+                  <button
+                    className="action-button"
+                    type="button"
+                    disabled={activeMembers.length === 0 || !selectedAdminMemberId}
+                    onClick={() => submitAdminMember(session.id)}
+                  >
+                    Add Member
+                  </button>
+                </div>
+
+                {selectedAdminMember && (
+                  <div className="admin-member-selected-card">
+                    <strong>{selectedAdminMember.name}</strong>
+                    <small>
+                      Balance {formatMoney(Number(selectedAdminMember.balance || 0))}
+                    </small>
+                  </div>
+                )}
+
+                <div className="admin-member-results-list">
+                  {!normalizedAdminMemberSearch ? (
+                    <p className="empty-text">Type a member name to search.</p>
+                  ) : matchedAdminMembers.length === 0 ? (
+                    <p className="empty-text">No active member found.</p>
+                  ) : (
+                    matchedAdminMembers.map((member) => (
+                      <button
+                        key={member.id}
+                        className={`admin-member-result-row ${
+                          Number(selectedAdminMemberId) === Number(member.id)
+                            ? "is-selected"
+                            : ""
+                        }`}
+                        type="button"
+                        onClick={() => {
+                          setAdminMemberBySession((previousMembers) => ({
+                            ...previousMembers,
+                            [session.id]: String(member.id),
+                          }));
+                          setAdminMemberSearchBySession((previousSearches) => ({
+                            ...previousSearches,
+                            [session.id]: member.name,
+                          }));
+                        }}
+                      >
+                        <span>{member.name}</span>
+                        <small>{formatMoney(Number(member.balance || 0))}</small>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            ),
+            String(activeMembers.length)
+          )}
+
+        {canManageIndependentWalkins &&
+          renderSessionSection(
+            session,
+            "adminWalkins",
+            "Admin Walk-ins",
+            "Manage independent walk-ins",
+            (
+              <div className="admin-walkin-section admin-workflow-card">
+                <div className="admin-walkin-header">
+                  <div>
+                    <h4>Admin Walk-ins</h4>
+                    <p>Independent walk-ins are not attached to member accounts.</p>
+                  </div>
+                  <span className="waitlist-badge">
+                    Confirmed {confirmedIndependentWalkins.length}
+                  </span>
+                </div>
+
+                <div className="admin-walkin-form">
+                  <div className="admin-walkin-drafts">
+                    {independentWalkinDrafts.map((name, index) => (
+                      <div key={`${session.id}-walkin-draft-${index}`} className="admin-walkin-input-row">
+                        <label>Walk-in Name</label>
+                        <input
+                          type="text"
+                          placeholder="Walk-in name"
+                          value={name}
+                          onChange={(event) =>
+                            updateWalkinDraft(session.id, index, event.target.value)
+                          }
+                        />
+                        {independentWalkinDrafts.length > 1 && (
                           <button
                             className="small-reject-button"
                             type="button"
-                            onClick={() =>
-                              runWithRowHighlight(`walkin-${walkin.id}`, () =>
-                                handleCancelIndependentWalkin(walkin.id)
-                              )
-                            }
+                            onClick={() => removeWalkinDraft(session.id, index)}
                           >
-                            Cancel
+                            Remove
                           </button>
                         )}
-                        <button
-                          className="small-reject-button"
-                          type="button"
-                          onClick={() =>
-                            runWithSessionHighlight(session.id, () =>
-                              handleRemoveIndependentWalkin(walkin.id)
-                            )
-                          }
-                        >
-                          Remove
-                        </button>
                       </div>
+                    ))}
+                  </div>
+
+                  <div className="admin-walkin-controls">
+                    <div>
+                      <label>Status</label>
+                      <select
+                        value={independentWalkinStatus}
+                        onChange={(event) =>
+                          setWalkinStatusBySession((previousStatuses) => ({
+                            ...previousStatuses,
+                            [session.id]: event.target.value,
+                          }))
+                        }
+                      >
+                        <option value="confirmed">Confirmed</option>
+                        <option value="waiting">Waiting</option>
+                      </select>
                     </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
-        {canAdminAddMember && (
-          <div className="admin-add-member-section admin-workflow-card">
-            <div className="admin-walkin-header">
-              <div>
-                <h4>Admin Add Member</h4>
-                <p>Add an active member directly into this session.</p>
-              </div>
-            </div>
+                    <button
+                      className="secondary-button"
+                      type="button"
+                      onClick={() => addWalkinDraft(session.id)}
+                    >
+                      Add another walk-in
+                    </button>
 
-            <div className="admin-add-member-controls">
-              <div>
-                <label>Member</label>
-                <select
-                  value={selectedAdminMemberId}
-                  onChange={(event) =>
-                    setAdminMemberBySession((previousMembers) => ({
-                      ...previousMembers,
-                      [session.id]: event.target.value,
-                    }))
-                  }
-                >
-                  <option value="">Select member</option>
-                  {activeMembers.map((member) => (
-                    <option key={member.id} value={member.id}>
-                      {member.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                    <button
+                      className="action-button"
+                      type="button"
+                      onClick={() => submitIndependentWalkins(session.id)}
+                    >
+                      Add Walk-in(s)
+                    </button>
+                  </div>
+                </div>
 
-              <div>
-                <label>Status</label>
-                <select
-                  value={adminMemberAddMode}
-                  onChange={(event) =>
-                    setAdminMemberModeBySession((previousModes) => ({
-                      ...previousModes,
-                      [session.id]: event.target.value,
-                    }))
-                  }
-                >
-                  <option value="confirmed">Confirmed</option>
-                  <option value="waiting">Waitlist</option>
-                </select>
+                <div className="admin-walkin-list-grid">
+                  <div>
+                    <h4>Confirmed Independent Walk-ins</h4>
+                    {visibleIndependentWalkins.length === 0 ? (
+                      <p className="empty-text">No confirmed independent walk-ins.</p>
+                    ) : (
+                      visibleIndependentWalkins.map((walkin) => (
+                        <div
+                          key={walkin.id}
+                          className={`waitlist-row ${
+                            recentlyUpdatedRowId === `walkin-${walkin.id}`
+                              ? "is-recently-updated"
+                              : ""
+                          }`}
+                        >
+                          <div>
+                            <strong>{walkin.name}</strong>
+                            <small>{walkin.createdAt || "Independent walk-in"}</small>
+                          </div>
+                          <span className="waitlist-badge">
+                            {walkin.status}
+                          </span>
+                          <div className="waitlist-actions">
+                            {walkin.status === "confirmed" && (
+                              <button
+                                className="small-reject-button"
+                                type="button"
+                                onClick={() =>
+                                  runWithRowHighlight(`walkin-${walkin.id}`, () =>
+                                    handleCancelIndependentWalkin(walkin.id)
+                                  )
+                                }
+                              >
+                                Cancel
+                              </button>
+                            )}
+                            <button
+                              className="small-reject-button"
+                              type="button"
+                              onClick={() =>
+                                runWithSessionHighlight(session.id, () =>
+                                  handleRemoveIndependentWalkin(walkin.id)
+                                )
+                              }
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
-
-              <button
-                className="action-button"
-                type="button"
-                disabled={activeMembers.length === 0}
-                onClick={() => submitAdminMember(session.id)}
-              >
-                Add Member
-              </button>
-            </div>
-          </div>
-        )}
-            </div>
             ),
-            "Add"
+            String(confirmedIndependentWalkins.length)
           )}
 
         {renderSessionSection(
@@ -1270,7 +1348,26 @@ function AdminBookingManagement({
             </div>
 
             <div>
-              <label>Other Fee Total</label>
+              <label>Walk-in Fee / Walk-in</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                inputMode="decimal"
+                value={session.walkInFee ?? ""}
+                disabled={isCharged}
+                onChange={(event) =>
+                  handleUpdateSessionChargeField(
+                    session.id,
+                    "walkInFee",
+                    event.target.value
+                  )
+                }
+              />
+            </div>
+
+            <div>
+              <label>Fee / Member</label>
               <input
                 type="number"
                 min="0"
@@ -1291,13 +1388,8 @@ function AdminBookingManagement({
 
           <div className="session-charge-summary-grid">
             <div>
-              <small>Court denominator incl. walk-ins</small>
-              <strong>{chargeSummary.courtDenominator}</strong>
-            </div>
-
-            <div>
-              <small>Shuttlecock denominator incl. walk-ins</small>
-              <strong>{chargeSummary.shuttlecockDenominator}</strong>
+              <small>Members to charge</small>
+              <strong>{chargeSummary.chargeRows.length}</strong>
             </div>
 
             <div>
@@ -1306,30 +1398,35 @@ function AdminBookingManagement({
             </div>
 
             <div>
-              <small>Shuttlecock total</small>
-              <strong>{formatMoney(chargeSummary.shuttlecockFeeTotal)}</strong>
+              <small>Total attendance</small>
+              <strong>{chargeSummary.totalAttendance}</strong>
             </div>
 
             <div>
-              <small>Court per player</small>
-              <strong>{formatMoney(chargeSummary.courtFeePerPlayer)}</strong>
+              <small>Court + shuttle total</small>
+              <strong>{formatMoney(chargeSummary.courtAndShuttleFeeTotal)}</strong>
             </div>
 
             <div>
-              <small>Attended member extra per player</small>
+              <small>Total member charge</small>
+              <strong>{formatMoney(chargeSummary.totalMemberChargeAmount)}</strong>
+            </div>
+
+            <div>
+              <small>Total collection</small>
+              <strong>{formatMoney(chargeSummary.totalCollectionAmount)}</strong>
+            </div>
+
+            <div>
+              <small>Fee / Member</small>
               <strong>
-                {formatMoney(chargeSummary.attendedFeePerPlayer)}
+                {formatMoney(chargeSummary.managementFeePerMember)}
               </strong>
             </div>
 
             <div>
-              <small>Walk-ins fixed fee only</small>
-              <strong>No wallet charge</strong>
-            </div>
-
-            <div>
-              <small>Members to charge</small>
-              <strong>{chargeSummary.chargeRows.length}</strong>
+              <small>Expenses/pax</small>
+              <strong>{formatMoney(chargeSummary.expensesPerPax)}</strong>
             </div>
           </div>
 

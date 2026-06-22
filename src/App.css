@@ -2217,7 +2217,7 @@ h1 {
 }
 
 .session-charge-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .session-charge-summary-grid,
@@ -4107,11 +4107,6 @@ select:focus-visible,
   color: #166534;
 }
 
-.admin-add-people-grid {
-  display: grid;
-  gap: 16px;
-}
-
 .admin-workflow-card {
   background:
     linear-gradient(135deg, rgba(248, 250, 252, 0.96), rgba(255, 255, 255, 0.98)),
@@ -4139,6 +4134,7 @@ select:focus-visible,
 
 .admin-walkin-controls select,
 .admin-add-member-controls select,
+.admin-member-search-panel input,
 .session-status-select,
 .walkin-admin-edit input,
 .session-charge-grid input {
@@ -4149,6 +4145,95 @@ select:focus-visible,
 .admin-add-member-controls .action-button {
   min-height: 48px;
   box-shadow: 0 12px 26px rgba(7, 17, 31, 0.18);
+}
+
+.admin-member-search-panel {
+  min-width: 0;
+}
+
+.admin-member-search-panel input {
+  min-height: 44px;
+}
+
+.admin-member-selected-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 14px;
+  background: #f8fafc;
+  color: var(--byt-muted);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.admin-member-selected-card strong {
+  color: var(--byt-ink);
+  overflow-wrap: anywhere;
+}
+
+.admin-member-selected-card small,
+.admin-member-selected-card span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-member-results-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.admin-member-results-list .empty-text {
+  margin: 0;
+}
+
+.admin-member-result-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 14px;
+  background: #ffffff;
+  color: var(--byt-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.admin-member-result-row:hover,
+.admin-member-result-row.is-selected {
+  border-color: rgba(37, 99, 235, 0.35);
+  background: #eff6ff;
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.08);
+}
+
+.admin-member-result-row:active {
+  transform: translateY(1px);
+}
+
+.admin-member-result-row span,
+.admin-member-result-row small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-member-result-row small {
+  color: var(--byt-muted);
+  font-weight: 850;
+  white-space: nowrap;
 }
 
 .admin-walkin-list-grid h4 {
