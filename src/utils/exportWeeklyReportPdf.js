@@ -96,6 +96,10 @@ function hasDateKey(dateValue, dateKey) {
   return getDateKeys(dateValue).has(dateKey);
 }
 
+function getPrimaryDateKey(dateValue) {
+  return [...getDateKeys(dateValue)][0] || "";
+}
+
 function getSessionChargeDateText(description) {
   const match = String(description || "").match(/session charge\s*-\s*(.+)$/i);
   return match ? match[1].trim() : "";
@@ -116,6 +120,25 @@ function transactionMatchesReportDate(transaction, reportDateKey) {
   }
 
   return hasDateKey(getSessionChargeDateText(transaction.description), reportDateKey);
+}
+
+function getTransactionEffectiveDateKey(transaction) {
+  const description = String(transaction.description || "").toLowerCase();
+  const type = String(transaction.type || "").toLowerCase();
+  const isSessionCharge =
+    type === "session_charge" || description.includes("session charge");
+
+  if (isSessionCharge) {
+    const sessionChargeDateKey = getPrimaryDateKey(
+      getSessionChargeDateText(transaction.description)
+    );
+
+    if (sessionChargeDateKey) {
+      return sessionChargeDateKey;
+    }
+  }
+
+  return getPrimaryDateKey(transaction.date);
 }
 
 function isReportExpenseTransaction(transaction, reportDateKey) {
@@ -146,9 +169,9 @@ function formatMoney(value, options = {}) {
   return `RM${Math.abs(amount).toFixed(2)}`;
 }
 
-function getBalanceStyle(member) {
+function getBalanceStyle(member, balanceValue = member.balance) {
   const status = String(member.status || "active").toLowerCase();
-  const balance = Number(member.balance || 0);
+  const balance = Number(balanceValue || 0);
 
   if (status !== "active") {
     return { fillColor: [0, 112, 255], textColor: [255, 255, 255] };
@@ -163,6 +186,21 @@ function getBalanceStyle(member) {
   }
 
   return { fillColor: [0, 255, 0], textColor: [0, 0, 0] };
+}
+
+function getMemberReportBalance(member, transactions, reportDateKey) {
+  const futureTransactionTotal = transactions
+    .filter(
+      (transaction) =>
+        Number(transaction.memberId) === Number(member.id) &&
+        getTransactionEffectiveDateKey(transaction) > reportDateKey
+    )
+    .reduce(
+      (total, transaction) => total + Number(transaction.amount || 0),
+      0
+    );
+
+  return Number((Number(member.balance || 0) - futureTransactionTotal).toFixed(2));
 }
 
 function arrayBufferToBase64(buffer) {
@@ -362,13 +400,18 @@ function buildReportRows(members, transactions, reportDateKey) {
           (total, transaction) => total + Math.abs(Number(transaction.amount || 0)),
           0
         );
+      const reportBalance = getMemberReportBalance(
+        member,
+        transactions,
+        reportDateKey
+      );
 
       return [
         index + 1,
         member.name || "",
         formatMoney(memberExpense),
-        formatMoney(member.balance, { parenthesizeNegative: true }),
-        member,
+        formatMoney(reportBalance, { parenthesizeNegative: true }),
+        { member, reportBalance },
       ];
     });
 }
@@ -430,13 +473,16 @@ export async function exportWeeklyReportPdf({
         return;
       }
 
-      const member = tableRows[data.row.index]?.[4];
+      const rowMeta = tableRows[data.row.index]?.[4];
 
-      if (!member) {
+      if (!rowMeta) {
         return;
       }
 
-      const balanceStyle = getBalanceStyle(member);
+      const balanceStyle = getBalanceStyle(
+        rowMeta.member,
+        rowMeta.reportBalance
+      );
       data.cell.styles.fillColor = balanceStyle.fillColor;
       data.cell.styles.textColor = balanceStyle.textColor;
       data.cell.styles.fontStyle = "normal";
