@@ -1007,158 +1007,173 @@ function AdminBookingManagement({
                               : ""
                           }`}
                         >
-                        <div className="session-booking-member">
-                          <span>{member ? member.name : "Unknown Member"}</span>
-                          <small>
-                            {booking.bookedAt
-                              ? `Booked ${booking.bookedAt}`
-                              : "Booking record"}
-                          </small>
-                          <small>
-                            Walk-in: {Number(booking.walkInCount || 0)}
-                            {booking.walkInNames?.length
-                              ? ` · ${booking.walkInNames.join(", ")}`
-                              : ""}
-                          </small>
-                          {Number(booking.lateCancelledWalkInCount || 0) > 0 && (
-                            <small>
-                              Late cancelled walk-in:{" "}
-                              {booking.lateCancelledWalkInCount}
-                              {booking.lateCancelledWalkInNames?.length
-                                ? ` · ${booking.lateCancelledWalkInNames.join(", ")}`
-                                : ""}
-                            </small>
-                          )}
-                        </div>
-
-                        <div className="session-booking-status">
-                          <span className="booking-status-pill">
-                            {currentStatus
-                              ? currentStatus.label
-                              : booking.status}
-                          </span>
-                          <select
-                            className="session-status-select"
-                            value={booking.status}
-                            disabled={isCharged}
-                            onChange={(event) =>
-                              runWithRowHighlight(`booking-${booking.id}`, () =>
-                                handleUpdateBookingStatus(
-                                  booking.id,
-                                  event.target.value
-                                )
-                              )
-                            }
-                          >
-                            {bookingStatusOptions.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-	                        <div className="walkin-admin-edit">
-                            <div className="walkin-admin-edit-heading">
-                              <strong>Walk-ins</strong>
-                              <small>Member-attached guests</small>
+                          <div className="session-booking-row-main">
+                            <div className="session-booking-member">
+                              <span>{member ? member.name : "Unknown Member"}</span>
+                              <small>
+                                {booking.bookedAt
+                                  ? `Booked ${booking.bookedAt}`
+                                  : "Booking record"}
+                              </small>
+                              <small>
+                                Walk-in: {Number(booking.walkInCount || 0)}
+                                {booking.walkInNames?.length
+                                  ? ` · ${booking.walkInNames.join(", ")}`
+                                  : ""}
+                              </small>
+                              {Number(booking.lateCancelledWalkInCount || 0) > 0 && (
+                                <small>
+                                  Late cancelled walk-in:{" "}
+                                  {booking.lateCancelledWalkInCount}
+                                  {booking.lateCancelledWalkInNames?.length
+                                    ? ` · ${booking.lateCancelledWalkInNames.join(", ")}`
+                                    : ""}
+                                </small>
+                              )}
                             </div>
-	                          <label>Walk-in Count</label>
-	                          <input
-	                            type="number"
-	                            min="0"
-	                            value={walkInDraft.count}
-	                            disabled={isCharged}
-	                            onChange={(event) =>
-	                              updateBookingWalkInDraft(booking, {
-	                                count: event.target.value,
-	                              })
-	                            }
-	                          />
-	                          <label>Walk-in Names</label>
-	                          <input
-	                            type="text"
-	                            placeholder="Alex, Jason"
-	                            value={walkInDraft.namesText}
-	                            disabled={isCharged}
-	                            onChange={(event) =>
-	                              updateBookingWalkInDraft(booking, {
-	                                namesText: event.target.value,
-	                              })
-	                            }
-	                          />
-                            <label>Walk-in charge</label>
-                            <select
-                              value={walkInChargeMode}
-                              disabled={isCharged}
-                              onChange={(event) =>
-                                runWithRowHighlight(`booking-${booking.id}`, () =>
-                                  handleUpdateBookingWalkInChargeMode(
-                                    booking.id,
-                                    event.target.value
+
+                            <div className="session-booking-status">
+                              <span className="booking-status-pill">
+                                {currentStatus
+                                  ? currentStatus.label
+                                  : booking.status}
+                              </span>
+                              <select
+                                className="session-status-select"
+                                value={booking.status}
+                                disabled={isCharged}
+                                onChange={(event) =>
+                                  runWithRowHighlight(`booking-${booking.id}`, () =>
+                                    handleUpdateBookingStatus(
+                                      booking.id,
+                                      event.target.value
+                                    )
                                   )
-                                )
-                              }
-                            >
-                              {memberAttachedWalkInChargeModeOptions.map(
-                                (option) => (
-                                  <option
-                                    key={option.value}
-                                    value={option.value}
-                                  >
+                                }
+                              >
+                                {bookingStatusOptions.map((option) => (
+                                  <option key={option.value} value={option.value}>
                                     {option.label}
                                   </option>
-                                )
-                              )}
-                            </select>
-                            {Number(booking.walkInCount || 0) > 0 && (
-                              <p className="walkin-charge-preview">
-                                {walkInChargeModeLabel}:{" "}
-                                {bookingCharge?.memberAttachedWalkInWalletAmount > 0
-                                  ? `wallet adds ${formatMoney(
-                                      bookingCharge.memberAttachedWalkInWalletAmount
-                                    )}`
-                                  : `separate collection ${formatMoney(
-                                      bookingCharge?.memberAttachedWalkInSeparateAmount ||
-                                        0
-                                    )}`}
-                              </p>
-                            )}
-	                          <button
-	                            className="secondary-button"
-	                            type="button"
-	                            disabled={isCharged}
-	                            onClick={() =>
-	                              runWithRowHighlight(`booking-${booking.id}`, () =>
-	                                handleUpdateBookingWalkIns(
-	                                  booking.id,
-	                                  walkInDraft.count,
-	                                  walkInDraft.namesText
-	                                )
-	                              )
-	                            }
-	                          >
-	                            Update Walk-ins
-	                          </button>
-	                        </div>
+                                ))}
+                              </select>
+                            </div>
 
-	                        <div className="session-booking-actions">
-	                          <button
-	                            className="small-reject-button"
-	                            type="button"
-	                            disabled={isCharged}
-	                            onClick={() =>
-	                              runWithSessionHighlight(session.id, () =>
-	                                handleAdminRemoveMemberFromSession(
-	                                  session.id,
-	                                  booking.id
-	                                )
-	                              )
-	                            }
-	                          >
-	                            Remove Member
-	                          </button>
-	                        </div>
+                            <div className="session-booking-actions">
+                              <button
+                                className="small-reject-button"
+                                type="button"
+                                disabled={isCharged}
+                                onClick={() =>
+                                  runWithSessionHighlight(session.id, () =>
+                                    handleAdminRemoveMemberFromSession(
+                                      session.id,
+                                      booking.id
+                                    )
+                                  )
+                                }
+                              >
+                                Remove Member
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="session-booking-row-footer">
+                            <div className="walkin-admin-settings">
+                              <div className="walkin-admin-edit-heading">
+                                <strong>Walk-in settings</strong>
+                                <small>Member-attached guests</small>
+                              </div>
+
+                              <label className="walkin-admin-field">
+                                <span>Count</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={walkInDraft.count}
+                                  disabled={isCharged}
+                                  onChange={(event) =>
+                                    updateBookingWalkInDraft(booking, {
+                                      count: event.target.value,
+                                    })
+                                  }
+                                />
+                              </label>
+
+                              <label className="walkin-admin-field walkin-admin-names">
+                                <span>Names</span>
+                                <input
+                                  type="text"
+                                  placeholder="Alex, Jason"
+                                  value={walkInDraft.namesText}
+                                  disabled={isCharged}
+                                  onChange={(event) =>
+                                    updateBookingWalkInDraft(booking, {
+                                      namesText: event.target.value,
+                                    })
+                                  }
+                                />
+                              </label>
+
+                              <label className="walkin-admin-field walkin-admin-charge-mode">
+                                <span>Charge</span>
+                                <select
+                                  value={walkInChargeMode}
+                                  disabled={isCharged}
+                                  onChange={(event) =>
+                                    runWithRowHighlight(`booking-${booking.id}`, () =>
+                                      handleUpdateBookingWalkInChargeMode(
+                                        booking.id,
+                                        event.target.value
+                                      )
+                                    )
+                                  }
+                                >
+                                  {memberAttachedWalkInChargeModeOptions.map(
+                                    (option) => (
+                                      <option
+                                        key={option.value}
+                                        value={option.value}
+                                      >
+                                        {option.label}
+                                      </option>
+                                    )
+                                  )}
+                                </select>
+                              </label>
+
+                              <button
+                                className="secondary-button walkin-admin-save"
+                                type="button"
+                                disabled={isCharged}
+                                onClick={() =>
+                                  runWithRowHighlight(`booking-${booking.id}`, () =>
+                                    handleUpdateBookingWalkIns(
+                                      booking.id,
+                                      walkInDraft.count,
+                                      walkInDraft.namesText
+                                    )
+                                  )
+                                }
+                              >
+                                Update Walk-ins
+                              </button>
+
+                              {Number(booking.walkInCount || 0) > 0 && (
+                                <p className="walkin-charge-preview">
+                                  {bookingCharge?.memberAttachedWalkInWalletAmount > 0
+                                    ? `Wallet adds ${formatMoney(
+                                        bookingCharge.memberAttachedWalkInWalletAmount
+                                      )}`
+                                    : `Separate collection ${formatMoney(
+                                        bookingCharge?.memberAttachedWalkInSeparateAmount ||
+                                          0
+                                      )}`}
+                                  <span>{walkInChargeModeLabel}</span>
+                                </p>
+                              )}
+                            </div>
+                          </div>
 	                      </div>
 	                    );
                   })}

@@ -2002,14 +2002,23 @@ h1 {
 
 .session-booking-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) auto minmax(240px, 0.8fr) auto;
-  align-items: center;
-  gap: 12px;
+  gap: 14px;
   margin-top: 10px;
   padding: 14px;
   border: 1px solid var(--byt-line);
   border-radius: 18px;
   background: #ffffff;
+}
+
+.session-booking-row-main {
+  display: grid;
+  grid-template-columns: minmax(210px, 1fr) minmax(250px, auto) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.session-booking-row-footer {
+  min-width: 0;
 }
 
 .session-booking-row:last-child {
@@ -2048,37 +2057,72 @@ h1 {
   min-width: 150px;
 }
 
-.walkin-admin-edit {
+.walkin-admin-edit,
+.walkin-admin-settings {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns:
+    minmax(130px, 0.8fr)
+    minmax(90px, 0.4fr)
+    minmax(180px, 1fr)
+    minmax(220px, 1fr)
+    auto;
   gap: 8px;
   align-items: end;
 }
 
-.walkin-admin-edit label {
+.walkin-admin-edit label,
+.walkin-admin-field {
+  display: grid;
+  gap: 5px;
   margin: 0;
 }
 
+.walkin-admin-field span {
+  color: var(--byt-muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
 .walkin-admin-edit input,
-.walkin-admin-edit select {
+.walkin-admin-edit select,
+.walkin-admin-settings input,
+.walkin-admin-settings select {
   min-height: 40px;
   padding: 10px 12px;
 }
 
-.walkin-charge-preview,
-.walkin-admin-edit .secondary-button {
-  grid-column: 1 / -1;
+.walkin-admin-charge-mode select {
+  min-width: 210px;
 }
 
 .walkin-charge-preview {
+  grid-column: 2 / -1;
+}
+
+.walkin-charge-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
   margin: 0;
   color: var(--byt-muted);
   font-size: 12px;
   font-weight: 850;
 }
 
+.walkin-charge-preview span {
+  color: #1d4ed8;
+  font-weight: 900;
+}
+
 .walkin-admin-edit .secondary-button {
   margin-top: 0;
+}
+
+.walkin-admin-save {
+  margin-top: 0;
+  min-height: 40px;
+  white-space: nowrap;
 }
 
 .session-booking-actions {
@@ -2586,7 +2630,8 @@ h1 {
 
   .session-booking-status,
   .session-booking-actions,
-  .walkin-admin-edit {
+  .walkin-admin-edit,
+  .walkin-admin-settings {
     width: 100%;
   }
 }
@@ -2721,6 +2766,7 @@ h1 {
   .admin-walkin-input-row,
   .admin-add-member-controls,
   .walkin-admin-edit,
+  .walkin-admin-settings,
   .developer-tools-unlock-row {
     grid-template-columns: 1fr;
   }
@@ -4150,6 +4196,8 @@ select:focus-visible,
 .session-status-select,
 .walkin-admin-edit input,
 .walkin-admin-edit select,
+.walkin-admin-settings input,
+.walkin-admin-settings select,
 .session-charge-grid input {
   border-color: rgba(148, 163, 184, 0.34);
 }
@@ -4283,7 +4331,6 @@ select:focus-visible,
 }
 
 .session-booking-row {
-  grid-template-columns: minmax(210px, 1.1fr) minmax(170px, 0.6fr) minmax(260px, 0.95fr) auto;
   border-color: rgba(148, 163, 184, 0.28);
 }
 
@@ -4312,15 +4359,15 @@ select:focus-visible,
   color: #991b1b;
 }
 
-.walkin-admin-edit {
-  padding: 12px;
+.walkin-admin-edit,
+.walkin-admin-settings {
+  padding: 12px 14px;
   border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 16px;
   background: #f8fafc;
 }
 
 .walkin-admin-edit-heading {
-  grid-column: 1 / -1;
   display: grid;
   gap: 2px;
 }
@@ -4700,7 +4747,9 @@ select:focus-visible,
 
 @media (max-width: 1000px) {
   .session-booking-tools,
-  .session-booking-row {
+  .session-booking-row,
+  .session-booking-row-main,
+  .walkin-admin-settings {
     grid-template-columns: 1fr;
   }
 
@@ -4712,6 +4761,10 @@ select:focus-visible,
   .session-booking-status {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(160px, 0.8fr);
+  }
+
+  .walkin-charge-preview {
+    grid-column: 1 / -1;
   }
 
   .ai-import-session-grid {
@@ -4758,6 +4811,10 @@ select:focus-visible,
   .session-charge-grid,
   .session-charge-summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .walkin-admin-charge-mode select {
+    min-width: 0;
   }
 
   .admin-table-scroll table {
