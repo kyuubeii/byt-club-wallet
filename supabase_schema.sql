@@ -146,6 +146,7 @@ create table if not exists session_bookings (
   status_updated_at timestamptz,
   walk_in_count integer not null default 0,
   walk_in_names text[] not null default '{}',
+  member_attached_walkin_charge_mode text not null default 'collect_separately',
   late_cancelled_walk_in_count integer not null default 0,
   late_cancelled_walk_in_names text[] not null default '{}',
   waitlist_type text,
@@ -154,6 +155,13 @@ create table if not exists session_bookings (
   updated_at timestamptz not null default now(),
   constraint session_bookings_status_check check (
     status in ('booked', 'attended', 'no_show', 'late_cancel', 'cancelled')
+  ),
+  constraint session_bookings_member_attached_walkin_charge_mode_check check (
+    member_attached_walkin_charge_mode in (
+      'collect_separately',
+      'deduct_walkin_fee',
+      'charge_as_member'
+    )
   )
 );
 
@@ -161,6 +169,7 @@ alter table sessions add column if not exists walk_in_limit integer not null def
 
 alter table session_bookings add column if not exists walk_in_count integer not null default 0;
 alter table session_bookings add column if not exists walk_in_names text[] not null default '{}';
+alter table session_bookings add column if not exists member_attached_walkin_charge_mode text not null default 'collect_separately';
 alter table session_bookings add column if not exists late_cancelled_walk_in_count integer not null default 0;
 alter table session_bookings add column if not exists late_cancelled_walk_in_names text[] not null default '{}';
 alter table session_bookings add column if not exists waitlist_type text;

@@ -1,5 +1,28 @@
 import { useState } from "react";
 
+const memberAttachedWalkInChargeModeOptions = [
+  {
+    value: "collect_separately",
+    label: "Collect separately",
+  },
+  {
+    value: "deduct_walkin_fee",
+    label: "Deduct walk-in fee",
+  },
+  {
+    value: "charge_as_member",
+    label: "Charge as member pax",
+  },
+];
+
+function getMemberAttachedWalkInChargeModeLabel(chargeMode) {
+  return (
+    memberAttachedWalkInChargeModeOptions.find(
+      (option) => option.value === chargeMode
+    )?.label || memberAttachedWalkInChargeModeOptions[0].label
+  );
+}
+
 function AdminBookingManagement({
   bookingStatusOptions,
   formatMoney,
@@ -29,6 +52,7 @@ function AdminBookingManagement({
   handleRemoveWaitlistBooking,
   handleBulkUpdateSessionBookingStatus,
   handleUpdateBookingStatus,
+  handleUpdateBookingWalkInChargeMode,
   handleUpdateBookingWalkIns,
   handleUpdateSessionChargeField,
   members,
@@ -958,6 +982,21 @@ function AdminBookingManagement({
 	                      (option) => option.value === booking.status
 	                    );
 	                    const walkInDraft = getBookingWalkInDraft(booking);
+                      const bookingCharge = (
+                        chargeSummary.calculatedChargeRows ||
+                        chargeSummary.chargeRows
+                      ).find(
+                        (charge) =>
+                          Number(charge.bookingId) === Number(booking.id)
+                      );
+                      const walkInChargeMode =
+                        bookingCharge?.memberAttachedWalkInChargeMode ||
+                        booking.memberAttachedWalkInChargeMode ||
+                        "collect_separately";
+                      const walkInChargeModeLabel =
+                        getMemberAttachedWalkInChargeModeLabel(
+                          walkInChargeMode
+                        );
 
 	                    return (
 	                      <div
@@ -1048,6 +1087,43 @@ function AdminBookingManagement({
 	                              })
 	                            }
 	                          />
+                            <label>Walk-in charge</label>
+                            <select
+                              value={walkInChargeMode}
+                              disabled={isCharged}
+                              onChange={(event) =>
+                                runWithRowHighlight(`booking-${booking.id}`, () =>
+                                  handleUpdateBookingWalkInChargeMode(
+                                    booking.id,
+                                    event.target.value
+                                  )
+                                )
+                              }
+                            >
+                              {memberAttachedWalkInChargeModeOptions.map(
+                                (option) => (
+                                  <option
+                                    key={option.value}
+                                    value={option.value}
+                                  >
+                                    {option.label}
+                                  </option>
+                                )
+                              )}
+                            </select>
+                            {Number(booking.walkInCount || 0) > 0 && (
+                              <p className="walkin-charge-preview">
+                                {walkInChargeModeLabel}:{" "}
+                                {bookingCharge?.memberAttachedWalkInWalletAmount > 0
+                                  ? `wallet adds ${formatMoney(
+                                      bookingCharge.memberAttachedWalkInWalletAmount
+                                    )}`
+                                  : `separate collection ${formatMoney(
+                                      bookingCharge?.memberAttachedWalkInSeparateAmount ||
+                                        0
+                                    )}`}
+                              </p>
+                            )}
 	                          <button
 	                            className="secondary-button"
 	                            type="button"

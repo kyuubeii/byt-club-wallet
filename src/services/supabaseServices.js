@@ -93,6 +93,8 @@ function toSupabaseSessionBookingRow(booking) {
     status_updated_at: nullable(booking.statusUpdatedAt),
     walk_in_count: Number(booking.walkInCount || 0),
     walk_in_names: booking.walkInNames || [],
+    member_attached_walkin_charge_mode:
+      booking.memberAttachedWalkInChargeMode || "collect_separately",
     late_cancelled_walk_in_count: Number(booking.lateCancelledWalkInCount || 0),
     late_cancelled_walk_in_names: booking.lateCancelledWalkInNames || [],
     waitlist_type: nullable(booking.waitlistType),
@@ -187,6 +189,16 @@ function toSupabaseSessionBookingUpdates(updates) {
 
   if (Object.prototype.hasOwnProperty.call(updates, "walkInNames")) {
     supabaseUpdates.walk_in_names = updates.walkInNames || [];
+  }
+
+  if (
+    Object.prototype.hasOwnProperty.call(
+      updates,
+      "memberAttachedWalkInChargeMode"
+    )
+  ) {
+    supabaseUpdates.member_attached_walkin_charge_mode =
+      updates.memberAttachedWalkInChargeMode || "collect_separately";
   }
 
   if (Object.prototype.hasOwnProperty.call(updates, "lateCancelledWalkInCount")) {

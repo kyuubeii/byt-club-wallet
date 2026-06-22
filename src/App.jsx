@@ -403,6 +403,18 @@ const bookingStatusOptions = [
 ];
 
 const courtChargeStatuses = ["booked", "attended", "no_show", "late_cancel"];
+const MEMBER_ATTACHED_WALKIN_CHARGE_MODES = [
+  "collect_separately",
+  "deduct_walkin_fee",
+  "charge_as_member",
+];
+const DEFAULT_MEMBER_ATTACHED_WALKIN_CHARGE_MODE = "collect_separately";
+
+function normalizeMemberAttachedWalkInChargeMode(chargeMode) {
+  return MEMBER_ATTACHED_WALKIN_CHARGE_MODES.includes(chargeMode)
+    ? chargeMode
+    : DEFAULT_MEMBER_ATTACHED_WALKIN_CHARGE_MODE;
+}
 
 const STORAGE_KEYS = {
   users: "byt_users",
@@ -606,6 +618,9 @@ function convertSupabaseSessionBookings(supabaseBookings) {
     statusUpdatedAt: booking.status_updated_at || null,
     walkInCount: Number(booking.walk_in_count || 0),
     walkInNames: booking.walk_in_names || [],
+    memberAttachedWalkInChargeMode: normalizeMemberAttachedWalkInChargeMode(
+      booking.member_attached_walkin_charge_mode
+    ),
     lateCancelledWalkInCount: Number(
       booking.late_cancelled_walk_in_count || 0
     ),
@@ -3163,6 +3178,8 @@ function App() {
         statusUpdatedAt: null,
         walkInCount: Number(row.walkInCount || 0),
         walkInNames: row.walkInNames || [],
+        memberAttachedWalkInChargeMode:
+          DEFAULT_MEMBER_ATTACHED_WALKIN_CHARGE_MODE,
         lateCancelledWalkInCount: 0,
         lateCancelledWalkInNames: [],
         waitlistType: null,
@@ -3406,34 +3423,84 @@ function App() {
     const otherFeePerAttendedPlayer = managementFeePerMember;
     const attendedFeePerPlayer = expensesPerPax;
 
-    const chargeRows = confirmedBookings
-      .map((booking) => {
+    const calculatedChargeRows = confirmedBookings.map((booking) => {
         const isChargeable = courtChargeStatuses.includes(booking.status);
         const courtAmount = isChargeable ? baseExpensePerPax : 0;
         const attendedAmount = isChargeable ? managementFeePerMember : 0;
+        const memberAttachedWalkInCount = Number(booking.walkInCount || 0);
+        const walkInChargeMode = normalizeMemberAttachedWalkInChargeMode(
+          booking.memberAttachedWalkInChargeMode
+        );
+        let memberAttachedWalkInWalletAmount = 0;
+        let memberAttachedWalkInSeparateAmount = 0;
+
+        if (isChargeable && memberAttachedWalkInCount > 0) {
+          if (walkInChargeMode === "deduct_walkin_fee") {
+            memberAttachedWalkInWalletAmount =
+              memberAttachedWalkInCount * walkInFeePerWalkIn;
+          } else if (walkInChargeMode === "charge_as_member") {
+            memberAttachedWalkInWalletAmount =
+              memberAttachedWalkInCount * expensesPerPax;
+          } else {
+            memberAttachedWalkInSeparateAmount =
+              memberAttachedWalkInCount * walkInFeePerWalkIn;
+          }
+        }
 
         return {
           bookingId: booking.id,
           memberId: booking.memberId,
           bookingStatus: booking.status,
+          memberAttachedWalkInCount: memberAttachedWalkInCount,
+          memberAttachedWalkInChargeMode: walkInChargeMode,
           courtAmount: courtAmount,
           attendedAmount: attendedAmount,
           baseAmount: courtAmount,
           managementAmount: attendedAmount,
-          amount: isChargeable ? expensesPerPax : 0,
+          memberAttachedWalkInWalletAmount:
+            memberAttachedWalkInWalletAmount,
+          memberAttachedWalkInSeparateAmount:
+            memberAttachedWalkInSeparateAmount,
+          amount: isChargeable
+            ? expensesPerPax + memberAttachedWalkInWalletAmount
+            : 0,
         };
-      })
-      .filter((charge) => charge.amount > 0);
+      });
+    const chargeRows = calculatedChargeRows.filter((charge) => charge.amount > 0);
     const totalMemberChargeAmount = Number(
       chargeRows
         .reduce((total, charge) => total + Number(charge.amount.toFixed(2)), 0)
         .toFixed(2)
     );
-    const totalWalkInChargeAmount = Number(
-      (totalConfirmedWalkInCount * walkInFeePerWalkIn).toFixed(2)
+    const totalMemberAttachedWalkInWalletChargeAmount = Number(
+      calculatedChargeRows
+        .reduce(
+          (total, charge) =>
+            total + Number(charge.memberAttachedWalkInWalletAmount.toFixed(2)),
+          0
+        )
+        .toFixed(2)
+    );
+    const totalMemberAttachedWalkInSeparateChargeAmount = Number(
+      calculatedChargeRows
+        .reduce(
+          (total, charge) =>
+            total + Number(charge.memberAttachedWalkInSeparateAmount.toFixed(2)),
+          0
+        )
+        .toFixed(2)
+    );
+    const totalIndependentWalkInChargeAmount = Number(
+      (confirmedIndependentWalkInCount * walkInFeePerWalkIn).toFixed(2)
+    );
+    const totalSeparateWalkInChargeAmount = Number(
+      (
+        totalMemberAttachedWalkInSeparateChargeAmount +
+        totalIndependentWalkInChargeAmount
+      ).toFixed(2)
     );
     const totalCollectionAmount = Number(
-      (totalMemberChargeAmount + totalWalkInChargeAmount).toFixed(2)
+      (totalMemberChargeAmount + totalSeparateWalkInChargeAmount).toFixed(2)
     );
 
     return {
@@ -3456,13 +3523,20 @@ function App() {
       otherFeePerAttendedPlayer: otherFeePerAttendedPlayer,
       baseExpensePerPax: baseExpensePerPax,
       walkInFeePerWalkIn: walkInFeePerWalkIn,
-      totalWalkInChargeAmount: totalWalkInChargeAmount,
+      totalMemberAttachedWalkInWalletChargeAmount:
+        totalMemberAttachedWalkInWalletChargeAmount,
+      totalMemberAttachedWalkInSeparateChargeAmount:
+        totalMemberAttachedWalkInSeparateChargeAmount,
+      totalIndependentWalkInChargeAmount: totalIndependentWalkInChargeAmount,
+      totalSeparateWalkInChargeAmount: totalSeparateWalkInChargeAmount,
+      totalWalkInChargeAmount: totalSeparateWalkInChargeAmount,
       totalCollectionAmount: totalCollectionAmount,
       managementFeePerMember: managementFeePerMember,
       expensesPerPax: expensesPerPax,
       courtFeePerPlayer: courtFeePerPlayer,
       attendedFeePerPlayer: attendedFeePerPlayer,
       totalMemberChargeAmount: totalMemberChargeAmount,
+      calculatedChargeRows: calculatedChargeRows,
       chargeRows: chargeRows,
     };
   }
@@ -3654,6 +3728,8 @@ function App() {
       bookedAt: new Date().toLocaleString(),
       walkInCount: selectedWalkInCount,
       walkInNames: walkInNames,
+      memberAttachedWalkInChargeMode:
+        DEFAULT_MEMBER_ATTACHED_WALKIN_CHARGE_MODE,
       waitlistType: waitlistType,
       waitlistStatus: waitlistStatus,
     };
@@ -3764,6 +3840,8 @@ function App() {
       statusUpdatedAt: null,
       walkInCount: 0,
       walkInNames: [],
+      memberAttachedWalkInChargeMode:
+        DEFAULT_MEMBER_ATTACHED_WALKIN_CHARGE_MODE,
       lateCancelledWalkInCount: 0,
       lateCancelledWalkInNames: [],
       waitlistType: isWaiting ? "member" : null,
@@ -4114,6 +4192,55 @@ function App() {
       await syncSessionBookingUpdateToSupabase(bookingId, {
         walkInCount: updatedBooking.walkInCount,
         walkInNames: updatedBooking.walkInNames,
+        statusUpdatedAt: updatedBooking.statusUpdatedAt,
+      });
+    } catch (error) {
+      alertSupabaseBookingSyncFailed(error);
+    }
+  }
+
+  async function handleUpdateBookingWalkInChargeMode(bookingId, chargeMode) {
+    const booking = sessionBookings.find(
+      (booking) => Number(booking.id) === Number(bookingId)
+    );
+
+    if (!booking) {
+      alert("Booking not found");
+      return;
+    }
+
+    const session = sessions.find(
+      (session) => Number(session.id) === Number(booking.sessionId)
+    );
+
+    if (!session) {
+      alert("Session not found");
+      return;
+    }
+
+    if (session.chargeStatus === "charged") {
+      alert("Charged sessions cannot be changed.");
+      return;
+    }
+
+    const nextChargeMode =
+      normalizeMemberAttachedWalkInChargeMode(chargeMode);
+    const updatedBooking = {
+      ...booking,
+      memberAttachedWalkInChargeMode: nextChargeMode,
+      statusUpdatedAt: new Date().toLocaleString(),
+    };
+
+    setSessionBookings((previousBookings) =>
+      previousBookings.map((item) =>
+        Number(item.id) === Number(bookingId) ? updatedBooking : item
+      )
+    );
+
+    try {
+      await syncSessionBookingUpdateToSupabase(bookingId, {
+        memberAttachedWalkInChargeMode:
+          updatedBooking.memberAttachedWalkInChargeMode,
         statusUpdatedAt: updatedBooking.statusUpdatedAt,
       });
     } catch (error) {
@@ -6470,6 +6597,9 @@ function App() {
               handleBulkUpdateSessionBookingStatus
             }
             handleUpdateBookingStatus={handleUpdateBookingStatus}
+            handleUpdateBookingWalkInChargeMode={
+              handleUpdateBookingWalkInChargeMode
+            }
             handleUpdateBookingWalkIns={handleUpdateBookingWalkIns}
             handleUpdateSessionChargeField={handleUpdateSessionChargeField}
             members={members}
