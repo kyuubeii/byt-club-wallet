@@ -5167,7 +5167,7 @@ function App() {
                 <div className="ai-import-header">
                   <div>
                     <span className="admin-session-eyebrow">Gemini Parser</span>
-                    <h2>AI Import Session List</h2>
+                    <h2>AI Import Session List (beta)</h2>
                     <p>
                       Paste a WhatsApp-style list. Gemini only parses text;
                       nothing is created until you confirm the preview.
