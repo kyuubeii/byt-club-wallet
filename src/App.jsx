@@ -4809,6 +4809,34 @@ function App() {
   }
 
   async function handleUpdateSessionChargeField(sessionId, field, value) {
+    if (field === "maxPlayers") {
+      const session = sessions.find(
+        (session) => Number(session.id) === Number(sessionId)
+      );
+      const nextMaxPlayers = Number(value || 0);
+
+      if (!session) {
+        alert("Session not found");
+        return;
+      }
+
+      if (session.chargeStatus === "charged") {
+        alert("Charged sessions cannot be changed.");
+        return;
+      }
+
+      if (
+        !Number.isInteger(nextMaxPlayers) ||
+        nextMaxPlayers < getSessionTotalParticipantCount(sessionId) ||
+        nextMaxPlayers < Number(session.walkInLimit ?? 5)
+      ) {
+        alert(
+          "Max players must be at least current participants and walk-in limit."
+        );
+        return;
+      }
+    }
+
     if (field === "walkInLimit") {
       const session = sessions.find(
         (session) => Number(session.id) === Number(sessionId)

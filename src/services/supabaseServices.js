@@ -127,6 +127,10 @@ function toSupabaseSessionUpdates(updates) {
     supabaseUpdates.walk_in_limit = Number(updates.walkInLimit ?? 5);
   }
 
+  if (Object.prototype.hasOwnProperty.call(updates, "maxPlayers")) {
+    supabaseUpdates.max_players = Number(updates.maxPlayers || 0);
+  }
+
   if (Object.prototype.hasOwnProperty.call(updates, "shuttlecockUsed")) {
     supabaseUpdates.shuttlecock_used = Number(updates.shuttlecockUsed || 0);
   }

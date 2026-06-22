@@ -527,6 +527,29 @@ function AdminBookingManagement({
             {renderOverviewStat("Cancel Cutoff", session.cancelCutoff)}
           </div>
 
+          <div className="admin-session-capacity-controls">
+            <label>
+              <span>Max Players</span>
+              <input
+                type="number"
+                min={Math.max(totalParticipantCount, walkInLimit, 1)}
+                step="1"
+                value={session.maxPlayers}
+                disabled={isCharged}
+                onChange={(event) =>
+                  handleUpdateSessionChargeField(
+                    session.id,
+                    "maxPlayers",
+                    event.target.value
+                  )
+                }
+              />
+            </label>
+            <small>
+              Current capacity {totalParticipantCount}/{session.maxPlayers}
+            </small>
+          </div>
+
           <div className="session-card-actions">
             <button
               className="secondary-button"

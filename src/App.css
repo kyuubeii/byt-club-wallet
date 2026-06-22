@@ -1875,6 +1875,37 @@ h1 {
   line-height: 1.3;
 }
 
+.admin-session-capacity-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.admin-session-capacity-controls label {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+}
+
+.admin-session-capacity-controls span,
+.admin-session-capacity-controls small {
+  color: var(--byt-muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.admin-session-capacity-controls input {
+  width: 130px;
+  min-height: 40px;
+  border-color: rgba(148, 163, 184, 0.34);
+}
+
 .admin-session-section {
   margin-top: 16px;
   border: 1px solid var(--byt-line);
@@ -4803,6 +4834,15 @@ select:focus-visible,
 
   .admin-overview-stat {
     min-height: auto;
+  }
+
+  .admin-session-capacity-controls {
+    display: grid;
+    align-items: stretch;
+  }
+
+  .admin-session-capacity-controls input {
+    width: 100%;
   }
 
   .admin-walkin-controls,
