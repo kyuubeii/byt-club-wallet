@@ -3393,9 +3393,39 @@ function App() {
       (total, booking) => total + Number(booking.walkInCount || 0),
       0
     );
+    const chargeAsMemberWalkInCount = courtBookings.reduce(
+      (total, booking) => {
+        const walkInChargeMode = normalizeMemberAttachedWalkInChargeMode(
+          booking.memberAttachedWalkInChargeMode
+        );
+
+        if (walkInChargeMode !== "charge_as_member") {
+          return total;
+        }
+
+        return total + Number(booking.walkInCount || 0);
+      },
+      0
+    );
+    const attendedNonMemberChargeWalkInCount = attendedBookings.reduce(
+      (total, booking) => {
+        const walkInChargeMode = normalizeMemberAttachedWalkInChargeMode(
+          booking.memberAttachedWalkInChargeMode
+        );
+
+        if (walkInChargeMode === "charge_as_member") {
+          return total;
+        }
+
+        return total + Number(booking.walkInCount || 0);
+      },
+      0
+    );
+    const denominatorMemberAttachedWalkInCount =
+      chargeAsMemberWalkInCount + attendedNonMemberChargeWalkInCount;
     const courtDenominator =
       courtBookings.length +
-      attendedBookingWalkInCount +
+      denominatorMemberAttachedWalkInCount +
       confirmedIndependentWalkInCount;
     const totalAttendance = courtDenominator;
     const confirmedMemberAttachedWalkInCount = confirmedBookings.reduce(
@@ -3508,6 +3538,9 @@ function App() {
       attendedBookings: attendedBookings,
       courtBookingWalkInCount: courtBookingWalkInCount,
       attendedBookingWalkInCount: attendedBookingWalkInCount,
+      chargeAsMemberWalkInCount: chargeAsMemberWalkInCount,
+      denominatorMemberAttachedWalkInCount:
+        denominatorMemberAttachedWalkInCount,
       confirmedMemberAttachedWalkInCount: confirmedMemberAttachedWalkInCount,
       confirmedIndependentWalkInCount: confirmedIndependentWalkInCount,
       totalConfirmedWalkInCount: totalConfirmedWalkInCount,
