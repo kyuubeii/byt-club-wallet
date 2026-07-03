@@ -391,6 +391,12 @@ function buildReportRows(members, transactions, reportDateKey) {
 
   return members
     .filter((member) => String(member.status || "").toLowerCase() !== "pending")
+    .sort((firstMember, secondMember) => {
+      const firstMemberId = Number(firstMember.id || 0);
+      const secondMemberId = Number(secondMember.id || 0);
+
+      return firstMemberId - secondMemberId;
+    })
     .map((member, index) => {
       const memberExpense = reportTransactions
         .filter(
@@ -407,7 +413,7 @@ function buildReportRows(members, transactions, reportDateKey) {
       );
 
       return [
-        index + 1,
+        Number(member.id || 0) || index + 1,
         member.name || "",
         formatMoney(memberExpense),
         formatMoney(reportBalance, { parenthesizeNegative: true }),
