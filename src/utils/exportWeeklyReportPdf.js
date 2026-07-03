@@ -111,15 +111,17 @@ function transactionMatchesReportDate(transaction, reportDateKey) {
   const isSessionCharge =
     type === "session_charge" || description.includes("session charge");
 
-  if (hasDateKey(transaction.date, reportDateKey)) {
-    return true;
+  if (isSessionCharge) {
+    const sessionChargeDateText = getSessionChargeDateText(
+      transaction.description
+    );
+
+    if (sessionChargeDateText) {
+      return hasDateKey(sessionChargeDateText, reportDateKey);
+    }
   }
 
-  if (!isSessionCharge) {
-    return false;
-  }
-
-  return hasDateKey(getSessionChargeDateText(transaction.description), reportDateKey);
+  return hasDateKey(transaction.date, reportDateKey);
 }
 
 function getTransactionEffectiveDateKey(transaction) {
@@ -388,15 +390,22 @@ function buildReportRows(members, transactions, reportDateKey) {
   const reportTransactions = transactions.filter((transaction) =>
     isReportExpenseTransaction(transaction, reportDateKey)
   );
-
-  return members
+  const reportMembers = [...(members || [])]
     .filter((member) => String(member.status || "").toLowerCase() !== "pending")
     .sort((firstMember, secondMember) => {
       const firstMemberId = Number(firstMember.id || 0);
       const secondMemberId = Number(secondMember.id || 0);
 
-      return firstMemberId - secondMemberId;
-    })
+      if (firstMemberId !== secondMemberId) {
+        return firstMemberId - secondMemberId;
+      }
+
+      return String(firstMember.name || "").localeCompare(
+        String(secondMember.name || "")
+      );
+    });
+
+  return reportMembers
     .map((member, index) => {
       const memberExpense = reportTransactions
         .filter(
