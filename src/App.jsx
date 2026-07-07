@@ -45,9 +45,9 @@ const MEMBER_PACKAGES = {
   extreme: {
     packageType: "extreme",
     packageName: "BYT Extreme Member",
-    packagePrice: 158,
+    packagePrice: 168,
     packageCredit: 100,
-    registrationFee: 58,
+    registrationFee: 68,
   },
 };
 const GIFT_CHOICES = ["wristband", "headband"];
@@ -528,6 +528,38 @@ function getDateInputValue(date = new Date()) {
     String(date.getMonth() + 1).padStart(2, "0"),
     String(date.getDate()).padStart(2, "0"),
   ].join("-");
+}
+
+function getLocalDateFromDateInputValue(value) {
+  if (!value) {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  const dateText = String(value).trim();
+  const inputDateMatch = dateText.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if (inputDateMatch) {
+    const [, year, month, day] = inputDateMatch;
+    const parsedInputDate = new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day)
+    );
+
+    return Number.isNaN(parsedInputDate.getTime()) ? null : parsedInputDate;
+  }
+
+  return safeParseDate(dateText);
+}
+
+function getDateInputStringFromPickerValue(value) {
+  const parsedDate = getLocalDateFromDateInputValue(value);
+
+  return parsedDate ? getDateInputValue(parsedDate) : "";
 }
 
 function downloadCsv(filename, csvContent) {
@@ -7060,10 +7092,17 @@ function App() {
                     className="registration-date-input"
                     label="Birthday"
                     placeholder="Select birthday"
-                    value={registerBirthday || null}
-                    maxDate={new Date().toISOString().split("T")[0]}
+                    value={getLocalDateFromDateInputValue(registerBirthday)}
+                    minDate={new Date(1900, 0, 1)}
+                    maxDate={new Date()}
+                    defaultDate={
+                      getLocalDateFromDateInputValue(registerBirthday) ||
+                      new Date(2000, 0, 1)
+                    }
                     valueFormat="MMM D, YYYY"
-                    onChange={(value) => setRegisterBirthday(value || "")}
+                    onChange={(value) =>
+                      setRegisterBirthday(getDateInputStringFromPickerValue(value))
+                    }
                   />
 
                   <TextInput
