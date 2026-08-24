@@ -88,6 +88,7 @@ function AdminBookingManagement({
   const [bookingWalkInDrafts, setBookingWalkInDrafts] = useState({});
   const [recentlyUpdatedRowId, setRecentlyUpdatedRowId] = useState("");
   const [recentlyUpdatedSessionId, setRecentlyUpdatedSessionId] = useState("");
+  const [editingChargedSessionId, setEditingChargedSessionId] = useState("");
 
   const activeSessions = sessions.filter(
     (session) => session.chargeStatus !== "charged"
@@ -335,9 +336,12 @@ function AdminBookingManagement({
     const allBookings = getSessionBookings(session.id);
     const chargeSummary = getSessionChargeSummary(session, allBookings);
     const isCharged = session.chargeStatus === "charged";
+    const isChargeEditMode =
+      isCharged && String(editingChargedSessionId) === String(session.id);
+    const canEditSession = !isCharged || isChargeEditMode;
     const canManageIndependentWalkins =
-      !isCharged && session.status === "open";
-    const canAdminAddMember = !isCharged;
+      (!isCharged && session.status === "open") || isChargeEditMode;
+    const canAdminAddMember = canEditSession;
     const activeMembers = members.filter((member) => member.status === "active");
     const memberBookingCount = getSessionMemberBookingCount(session.id);
     const walkInCount = getSessionWalkInCount(session.id);
@@ -535,7 +539,7 @@ function AdminBookingManagement({
                 min={Math.max(totalParticipantCount, walkInLimit, 1)}
                 step="1"
                 value={session.maxPlayers}
-                disabled={isCharged}
+                disabled={!canEditSession}
                 onChange={(event) =>
                   handleUpdateSessionChargeField(
                     session.id,
@@ -560,7 +564,14 @@ function AdminBookingManagement({
             </button>
 
             {isCharged ? (
-              <span className="admin-closed-note">Charged and closed</span>
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={isChargeEditMode}
+                onClick={() => setEditingChargedSessionId(String(session.id))}
+              >
+                {isChargeEditMode ? "Editing Charged Session" : "Edit Charged Session"}
+              </button>
             ) : session.status === "open" ? (
               <button
                 className="secondary-button"
@@ -963,7 +974,7 @@ function AdminBookingManagement({
                 <div className="session-booking-quick-actions">
                   <button
                     className="secondary-button"
-                    disabled={isCharged || !hasBookedBookings}
+                    disabled={!canEditSession || !hasBookedBookings}
                     onClick={() =>
                       runWithSessionHighlight(session.id, () =>
                         handleBulkUpdateSessionBookingStatus(
@@ -977,7 +988,7 @@ function AdminBookingManagement({
                   </button>
                   <button
                     className="secondary-button"
-                    disabled={isCharged || !hasNonCancelledBookings}
+                    disabled={!canEditSession || !hasNonCancelledBookings}
                     onClick={() =>
                       runWithSessionHighlight(session.id, () =>
                         handleBulkUpdateSessionBookingStatus(
@@ -1064,7 +1075,7 @@ function AdminBookingManagement({
                               <select
                                 className="session-status-select"
                                 value={booking.status}
-                                disabled={isCharged}
+                                disabled={!canEditSession}
                                 onChange={(event) =>
                                   runWithRowHighlight(`booking-${booking.id}`, () =>
                                     handleUpdateBookingStatus(
@@ -1086,7 +1097,7 @@ function AdminBookingManagement({
                               <button
                                 className="small-reject-button"
                                 type="button"
-                                disabled={isCharged}
+                                disabled={!canEditSession}
                                 onClick={() =>
                                   runWithSessionHighlight(session.id, () =>
                                     handleAdminRemoveMemberFromSession(
@@ -1114,7 +1125,7 @@ function AdminBookingManagement({
                                   type="number"
                                   min="0"
                                   value={walkInDraft.count}
-                                  disabled={isCharged}
+                                  disabled={!canEditSession}
                                   onChange={(event) =>
                                     updateBookingWalkInDraft(booking, {
                                       count: event.target.value,
@@ -1129,7 +1140,7 @@ function AdminBookingManagement({
                                   type="text"
                                   placeholder="Alex, Jason"
                                   value={walkInDraft.namesText}
-                                  disabled={isCharged}
+                                  disabled={!canEditSession}
                                   onChange={(event) =>
                                     updateBookingWalkInDraft(booking, {
                                       namesText: event.target.value,
@@ -1142,7 +1153,7 @@ function AdminBookingManagement({
                                 <span>Charge</span>
                                 <select
                                   value={walkInChargeMode}
-                                  disabled={isCharged}
+                                  disabled={!canEditSession}
                                   onChange={(event) =>
                                     runWithRowHighlight(`booking-${booking.id}`, () =>
                                       handleUpdateBookingWalkInChargeMode(
@@ -1168,7 +1179,7 @@ function AdminBookingManagement({
                               <button
                                 className="secondary-button walkin-admin-save"
                                 type="button"
-                                disabled={isCharged}
+                                disabled={!canEditSession}
                                 onClick={() =>
                                   runWithRowHighlight(`booking-${booking.id}`, () =>
                                     handleUpdateBookingWalkIns(
@@ -1248,7 +1259,7 @@ function AdminBookingManagement({
                     <div className="waitlist-actions">
                       <button
                         className="small-approve-button"
-                        disabled={isCharged}
+                        disabled={!canEditSession}
                         onClick={() =>
                           runWithSessionHighlight(session.id, () =>
                             handlePromoteWaitlistBooking(booking.id)
@@ -1259,7 +1270,7 @@ function AdminBookingManagement({
                       </button>
                       <button
                         className="small-reject-button"
-                        disabled={isCharged}
+                        disabled={!canEditSession}
                         onClick={() =>
                           runWithSessionHighlight(session.id, () =>
                             handleRemoveWaitlistBooking(booking.id)
@@ -1312,7 +1323,7 @@ function AdminBookingManagement({
                       <div className="waitlist-actions">
                         <button
                           className="small-approve-button"
-                          disabled={isCharged}
+                          disabled={!canEditSession}
                           onClick={() =>
                             runWithSessionHighlight(session.id, () =>
                               handlePromoteWaitlistBooking(booking.id)
@@ -1323,7 +1334,7 @@ function AdminBookingManagement({
                         </button>
                         <button
                           className="small-reject-button"
-                          disabled={isCharged}
+                          disabled={!canEditSession}
                           onClick={() =>
                             runWithSessionHighlight(session.id, () =>
                               handleRemoveWaitlistBooking(booking.id)
@@ -1354,7 +1365,7 @@ function AdminBookingManagement({
                       <button
                         className="small-approve-button"
                         type="button"
-                        disabled={isCharged}
+                        disabled={!canEditSession}
                         onClick={() =>
                           runWithSessionHighlight(session.id, () =>
                             handlePromoteIndependentWalkin(walkin.id)
@@ -1366,7 +1377,7 @@ function AdminBookingManagement({
                       <button
                         className="small-reject-button"
                         type="button"
-                        disabled={isCharged}
+                        disabled={!canEditSession}
                         onClick={() =>
                           runWithSessionHighlight(session.id, () =>
                             handleRemoveIndependentWalkin(walkin.id)
@@ -1409,12 +1420,31 @@ function AdminBookingManagement({
 
           <div className="session-charge-grid">
             <div>
+              <label>Court Fee Total</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                inputMode="decimal"
+                value={session.courtFeeTotal ?? ""}
+                disabled={!canEditSession}
+                onChange={(event) =>
+                  handleUpdateSessionChargeField(
+                    session.id,
+                    "courtFeeTotal",
+                    event.target.value
+                  )
+                }
+              />
+            </div>
+
+            <div>
               <label>Walk-in Limit</label>
               <input
                 type="number"
                 min="0"
                 value={session.walkInLimit ?? 5}
-                disabled={isCharged}
+                disabled={!canEditSession}
                 onChange={(event) =>
                   handleUpdateSessionChargeField(
                     session.id,
@@ -1431,7 +1461,7 @@ function AdminBookingManagement({
                 type="number"
                 min="0"
                 value={session.shuttlecockUsed ?? ""}
-                disabled={isCharged}
+                disabled={!canEditSession}
                 onChange={(event) =>
                   handleUpdateSessionChargeField(
                     session.id,
@@ -1450,7 +1480,7 @@ function AdminBookingManagement({
                 step="0.01"
                 inputMode="decimal"
                 value={session.shuttlecockRate ?? ""}
-                disabled={isCharged}
+                disabled={!canEditSession}
                 onChange={(event) =>
                   handleUpdateSessionChargeField(
                     session.id,
@@ -1469,7 +1499,7 @@ function AdminBookingManagement({
                 step="0.01"
                 inputMode="decimal"
                 value={session.walkInFee ?? ""}
-                disabled={isCharged}
+                disabled={!canEditSession}
                 onChange={(event) =>
                   handleUpdateSessionChargeField(
                     session.id,
@@ -1488,7 +1518,7 @@ function AdminBookingManagement({
                 step="0.01"
                 inputMode="decimal"
                 value={session.otherFeeTotal ?? ""}
-                disabled={isCharged}
+                disabled={!canEditSession}
                 onChange={(event) =>
                   handleUpdateSessionChargeField(
                     session.id,
@@ -1554,13 +1584,36 @@ function AdminBookingManagement({
             </p>
           )}
 
-          <button
-            className="action-button"
-            disabled={isCharged || allBookings.length === 0}
-            onClick={() => handleFinalizeSessionCharge(session.id)}
-          >
-            {isCharged ? "Session Charged" : "Finalize Session Charge"}
-          </button>
+          {isCharged && !isChargeEditMode && (
+            <p className="finalize-warning-note">
+              Click Edit Charged Session before changing attendance or fees. Save Charge Changes will recalculate member wallets and replace the related session transactions.
+            </p>
+          )}
+
+          {isCharged && !isChargeEditMode ? (
+            <button
+              className="action-button"
+              type="button"
+              onClick={() => setEditingChargedSessionId(String(session.id))}
+            >
+              Edit Charged Session
+            </button>
+          ) : (
+            <button
+              className="action-button"
+              type="button"
+              disabled={!isCharged && allBookings.length === 0}
+              onClick={async () => {
+                const didSave = await handleFinalizeSessionCharge(session.id);
+
+                if (didSave && isCharged) {
+                  setEditingChargedSessionId("");
+                }
+              }}
+            >
+              {isCharged ? "Save Charge Changes" : "Finalize Session Charge"}
+            </button>
+          )}
         </div>
           ),
           isCharged ? "Charged" : "Review"

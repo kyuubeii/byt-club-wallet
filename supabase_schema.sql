@@ -114,6 +114,7 @@ create table if not exists sessions (
   court_fee_total numeric(10, 2) not null,
   cancel_cutoff time,
   walk_in_limit integer not null default 5,
+  walk_in_fee numeric(10, 2) not null default 0,
   status text not null default 'open',
   charge_status text not null default 'not_charged',
   shuttlecock_used integer not null default 0,
@@ -166,6 +167,10 @@ create table if not exists session_bookings (
 );
 
 alter table sessions add column if not exists walk_in_limit integer not null default 5;
+alter table sessions add column if not exists walk_in_fee numeric(10, 2) not null default 0;
+
+alter table transactions
+  add column if not exists session_id bigint references sessions(id) on delete restrict;
 
 alter table session_bookings add column if not exists walk_in_count integer not null default 0;
 alter table session_bookings add column if not exists walk_in_names text[] not null default '{}';
@@ -185,6 +190,7 @@ create index if not exists idx_reload_requests_date on reload_requests(date);
 create index if not exists idx_transactions_member_id on transactions(member_id);
 create index if not exists idx_transactions_date on transactions(date);
 create index if not exists idx_transactions_type on transactions(type);
+create index if not exists idx_transactions_session_id on transactions(session_id);
 
 create index if not exists idx_sessions_date on sessions(date);
 create index if not exists idx_sessions_status on sessions(status);

@@ -630,6 +630,7 @@ function convertSupabaseSessions(supabaseSessions) {
     chargeStatus: session.charge_status || "not_charged",
     shuttlecockUsed: Number(session.shuttlecock_used || 0),
     shuttlecockRate: Number(session.shuttlecock_rate || 0),
+    walkInFee: Number(session.walk_in_fee || 0),
     otherFeeTotal: Number(session.other_fee_total || 0),
     chargedAt: session.charged_at || null,
     finalizedCourtChargePerPlayer:
@@ -680,6 +681,7 @@ function convertSupabaseTransactions(supabaseTransactions) {
     description: transaction.description || "",
     amount: Number(transaction.amount || 0),
     type: transaction.type || null,
+    sessionId: transaction.session_id || null,
   }));
 }
 
@@ -1312,6 +1314,14 @@ function App() {
     );
 
     await upsertTransactionsToSupabase(transactions);
+  }
+
+  async function syncTransactionsDeleteToSupabase(transactionIds) {
+    const { deleteTransactionsFromSupabase } = await import(
+      "./services/supabaseServices.js"
+    );
+
+    await deleteTransactionsFromSupabase(transactionIds);
   }
 
   async function syncMemberBalanceToSupabase(memberId, balance) {
@@ -3606,6 +3616,90 @@ function App() {
     };
   }
 
+  function getSessionChargeDescription(session) {
+    return `Session Charge - ${session.date}`;
+  }
+
+  function getSessionChargeLedger(session) {
+    const description = getSessionChargeDescription(session);
+    const linkedTransactions = transactions.filter(
+      (transaction) =>
+        Number(transaction.sessionId) === Number(session.id) &&
+        (transaction.type === "session_charge" ||
+          transaction.description === description)
+    );
+
+    if (linkedTransactions.length > 0) {
+      return {
+        transactions: linkedTransactions,
+        isLegacy: false,
+        isAmbiguous: false,
+      };
+    }
+
+    const legacyTransactions = transactions.filter((transaction) => {
+      const hasSessionId =
+        transaction.sessionId !== undefined &&
+        transaction.sessionId !== null &&
+        transaction.sessionId !== "";
+
+      return (
+        !hasSessionId &&
+        transaction.description === description &&
+        (!transaction.type || transaction.type === "session_charge")
+      );
+    });
+    const sameDateChargedSessions = sessions.filter(
+      (otherSession) =>
+        Number(otherSession.id) !== Number(session.id) &&
+        otherSession.chargeStatus === "charged" &&
+        String(otherSession.date) === String(session.date)
+    );
+
+    return {
+      transactions: legacyTransactions,
+      isLegacy: legacyTransactions.length > 0,
+      isAmbiguous:
+        legacyTransactions.length > 0 && sameDateChargedSessions.length > 0,
+    };
+  }
+
+  function buildSessionChargeTransactions(
+    session,
+    chargeSummary,
+    previousChargeTransactions
+  ) {
+    const previousTransactionsByMember = new Map();
+
+    previousChargeTransactions.forEach((transaction) => {
+      const memberKey = String(transaction.memberId);
+      const memberTransactions =
+        previousTransactionsByMember.get(memberKey) || [];
+
+      memberTransactions.push(transaction);
+      previousTransactionsByMember.set(memberKey, memberTransactions);
+    });
+
+    const transactionDate = new Date().toLocaleDateString();
+    const transactionIdBase = Date.now();
+
+    return chargeSummary.chargeRows.map((charge, index) => {
+      const memberTransactions =
+        previousTransactionsByMember.get(String(charge.memberId)) || [];
+      const previousTransaction = memberTransactions.shift();
+
+      return {
+        id: previousTransaction?.id ?? transactionIdBase + index,
+        sessionId: session.id,
+        memberId: charge.memberId,
+        date: previousTransaction?.date || transactionDate,
+        description: getSessionChargeDescription(session),
+        amount: -Number(charge.amount.toFixed(2)),
+        type: "session_charge",
+      };
+    });
+  }
+
   async function handleCreateSession() {
     if (newSessionDate === "") {
       alert("Please select session date");
@@ -3860,11 +3954,6 @@ function App() {
       return false;
     }
 
-    if (session.chargeStatus === "charged") {
-      alert("Charged sessions cannot be changed.");
-      return false;
-    }
-
     if (!member) {
       alert("Please select a member.");
       return false;
@@ -4095,11 +4184,6 @@ function App() {
       return;
     }
 
-    if (session.chargeStatus === "charged") {
-      alert("Charged sessions cannot be changed.");
-      return;
-    }
-
     const updatedAt = new Date().toLocaleString();
 
     setSessionBookings((previousBookings) =>
@@ -4136,11 +4220,6 @@ function App() {
 
     if (!session) {
       alert("Session not found");
-      return;
-    }
-
-    if (session.chargeStatus === "charged") {
-      alert("Charged sessions cannot be changed.");
       return;
     }
 
@@ -4200,11 +4279,6 @@ function App() {
 
     if (!session) {
       alert("Session not found");
-      return;
-    }
-
-    if (session.chargeStatus === "charged") {
-      alert("Charged sessions cannot be changed.");
       return;
     }
 
@@ -4280,11 +4354,6 @@ function App() {
 
     if (!session) {
       alert("Session not found");
-      return;
-    }
-
-    if (session.chargeStatus === "charged") {
-      alert("Charged sessions cannot be changed.");
       return;
     }
 
@@ -4852,11 +4921,6 @@ function App() {
         return;
       }
 
-      if (session.chargeStatus === "charged") {
-        alert("Charged sessions cannot be changed.");
-        return;
-      }
-
       if (
         !Number.isInteger(nextMaxPlayers) ||
         nextMaxPlayers < getSessionTotalParticipantCount(sessionId) ||
@@ -4894,6 +4958,11 @@ function App() {
       return;
     }
 
+    if (field === "courtFeeTotal" && Number(value || 0) < 0) {
+      alert("Court fee total cannot be negative.");
+      return;
+    }
+
     setSessions((previousSessions) =>
       previousSessions.map((session) => {
         if (Number(session.id) === Number(sessionId)) {
@@ -4907,10 +4976,6 @@ function App() {
       })
     );
 
-    if (field === "walkInFee") {
-      return;
-    }
-
     try {
       await syncSessionUpdateToSupabase(sessionId, {
         [field]: value,
@@ -4921,37 +4986,57 @@ function App() {
   }
 
   async function handleFinalizeSessionCharge(sessionId) {
-    const session = sessions.find((session) => session.id === sessionId);
+    const session = sessions.find(
+      (session) => Number(session.id) === Number(sessionId)
+    );
 
     if (!session) {
       alert("Session not found");
-      return;
+      return false;
     }
 
-    if (session.chargeStatus === "charged") {
-      alert("This session has already been charged");
-      return;
+    const isEditingExistingCharge = session.chargeStatus === "charged";
+    const sessionChargeLedger = isEditingExistingCharge
+      ? getSessionChargeLedger(session)
+      : { transactions: [], isAmbiguous: false };
+
+    if (sessionChargeLedger.isAmbiguous) {
+      alert(
+        "This session has a legacy charge with the same date as another charged session. Please link the transaction manually before editing."
+      );
+      return false;
+    }
+
+    if (
+      isEditingExistingCharge &&
+      sessionChargeLedger.transactions.length === 0
+    ) {
+      alert(
+        "The original session charge transaction could not be found. Editing is blocked to prevent a duplicate member charge."
+      );
+      return false;
     }
 
     const allBookings = getSessionBookings(sessionId);
     const chargeSummary = getSessionChargeSummary(session, allBookings);
 
-    if (chargeSummary.courtBookings.length === 0) {
+    if (!isEditingExistingCharge && chargeSummary.courtBookings.length === 0) {
       alert("No chargeable booking found. Cancelled players are not charged.");
-      return;
+      return false;
     }
 
     if (
       chargeSummary.courtAndShuttleFeeTotal > 0 &&
-      chargeSummary.totalAttendance === 0
+      chargeSummary.totalAttendance === 0 &&
+      chargeSummary.chargeRows.length > 0
     ) {
       alert("Please add at least one chargeable participant before charging court or shuttlecock fees.");
-      return;
+      return false;
     }
 
-    if (chargeSummary.chargeRows.length === 0) {
+    if (!isEditingExistingCharge && chargeSummary.chargeRows.length === 0) {
       alert("No member charge was calculated");
-      return;
+      return false;
     }
 
     const finalizedAt = new Date().toLocaleString();
@@ -4962,57 +5047,85 @@ function App() {
       finalizedCourtChargePerPlayer: chargeSummary.courtFeePerPlayer,
       finalizedAttendedChargePerPlayer: chargeSummary.attendedFeePerPlayer,
     };
-    const transactionDate = new Date().toLocaleDateString();
-    const transactionIdBase = Date.now();
-    const newTransactions = chargeSummary.chargeRows.map((charge, index) => ({
-      id: transactionIdBase + index,
-      memberId: charge.memberId,
-      date: transactionDate,
-      description: `Session Charge - ${session.date}`,
-      amount: -Number(charge.amount.toFixed(2)),
-    }));
-    const affectedMemberBalances = members
-      .map((member) => {
-        const charge = chargeSummary.chargeRows.find(
-          (item) => Number(item.memberId) === Number(member.id)
-        );
-
-        if (!charge) {
-          return null;
-        }
-
-        return {
-          memberId: member.id,
-          balance: Number((member.balance - charge.amount).toFixed(2)),
-        };
-      })
-      .filter(Boolean);
-
-    setMembers((previousMembers) =>
-      previousMembers.map((member) => {
-        const charge = chargeSummary.chargeRows.find(
-          (item) => Number(item.memberId) === Number(member.id)
-        );
-
-        if (charge) {
-          return {
-            ...member,
-            balance: Number((member.balance - charge.amount).toFixed(2)),
-          };
-        }
-
-        return member;
-      })
+    const previousChargeTransactions = sessionChargeLedger.transactions;
+    const newTransactions = buildSessionChargeTransactions(
+      session,
+      chargeSummary,
+      previousChargeTransactions
     );
+    const previousTransactionIds = new Set(
+      previousChargeTransactions.map((transaction) => String(transaction.id))
+    );
+    const nextTransactionIds = new Set(
+      newTransactions.map((transaction) => String(transaction.id))
+    );
+    const deletedTransactionIds = previousChargeTransactions
+      .filter(
+        (transaction) => !nextTransactionIds.has(String(transaction.id))
+      )
+      .map((transaction) => transaction.id);
+    const previousAmountByMember = new Map();
 
-    setTransactions((previousTransactions) => [
-      ...newTransactions,
-      ...previousTransactions,
+    previousChargeTransactions.forEach((transaction) => {
+      const memberKey = String(transaction.memberId);
+      previousAmountByMember.set(
+        memberKey,
+        Number(previousAmountByMember.get(memberKey) || 0) +
+          Number(transaction.amount || 0)
+      );
+    });
+
+    const nextAmountByMember = new Map();
+
+    newTransactions.forEach((transaction) => {
+      const memberKey = String(transaction.memberId);
+      nextAmountByMember.set(
+        memberKey,
+        Number(nextAmountByMember.get(memberKey) || 0) +
+          Number(transaction.amount || 0)
+      );
+    });
+
+    const affectedMemberIds = new Set([
+      ...previousAmountByMember.keys(),
+      ...nextAmountByMember.keys(),
     ]);
+    const nextMembers = members.map((member) => {
+      const memberKey = String(member.id);
+
+      if (!affectedMemberIds.has(memberKey)) {
+        return member;
+      }
+
+      const previousAmount = Number(previousAmountByMember.get(memberKey) || 0);
+      const nextAmount = Number(nextAmountByMember.get(memberKey) || 0);
+
+      return {
+        ...member,
+        balance: Number(
+          (Number(member.balance || 0) - previousAmount + nextAmount).toFixed(2)
+        ),
+      };
+    });
+    const affectedMemberBalances = nextMembers
+      .filter((member) => affectedMemberIds.has(String(member.id)))
+      .map((member) => ({
+        memberId: member.id,
+        balance: member.balance,
+      }));
+    const nextTransactions = [
+      ...newTransactions,
+      ...transactions.filter(
+        (transaction) => !previousTransactionIds.has(String(transaction.id))
+      ),
+    ];
+
+    setMembers(nextMembers);
+    setTransactions(nextTransactions);
 
     setSessions((previousSessions) =>
       previousSessions.map((session) => {
-        if (session.id === sessionId) {
+        if (Number(session.id) === Number(sessionId)) {
           return {
             ...session,
             ...finalizedSessionUpdates,
@@ -5027,31 +5140,49 @@ function App() {
       await syncSessionUpdateToSupabase(sessionId, finalizedSessionUpdates);
     } catch (error) {
       alertSupabaseSessionSyncFailed(error);
-      return;
+      return false;
     }
 
     try {
-      await Promise.all([
+      const financeSyncs = [
         ...affectedMemberBalances.map((member) =>
           syncMemberBalanceToSupabase(member.memberId, member.balance)
         ),
-        syncTransactionsToSupabase(newTransactions),
-      ]);
+      ];
+
+      if (newTransactions.length > 0) {
+        financeSyncs.push(syncTransactionsToSupabase(newTransactions));
+      }
+
+      if (deletedTransactionIds.length > 0) {
+        financeSyncs.push(
+          syncTransactionsDeleteToSupabase(deletedTransactionIds)
+        );
+      }
+
+      await Promise.all(financeSyncs);
     } catch (error) {
       alertSupabaseFinanceSyncFailed(error);
-      return;
+      return false;
     }
 
     logActivity({
-      action: "finalize_session_charge",
+      action: isEditingExistingCharge
+        ? "edit_session_charge"
+        : "finalize_session_charge",
       targetType: "session",
       targetId: sessionId,
-      description: `Finalized session charge for ${session.date}`,
+      description: `${
+        isEditingExistingCharge ? "Updated" : "Finalized"
+      } session charge for ${session.date}`,
     });
 
     alert(
-      `Session finalized. ${chargeSummary.chargeRows.length} member(s) charged.`
+      `${
+        isEditingExistingCharge ? "Session charge updated" : "Session finalized"
+      }. ${chargeSummary.chargeRows.length} member(s) charged and wallet balances were adjusted.`
     );
+    return true;
   }
 
   async function handleCloseSession(sessionId) {

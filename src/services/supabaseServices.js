@@ -67,6 +67,7 @@ function toSupabaseSessionRow(session) {
     court_fee_total: Number(session.courtFeeTotal || 0),
     cancel_cutoff: nullable(session.cancelCutoff),
     walk_in_limit: Number(session.walkInLimit ?? 5),
+    walk_in_fee: Number(session.walkInFee || 0),
     status: session.status || "open",
     charge_status: session.chargeStatus || "not_charged",
     shuttlecock_used: Number(session.shuttlecockUsed || 0),
@@ -129,6 +130,14 @@ function toSupabaseSessionUpdates(updates) {
 
   if (Object.prototype.hasOwnProperty.call(updates, "maxPlayers")) {
     supabaseUpdates.max_players = Number(updates.maxPlayers || 0);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "courtFeeTotal")) {
+    supabaseUpdates.court_fee_total = Number(updates.courtFeeTotal || 0);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "walkInFee")) {
+    supabaseUpdates.walk_in_fee = Number(updates.walkInFee || 0);
   }
 
   if (Object.prototype.hasOwnProperty.call(updates, "shuttlecockUsed")) {
@@ -253,6 +262,7 @@ function toSupabaseTransactionRow(transaction) {
   return {
     id: transaction.id,
     member_id: transaction.memberId,
+    session_id: nullable(transaction.sessionId),
     date: transaction.date,
     description: transaction.description,
     amount: Number(transaction.amount || 0),
@@ -1105,6 +1115,32 @@ export async function upsertTransactionsToSupabase(transactions) {
     return data || [];
   } catch (error) {
     throw new Error(getSupabaseErrorMessage(error));
+  }
+}
+
+export async function deleteTransactionsFromSupabase(transactionIds) {
+  const ids = (transactionIds || []).filter(
+    (transactionId) => transactionId !== undefined && transactionId !== null
+  );
+
+  if (ids.length === 0) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("transactions")
+      .delete()
+      .in("id", ids)
+      .select();
+
+    if (error) {
+      throw new Error(getSupabaseErrorMessage(error));
+    }
+
+    return data || [];
+  } catch (error) {
+    throw new Error(getSupabaseErrorMessage(error), { cause: error });
   }
 }
 
