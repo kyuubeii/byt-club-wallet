@@ -4023,6 +4023,22 @@ select:focus-visible,
   overflow-wrap: anywhere;
 }
 
+.balance-history-detail {
+  display: grid;
+  gap: 3px;
+  min-width: 132px;
+}
+
+.balance-history-after {
+  color: var(--byt-ink);
+  font-weight: 950;
+}
+
+.balance-history-detail small {
+  color: var(--byt-muted);
+  font-size: 12px;
+}
+
 @media (max-width: 900px) {
   .reload-payment-grid,
   .member-session-detail-grid {

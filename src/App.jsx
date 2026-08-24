@@ -522,6 +522,106 @@ function safeParseDate(dateValue) {
   return parsedDate;
 }
 
+function roundCurrency(value) {
+  return Number(Number(value || 0).toFixed(2));
+}
+
+function getTransactionTimelineValue(transaction) {
+  const createdAt = safeParseDate(transaction.createdAt);
+
+  if (createdAt) {
+    return createdAt.getTime();
+  }
+
+  const transactionDate = safeParseDate(transaction.date);
+  return transactionDate ? transactionDate.getTime() : 0;
+}
+
+function buildBalanceChangeRows(transactions, members) {
+  const rowsByIndex = new Array(transactions.length);
+  const groupedTransactions = new Map();
+
+  transactions.forEach((transaction, index) => {
+    const memberKey = String(transaction.memberId);
+    const memberTransactions = groupedTransactions.get(memberKey) || [];
+
+    memberTransactions.push({ transaction, index });
+    groupedTransactions.set(memberKey, memberTransactions);
+  });
+
+  groupedTransactions.forEach((memberTransactions, memberKey) => {
+    const member = members.find((item) => String(item.id) === memberKey);
+    const currentBalance = roundCurrency(member?.balance || 0);
+    const totalTransactionAmount = memberTransactions.reduce(
+      (total, item) => total + Number(item.transaction.amount || 0),
+      0
+    );
+    let runningBalance = roundCurrency(currentBalance - totalTransactionAmount);
+
+    memberTransactions.sort((first, second) => {
+      const timelineDifference =
+        getTransactionTimelineValue(first.transaction) -
+        getTransactionTimelineValue(second.transaction);
+
+      if (timelineDifference !== 0) {
+        return timelineDifference;
+      }
+
+      return (
+        Number(first.transaction.id || 0) - Number(second.transaction.id || 0)
+      );
+    });
+
+    memberTransactions.forEach(({ transaction, index }) => {
+      const amount = roundCurrency(transaction.amount);
+      const balanceBefore = roundCurrency(runningBalance);
+      const balanceAfter = roundCurrency(balanceBefore + amount);
+
+      rowsByIndex[index] = {
+        ...transaction,
+        amount,
+        balanceBefore,
+        balanceAfter,
+      };
+      runningBalance = balanceAfter;
+    });
+  });
+
+  return rowsByIndex.map((transaction, index) => {
+    if (transaction) {
+      return transaction;
+    }
+
+    return {
+      ...transactions[index],
+      balanceBefore: 0,
+      balanceAfter: 0,
+    };
+  });
+}
+
+function createBalanceAdjustmentTransaction({
+  memberId,
+  previousBalance,
+  nextBalance,
+  description,
+}) {
+  const amount = roundCurrency(Number(nextBalance) - Number(previousBalance));
+
+  if (amount === 0) {
+    return null;
+  }
+
+  return {
+    id: Date.now() + Number(memberId || 0),
+    memberId,
+    date: new Date().toLocaleDateString(),
+    description,
+    amount,
+    type: "manual_adjustment",
+  };
+}
+
 function getDateInputValue(date = new Date()) {
   return [
     date.getFullYear(),
@@ -678,6 +778,7 @@ function convertSupabaseTransactions(supabaseTransactions) {
     id: transaction.id,
     memberId: transaction.member_id,
     date: transaction.date,
+    createdAt: transaction.created_at || "",
     description: transaction.description || "",
     amount: Number(transaction.amount || 0),
     type: transaction.type || null,
@@ -1392,6 +1493,11 @@ function App() {
       return;
     }
 
+    if (!Number.isFinite(newBalance)) {
+      alert("Please enter a valid balance");
+      return;
+    }
+
     const currentMember = members.find(
       (member) => Number(member.id) === Number(selectedMemberId)
     );
@@ -1401,10 +1507,17 @@ function App() {
       return;
     }
 
+    const updatedBalance = roundCurrency(newBalance);
     const updatedMember = {
       ...currentMember,
-      balance: newBalance,
+      balance: updatedBalance,
     };
+    const balanceAdjustmentTransaction = createBalanceAdjustmentTransaction({
+      memberId: currentMember.id,
+      previousBalance: currentMember.balance,
+      nextBalance: updatedBalance,
+      description: "Manual Balance Adjustment",
+    });
 
     setMembers((previousMembers) =>
       previousMembers.map((member) => {
@@ -1416,9 +1529,24 @@ function App() {
       })
     );
 
+    if (balanceAdjustmentTransaction) {
+      setTransactions((previousTransactions) => [
+        balanceAdjustmentTransaction,
+        ...previousTransactions,
+      ]);
+    }
+
     setManualBalance("");
     try {
-      await syncMemberToSupabase(updatedMember);
+      const financeSyncs = [syncMemberToSupabase(updatedMember)];
+
+      if (balanceAdjustmentTransaction) {
+        financeSyncs.push(
+          syncTransactionToSupabase(balanceAdjustmentTransaction)
+        );
+      }
+
+      await Promise.all(financeSyncs);
     } catch (error) {
       alertSupabaseMemberSyncFailed(error);
       return;
@@ -1540,7 +1668,7 @@ function App() {
       id: newId,
       name: newMemberName,
       email: newMemberEmail,
-      balance: startingBalance,
+      balance: roundCurrency(startingBalance),
       status: "active",
       whatsapp: "",
       ...getMemberRegistrationDefaults(),
@@ -1554,9 +1682,22 @@ function App() {
       password: "123456",
       role: "member",
     };
+    const initialBalanceTransaction = createBalanceAdjustmentTransaction({
+      memberId: newId,
+      previousBalance: 0,
+      nextBalance: newMember.balance,
+      description: "Initial Balance",
+    });
 
     setMembers((previousMembers) => [...previousMembers, newMember]);
     setUsers((previousUsers) => [...previousUsers, newUser]);
+
+    if (initialBalanceTransaction) {
+      setTransactions((previousTransactions) => [
+        initialBalanceTransaction,
+        ...previousTransactions,
+      ]);
+    }
 
     setNewMemberName("");
     setNewMemberEmail("");
@@ -1574,6 +1715,15 @@ function App() {
     } catch (error) {
       alertSupabaseUserSyncFailed(error);
       return;
+    }
+
+    if (initialBalanceTransaction) {
+      try {
+        await syncTransactionToSupabase(initialBalanceTransaction);
+      } catch (error) {
+        alertSupabaseFinanceSyncFailed(error);
+        return;
+      }
     }
 
     alert("New member added successfully. Default password is 123456.");
@@ -1658,10 +1808,16 @@ function App() {
       ...currentMember,
       name: editMemberName,
       email: editMemberEmail,
-      balance: updatedBalance,
+      balance: roundCurrency(updatedBalance),
       status: editMemberStatus,
       whatsapp: normalizedWhatsapp,
     };
+    const balanceAdjustmentTransaction = createBalanceAdjustmentTransaction({
+      memberId: currentMember.id,
+      previousBalance: currentMember.balance,
+      nextBalance: updatedMember.balance,
+      description: "Admin Balance Adjustment",
+    });
 
     setMembers((previousMembers) =>
       previousMembers.map((member) => {
@@ -1687,6 +1843,13 @@ function App() {
       })
     );
 
+    if (balanceAdjustmentTransaction) {
+      setTransactions((previousTransactions) => [
+        balanceAdjustmentTransaction,
+        ...previousTransactions,
+      ]);
+    }
+
     try {
       await syncMemberToSupabase(updatedMember);
     } catch (error) {
@@ -1702,6 +1865,15 @@ function App() {
     } catch (error) {
       alertSupabaseUserSyncFailed(error);
       return;
+    }
+
+    if (balanceAdjustmentTransaction) {
+      try {
+        await syncTransactionToSupabase(balanceAdjustmentTransaction);
+      } catch (error) {
+        alertSupabaseFinanceSyncFailed(error);
+        return;
+      }
     }
 
     alert("Member info updated successfully");
@@ -1821,6 +1993,12 @@ function App() {
           ? Number(pendingMember.packageCredit)
           : Number(pendingMember.balance || 0),
     };
+    const balanceAdjustmentTransaction = createBalanceAdjustmentTransaction({
+      memberId: pendingMember.id,
+      previousBalance: pendingMember.balance,
+      nextBalance: updatedMember.balance,
+      description: "Membership Package Credit",
+    });
 
     setMembers((previousMembers) =>
       previousMembers.map((member) => {
@@ -1837,11 +2015,27 @@ function App() {
       setEditMemberBalance(updatedMember.balance);
     }
 
+    if (balanceAdjustmentTransaction) {
+      setTransactions((previousTransactions) => [
+        balanceAdjustmentTransaction,
+        ...previousTransactions,
+      ]);
+    }
+
     try {
       await syncMemberToSupabase(updatedMember);
     } catch (error) {
       alertSupabaseMemberSyncFailed(error);
       return;
+    }
+
+    if (balanceAdjustmentTransaction) {
+      try {
+        await syncTransactionToSupabase(balanceAdjustmentTransaction);
+      } catch (error) {
+        alertSupabaseFinanceSyncFailed(error);
+        return;
+      }
     }
 
     logActivity({
@@ -5356,7 +5550,8 @@ function App() {
           Number(member.balance || 0) < MINIMUM_BOOKING_BALANCE
       )
       .sort((a, b) => Number(a.balance || 0) - Number(b.balance || 0));
-    const allTransactions = transactions.map((transaction) => {
+    const balanceChangeRows = buildBalanceChangeRows(transactions, members);
+    const allTransactions = balanceChangeRows.map((transaction) => {
       const member = members.find(
         (member) => Number(member.id) === Number(transaction.memberId)
       );
@@ -5597,7 +5792,7 @@ function App() {
                 setShowTransactionsSection(!showTransactionsSection)
               }
             >
-              Transactions
+              Balance Changes
             </button>
 
             <button
@@ -6971,16 +7166,16 @@ function App() {
             <section className="collapsible-section">
               <div className="collapsible-section-header">
                 <div>
-                  <h2>Transactions</h2>
-                  <p>Search, filter, export, and review club transaction history.</p>
+                  <h2>Balance Changes</h2>
+                  <p>Review every wallet change, from the opening balance to the latest balance.</p>
                 </div>
               </div>
 
           <div className="panel transaction-panel">
             <div className="panel-header">
               <div>
-                <h2>All Transactions</h2>
-                <p>Search and filter club transaction history.</p>
+                <h2>Balance Changes &amp; Transactions</h2>
+                <p>Search wallet activity and see the balance after each change.</p>
               </div>
 
               <button className="secondary-button" onClick={handleExportTransactions}>
@@ -7007,7 +7202,7 @@ function App() {
             </div>
 
             {filteredTransactions.length === 0 ? (
-              <p className="empty-text">No transactions yet.</p>
+              <p className="empty-text">No balance changes yet.</p>
             ) : (
               <table>
                 <thead>
@@ -7015,7 +7210,8 @@ function App() {
                     <th>Date</th>
                     <th>Member</th>
                     <th>Description</th>
-                    <th>Amount</th>
+                    <th>Change</th>
+                    <th>Balance After</th>
                   </tr>
                 </thead>
 
@@ -7027,6 +7223,16 @@ function App() {
                       <td>{transaction.description}</td>
                       <td className={transaction.amount < 0 ? "negative" : "positive"}>
                         {formatMoney(transaction.amount)}
+                      </td>
+                      <td>
+                        <div className="balance-history-detail">
+                          <strong className="balance-history-after">
+                            {formatMoney(transaction.balanceAfter)}
+                          </strong>
+                          <small>
+                            From {formatMoney(transaction.balanceBefore)}
+                          </small>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -7173,7 +7379,7 @@ function App() {
           users={users}
           members={members}
           reloadRequests={reloadRequests}
-          transactions={transactions}
+          transactions={buildBalanceChangeRows(transactions, members)}
           showTopUpBox={showTopUpBox}
           setShowTopUpBox={setShowTopUpBox}
           topUpAmount={topUpAmount}

@@ -1257,12 +1257,12 @@ function MemberPortal({
 
                 <div className="panel member-history-panel member-transaction-history-panel">
                     <div className="member-panel-heading">
-                        <h2>My Recent Transactions</h2>
-                        <p>Recent wallet movement from reloads and session charges.</p>
+                        <h2>My Balance Changes</h2>
+                        <p>See each wallet change and the balance after it.</p>
                     </div>
 
                     {sortedTransactions.length === 0 ? (
-                        <p className="empty-text">No recent transaction yet.</p>
+                        <p className="empty-text">No balance changes yet.</p>
                     ) : (
                         <div className="member-history-table-wrap">
                             <table>
@@ -1270,7 +1270,8 @@ function MemberPortal({
                                     <tr>
                                         <th>Date</th>
                                         <th>Description</th>
-                                        <th>Amount</th>
+                                        <th>Change</th>
+                                        <th>Balance After</th>
                                     </tr>
                                 </thead>
 
@@ -1285,6 +1286,16 @@ function MemberPortal({
                                                 }
                                             >
                                                 {formatMoney(transaction.amount)}
+                                            </td>
+                                            <td>
+                                                <div className="balance-history-detail">
+                                                    <strong className="balance-history-after">
+                                                        {formatMoney(transaction.balanceAfter)}
+                                                    </strong>
+                                                    <small>
+                                                        From {formatMoney(transaction.balanceBefore)}
+                                                    </small>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
