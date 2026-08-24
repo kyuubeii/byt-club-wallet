@@ -731,6 +731,7 @@ function App() {
 
   const [selectedMemberId, setSelectedMemberId] = useState(3);
   const [manualBalance, setManualBalance] = useState("");
+  const [adminTopUpAmount, setAdminTopUpAmount] = useState("");
   const [expenseAmount, setExpenseAmount] = useState("");
   const [selectedExpenseMembers, setSelectedExpenseMembers] = useState([]);
   const [weeklyReportDate, setWeeklyReportDate] = useState(() =>
@@ -1424,6 +1425,85 @@ function App() {
     }
 
     alert("Balance updated successfully");
+  }
+
+  async function handleAdminTopUp() {
+    if (adminTopUpAmount.trim() === "") {
+      alert("Please enter a top up amount");
+      return;
+    }
+
+    const amount = Number(adminTopUpAmount);
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      alert("Please enter a valid top up amount");
+      return;
+    }
+
+    const currentMember = members.find(
+      (member) => Number(member.id) === Number(selectedMemberId)
+    );
+
+    if (!currentMember) {
+      alert("Member not found");
+      return;
+    }
+
+    const topUpAmountValue = Number(amount.toFixed(2));
+    const updatedBalance = Number(
+      (Number(currentMember.balance || 0) + topUpAmountValue).toFixed(2)
+    );
+    const newTransaction = {
+      id: Date.now(),
+      memberId: currentMember.id,
+      date: new Date().toLocaleDateString(),
+      description: "Admin Reload",
+      amount: topUpAmountValue,
+      type: "reload",
+    };
+
+    setMembers((previousMembers) =>
+      previousMembers.map((member) => {
+        if (Number(member.id) === Number(currentMember.id)) {
+          return {
+            ...member,
+            balance: updatedBalance,
+          };
+        }
+
+        return member;
+      })
+    );
+    setTransactions((previousTransactions) => [
+      newTransaction,
+      ...previousTransactions,
+    ]);
+    setAdminTopUpAmount("");
+
+    try {
+      await Promise.all([
+        syncMemberBalanceToSupabase(currentMember.id, updatedBalance),
+        syncTransactionToSupabase(newTransaction),
+      ]);
+    } catch (error) {
+      alertSupabaseFinanceSyncFailed(error);
+      return;
+    }
+
+    logActivity({
+      action: "admin_top_up",
+      targetType: "member",
+      targetId: currentMember.id,
+      description: `Admin reloaded ${currentMember.name} RM${topUpAmountValue.toFixed(
+        2
+      )}`,
+    });
+
+    alert(
+      `${currentMember.name} reloaded successfully. New balance: ${formatMoney(
+        updatedBalance
+      )}`
+    );
   }
 
   async function handleAddMember() {
@@ -2393,6 +2473,7 @@ function App() {
     setSelectedExpenseMembers([]);
     setExpenseAmount("");
     setManualBalance("");
+    setAdminTopUpAmount("");
     setMemberSearch("");
     setMemberFilter("all");
     setShowTopUpBox(false);
@@ -6664,6 +6745,43 @@ function App() {
                 />
 
                 <div className="balance-side-stack">
+                  <div className="panel admin-top-up-panel">
+                    <h2>Admin Top Up</h2>
+                    <p>
+                      Add credit directly to a member and record it as a reload
+                      transaction.
+                    </p>
+
+                    <label>Member</label>
+                    <select
+                      value={selectedMemberId}
+                      onChange={(event) => setSelectedMemberId(event.target.value)}
+                    >
+                      {members
+                        .filter((member) => member.status === "active")
+                        .map((member) => (
+                          <option key={member.id} value={member.id}>
+                            {member.name}
+                          </option>
+                        ))}
+                    </select>
+
+                    <label>Top Up Amount</label>
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      inputMode="decimal"
+                      placeholder="Example: 50"
+                      value={adminTopUpAmount}
+                      onChange={(event) => setAdminTopUpAmount(event.target.value)}
+                    />
+
+                    <button className="action-button" onClick={handleAdminTopUp}>
+                      Top Up Member
+                    </button>
+                  </div>
+
                   <div className="panel">
                     <h2>Manual Balance Update</h2>
 

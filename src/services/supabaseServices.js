@@ -259,15 +259,26 @@ function toSupabaseSessionWalkinUpdates(updates) {
 }
 
 function toSupabaseTransactionRow(transaction) {
-  return {
+  const row = {
     id: transaction.id,
     member_id: transaction.memberId,
-    session_id: nullable(transaction.sessionId),
     date: transaction.date,
     description: transaction.description,
     amount: Number(transaction.amount || 0),
     type: transaction.type || null,
   };
+
+  // Keep ordinary reload/expense transactions compatible with older databases
+  // until the optional session_id column has been applied remotely.
+  if (
+    transaction.sessionId !== undefined &&
+    transaction.sessionId !== null &&
+    transaction.sessionId !== ""
+  ) {
+    row.session_id = transaction.sessionId;
+  }
+
+  return row;
 }
 
 function toSupabaseReloadRequestRow(request) {
